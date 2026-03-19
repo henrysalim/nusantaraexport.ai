@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Docker volumes
+docker/postgres_data/
+
+# AI Models (large files)
+ai-services/models/
+*.pt
+*.bin
+*.onnx
+
+# Temporary
+tmp/
+temp/
