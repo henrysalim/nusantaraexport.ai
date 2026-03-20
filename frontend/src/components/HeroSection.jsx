@@ -49,7 +49,7 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative min-h-[90vh] flex items-center pt-32 pb-20 px-6 overflow-hidden"
+      className="relative h-screen flex items-center pt-32 pb-20 px-6 overflow-hidden"
       aria-label="Halaman utama NusantaraExport.AI"
     >
       {/* Background Image */}

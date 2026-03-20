@@ -55,7 +55,7 @@ export default function Footer() {
 
         <div className="pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-xs font-bold text-secondary/40 uppercase tracking-widest">
-            &copy; 2025 NusantaraExport.AI — Prototype DIGDAYA X Hackathon
+            &copy; 2026 NusantaraExport.AI — Prototype DIGDAYA X Hackathon
           </p>
           <span className="text-xs text-secondary/40 font-medium">
             Dibangun untuk UMKM Indonesia | Inklusif & Ramah Disabilitas
