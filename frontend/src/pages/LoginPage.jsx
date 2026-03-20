@@ -106,12 +106,16 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsRegister(!isRegister)}
-              className="text-sm font-bold text-accent hover:underline"
-            >
-              {isRegister ? 'Sudah punya akun? Masuk' : 'Belum punya akun? Daftar gratis'}
-            </button>
+            <p className="text-sm font-bold text-black">
+              {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
+              <button
+                type="button"
+                onClick={() => setIsRegister(!isRegister)}
+                className="text-accent underline decoration-accent/30 hover:decoration-accent transition-all"
+              >
+                {isRegister ? 'Masuk' : 'Daftar gratis'}
+              </button>
+            </p>
           </div>
         </div>
 

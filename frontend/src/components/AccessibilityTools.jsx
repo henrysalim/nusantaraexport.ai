@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Volume2, Square, Book, Contrast, RotateCcw, Keyboard } from "lucide-react";
+import { Volume2, Square, Book, Contrast, RotateCcw, Keyboard, Settings, Info } from "lucide-react";
 import GlossaryPanel from "./GlossaryPanel";
 
 export default function AccessibilityTools() {
@@ -9,6 +9,7 @@ export default function AccessibilityTools() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().includes('MAC');
   const modKey = isMac ? '⌘' : 'Ctrl';
@@ -94,94 +95,118 @@ export default function AccessibilityTools() {
       </a>
 
       {/* Floating Controls */}
-      <div className="fixed bottom-8 left-8 z-[60] flex flex-col gap-2" role="toolbar" aria-label="Alat aksesibilitas">
-        <div className="bg-white/90 backdrop-blur-md border border-slate-200 p-2 rounded-2xl shadow-2xl flex flex-col gap-1 items-center">
-          <span className="text-[10px] font-black uppercase text-secondary/40 mb-1" aria-hidden="true">Akses</span>
+      <div className="fixed bottom-8 left-8 z-[60] flex flex-col items-start gap-4" role="toolbar" aria-label="Alat aksesibilitas">
+        {/* Expanded Menu */}
+        <div className={`transition-all duration-300 origin-bottom flex flex-col gap-2 ${isExpanded ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-95 pointer-events-none'}`}>
+          <div className="bg-white border border-slate-200 p-2 rounded-3xl shadow-2xl flex flex-col gap-1 w-64 overflow-hidden">
+            <div className="px-4 py-2 border-b border-slate-100 mb-1 flex items-center gap-2">
+                <Settings size={14} className="text-secondary/40" />
+                <span className="text-[10px] font-black uppercase text-secondary/40" aria-hidden="true">Pengaturan Akses</span>
+            </div>
 
-          {/* TTS */}
-          <button
-            onClick={toggleSpeech}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${isSpeaking ? "bg-accent text-white animate-pulse" : "bg-slate-100 text-secondary hover:bg-slate-200"}`}
-            aria-label={isSpeaking ? "Hentikan pembacaan suara" : "Bacakan halaman ini"}
-            aria-pressed={isSpeaking}
-            title={`${modKey}+S`}
-          >
-            {isSpeaking ? <Square size={18} fill="currentColor" /> : <Volume2 size={20} />}
-          </button>
+            {/* TTS */}
+            <button
+              onClick={toggleSpeech}
+              className={`flex items-center gap-4 w-full p-3 rounded-2xl font-bold transition-all ${isSpeaking ? "bg-accent text-white animate-pulse" : "bg-slate-50 text-secondary hover:bg-slate-100"}`}
+              aria-label={isSpeaking ? "Hentikan pembacaan suara" : "Bacakan halaman ini"}
+            >
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                {isSpeaking ? <Square size={16} fill="currentColor" /> : <Volume2 size={18} />}
+              </div>
+              <span className="text-sm">{isSpeaking ? "Berhenti" : "Dengarkan Suara"}</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+S</span>
+            </button>
 
-          <div className="w-8 h-px bg-slate-100 my-1" aria-hidden="true" />
+            {/* Glossary */}
+            <button
+              onClick={() => setIsGlossaryOpen(!isGlossaryOpen)}
+              className={`flex items-center gap-4 w-full p-3 rounded-2xl font-bold transition-all ${isGlossaryOpen ? "bg-secondary text-white" : "bg-slate-50 text-secondary hover:bg-slate-100"}`}
+            >
+              <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Book size={18} />
+              </div>
+              <span className="text-sm">Kamus Ekspor</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+K</span>
+            </button>
 
-          {/* Glossary */}
-          <button
-            onClick={() => setIsGlossaryOpen(!isGlossaryOpen)}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${isGlossaryOpen ? "bg-secondary text-white" : "bg-slate-100 text-secondary hover:bg-slate-200"}`}
-            aria-label={isGlossaryOpen ? "Tutup kamus ekspor" : "Buka kamus ekspor"}
-            aria-expanded={isGlossaryOpen}
-            title={`${modKey}+K`}
-          >
-            <Book size={20} />
-          </button>
+            <div className="h-px bg-slate-100 my-1 mx-2" aria-hidden="true" />
 
-          <div className="w-8 h-px bg-slate-100 my-1" aria-hidden="true" />
+            {/* High Contrast */}
+            <button
+              onClick={() => setHighContrast(!highContrast)}
+              className={`flex items-center gap-4 w-full p-3 rounded-2xl font-bold transition-all ${highContrast ? "bg-yellow-400 text-black shadow-lg" : "bg-slate-50 text-secondary hover:bg-slate-100"}`}
+            >
+              <div className="w-8 h-8 rounded-xl bg-black/5 flex items-center justify-center flex-shrink-0">
+                <Contrast size={18} />
+              </div>
+              <span className="text-sm">Kontras Tinggi</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+J</span>
+            </button>
 
-          {/* High Contrast */}
-          <button
-            onClick={() => setHighContrast(!highContrast)}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${highContrast ? "bg-yellow-400 text-black" : "bg-slate-100 text-secondary hover:bg-slate-200"}`}
-            aria-label={highContrast ? "Nonaktifkan kontras tinggi" : "Aktifkan kontras tinggi"}
-            aria-pressed={highContrast}
-            title={`${modKey}+J`}
-          >
-            <Contrast size={20} />
-          </button>
+            {/* Font Control Layout */}
+            <div className="flex flex-col gap-1 mt-1 p-1 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="px-3 py-1 flex items-center gap-2">
+                    <span className="text-[9px] font-black uppercase text-secondary/30">Ukuran Teks</span>
+                </div>
+                <div className="flex gap-1">
+                    <button
+                        onClick={() => setFontSize("xl")}
+                        className={`flex-1 py-2 rounded-xl font-black text-xs transition-all ${fontSize === "xl" ? "bg-accent text-white" : "hover:bg-slate-200"}`}
+                    >
+                        Paling Besar
+                    </button>
+                    <button
+                        onClick={() => setFontSize("lg")}
+                        className={`flex-1 py-2 rounded-xl font-black text-xs transition-all ${fontSize === "lg" ? "bg-accent text-white" : "hover:bg-slate-200"}`}
+                    >
+                        Besar
+                    </button>
+                    <button
+                        onClick={() => setFontSize("base")}
+                        className={`flex-1 py-2 rounded-xl font-black text-xs transition-all ${fontSize === "base" ? "bg-secondary text-white" : "hover:bg-slate-200"}`}
+                    >
+                        Normal
+                    </button>
+                </div>
+            </div>
 
-          {/* Font A+ */}
-          <button
-            onClick={() => setFontSize("xl")}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${fontSize === "xl" ? "bg-accent text-white" : "bg-slate-100 text-secondary hover:bg-slate-200"}`}
-            aria-label="Teks sangat besar"
-            aria-pressed={fontSize === "xl"}
-          >
-            A+
-          </button>
+            <div className="h-px bg-slate-100 my-1 mx-2" aria-hidden="true" />
 
-          {/* Font A */}
-          <button
-            onClick={() => setFontSize("lg")}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${fontSize === "lg" ? "bg-accent text-white" : "bg-slate-100 text-secondary hover:bg-slate-200"}`}
-            aria-label="Teks besar"
-            aria-pressed={fontSize === "lg"}
-          >
-            A
-          </button>
-
-          {/* Reset */}
-          <button
-            onClick={() => { setFontSize("base"); setHighContrast(false); }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${fontSize === "base" && !highContrast ? "bg-secondary text-white" : "bg-slate-100 text-secondary hover:bg-slate-200"}`}
-            aria-label="Reset aksesibilitas"
-            title={`${modKey}+0`}
-          >
-            <RotateCcw size={18} />
-          </button>
-
-          <div className="w-8 h-px bg-slate-100 my-1" aria-hidden="true" />
-
-          {/* Shortcuts */}
-          <button
-            onClick={() => setShowShortcuts(!showShortcuts)}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all ${showShortcuts ? "bg-secondary text-white" : "bg-slate-100 text-secondary hover:bg-slate-200"}`}
-            aria-label="Tampilkan pintasan keyboard"
-            aria-expanded={showShortcuts}
-          >
-            <Keyboard size={18} />
-          </button>
+            {/* Shortcuts & Reset Container */}
+            <div className="flex gap-2 p-1">
+                <button
+                    onClick={() => setShowShortcuts(!showShortcuts)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-100 text-secondary hover:bg-slate-200 rounded-xl font-bold text-xs transition-all"
+                >
+                    <Keyboard size={14} /> Pintasan
+                </button>
+                <button
+                    onClick={() => { setFontSize("base"); setHighContrast(false); }}
+                    className="w-12 flex items-center justify-center bg-slate-100 text-secondary hover:bg-red-50 hover:text-red-500 rounded-xl transition-all"
+                    title="Reset Semua"
+                >
+                    <RotateCcw size={16} />
+                </button>
+            </div>
+          </div>
         </div>
+
+        {/* Main Toggle Button */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`group flex items-center gap-3 px-6 h-14 rounded-2xl shadow-2xl transition-all duration-300 transform border-2 ${isExpanded ? 'bg-secondary text-white border-secondary' : 'bg-white text-secondary border-slate-100 hover:scale-105 active:scale-95'}`}
+          aria-label={isExpanded ? "Tutup menu aksesibilitas" : "Buka menu aksesibilitas"}
+          aria-expanded={isExpanded}
+        >
+          <Settings size={22} className={`transition-transform duration-500 ${isExpanded ? 'rotate-180' : 'group-hover:rotate-45'}`} />
+          <span className="font-black text-sm uppercase tracking-wider">Aksesibilitas</span>
+          {isExpanded && <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">×</div>}
+        </button>
       </div>
 
       {/* Shortcuts Modal */}
       {showShortcuts && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} role="dialog" aria-modal="true" aria-label="Pintasan keyboard">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70" onClick={() => setShowShortcuts(false)} role="dialog" aria-modal="true" aria-label="Pintasan keyboard">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-black text-secondary mb-6">Pintasan Keyboard</h2>
             <div className="space-y-3">
@@ -213,9 +238,10 @@ export default function AccessibilityTools() {
       <button
         onClick={scrollToTop}
         aria-label="Kembali ke atas"
-        className={`fixed bottom-8 right-8 z-[60] w-14 h-14 bg-accent text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 transform border-4 border-white ${isVisible ? "translate-y-0 opacity-100 scale-100" : "translate-y-20 opacity-0 scale-50 pointer-events-none"} hover:bg-secondary hover:-translate-y-2 active:scale-95`}
+        className={`fixed bottom-8 right-8 z-[60] w-auto px-4 h-14 bg-accent text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 transform border-4 border-white ${isVisible ? "translate-y-0 opacity-100 scale-100" : "translate-y-20 opacity-0 scale-50 pointer-events-none"} hover:bg-secondary hover:-translate-y-2 active:scale-95`}
         tabIndex={isVisible ? 0 : -1}
       >
+        Kembali ke atas&nbsp;
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
       </button>
     </>

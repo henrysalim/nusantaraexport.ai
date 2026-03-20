@@ -143,18 +143,18 @@ export default function VoiceDemoSection() {
         </div>
 
         {/* Text Input */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <label htmlFor="voice-input" className="sr-only">Ketik pertanyaan ekspor Anda</label>
           <input
             id="voice-input"
-            className="flex-1 px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+            className="flex-1 px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors min-w-0"
             type="text"
             placeholder="Atau ketik pertanyaan Anda di sini..."
             value={inputText}
             onChange={e => setInputText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleTextSubmit()}
           />
-          <button onClick={handleTextSubmit} className="btn-primary px-6" aria-label="Kirim pertanyaan">
+          <button onClick={handleTextSubmit} className="btn-primary px-8 py-4 justify-center whitespace-nowrap" aria-label="Kirim pertanyaan">
             Kirim
           </button>
         </div>

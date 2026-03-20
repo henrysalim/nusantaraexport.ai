@@ -130,7 +130,7 @@ export default function HeroSection() {
 
         {/* Right Column — Dashboard Preview */}
         <div className="relative animate-fadeInUp hidden md:block w-full max-w-md ml-auto" aria-hidden="true">
-          <div className="bg-white/20 backdrop-blur-sm border border-white/20 pb-0 overflow-hidden rounded-[2.5rem] shadow-2xl transform translate-z-0">
+          <div className="bg-white/25 border border-white/20 pb-0 overflow-hidden rounded-[2.5rem] shadow-2xl transform translate-z-0">
             <div className="p-8 pb-4">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center text-white">
@@ -194,7 +194,7 @@ export default function HeroSection() {
                 ))}
               </div>
             </div>
-            <div className="bg-white/10 p-6 mt-8 backdrop-blur-sm border-t border-white/10">
+            <div className="bg-white/10 p-6 mt-8 border-t border-white/10">
               <div className="flex items-center gap-3 text-white">
                 <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                 <span className="text-xs font-bold uppercase tracking-widest opacity-80">
