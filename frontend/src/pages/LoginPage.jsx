@@ -39,10 +39,10 @@ export default function LoginPage() {
             </span>
           </Link>
           <h1 className="text-3xl font-display font-black text-secondary mb-2">
-            {isRegister ? 'Daftar Akun Baru' : 'Masuk ke Akun Anda'}
+            {isRegister ? 'Mulai Langkah Ekspor Anda' : 'Masuk ke Dashboard UMKM'}
           </h1>
           <p className="text-secondary/50 font-medium">
-            {isRegister ? 'Gratis untuk semua UMKM Indonesia' : 'Selamat datang kembali!'}
+            {isRegister ? 'Bergabung dengan ribuan UMKM yang sudah go-global' : 'Senang melihat Anda kembali!'}
           </p>
         </div>
 

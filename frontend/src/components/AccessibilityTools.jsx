@@ -100,7 +100,7 @@ export default function AccessibilityTools() {
       <div className="fixed bottom-8 left-8 z-[60] flex flex-col items-start gap-4" role="toolbar" aria-label="Alat aksesibilitas">
         {/* Expanded Menu */}
         <div className={`transition-all duration-300 origin-bottom flex flex-col gap-2 ${isExpanded ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-95 pointer-events-none'}`}>
-          <div className="bg-white border border-slate-200 p-2 rounded-3xl shadow-2xl flex flex-col gap-1 w-64 overflow-hidden">
+          <div className="bg-white accessibility-panel border border-slate-200 p-2 rounded-3xl shadow-2xl flex flex-col gap-1 w-64 overflow-hidden">
             <div className="px-4 py-2 border-b border-slate-100 mb-1 flex items-center gap-2">
                 <Settings size={14} className="text-secondary/40" />
                 <span className="text-[10px] font-black uppercase text-secondary/40" aria-hidden="true">Pengaturan Akses</span>

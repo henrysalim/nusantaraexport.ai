@@ -106,7 +106,7 @@ export default function GlossaryPanel({ isOpen, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-label="Kamus istilah ekspor dalam bahasa sederhana"
-      className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl z-[100] transform transition-transform duration-500 ease-in-out border-l border-slate-100 flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+      className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white accessibility-panel shadow-2xl z-[100] transform transition-transform duration-500 ease-in-out border-l border-slate-100 flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       aria-hidden={!isOpen}
       tabIndex={-1}
     >

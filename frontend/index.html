@@ -153,13 +153,17 @@
         box-shadow: 0 0 0 1px #4b5563 !important;
       }
 
-      html.high-contrast .bg-slate-soft {
+      html.high-contrast .bg-slate-soft,
+      html.high-contrast [class*="bg-slate-"],
+      html.high-contrast [class*="bg-gray-"] {
         background-color: #111827 !important;
       }
 
       html.high-contrast [class*="bg-white"],
-      html.high-contrast [class*="bg-accent-light"] {
-        background-color: #1a2236 !important;
+      html.high-contrast [class*="bg-accent-light"],
+      html.high-contrast .accessibility-panel {
+        background-color: #0d111b !important;
+        border-color: #2d3748 !important;
       }
 
       /* Pastikan link navigasi tidak punya background paksaan */
@@ -172,8 +176,17 @@
       html.high-contrast a,
       html.high-contrast li,
       html.high-contrast label,
-      html.high-contrast [class*="text-secondary"] {
-        color: #e5e7eb !important;
+      html.high-contrast [class*="text-secondary"],
+      html.high-contrast [class*="text-black"],
+      html.high-contrast .text-black {
+        color: #ffffff !important;
+        opacity: 1 !important;
+      }
+
+      html.high-contrast [class*="text-secondary/"],
+      html.high-contrast [class*="text-white"] {
+        color: #ccd6f6 !important;
+        opacity: 1 !important;
       }
 
       html.high-contrast h1,
@@ -200,9 +213,10 @@
 
       html.high-contrast input,
       html.high-contrast textarea {
-        background-color: #1f2937 !important;
+        background-color: #1a2236 !important;
         color: #ffffff !important;
-        border-color: #4b5563 !important;
+        border: 2px solid #ccd6f6 !important;
+        box-shadow: none !important;
       }
 
       html.high-contrast input::placeholder {
@@ -233,6 +247,11 @@
         outline: 3px solid #e11d48 !important; /* accent red */
         outline-offset: 4px;
         border-radius: 4px;
+      }
+
+      html.high-contrast :focus-visible {
+        outline: 3px solid #ffff00 !important; /* bright yellow for HC */
+        outline-offset: 6px;
       }
 
       /* Skip to Content Link */
