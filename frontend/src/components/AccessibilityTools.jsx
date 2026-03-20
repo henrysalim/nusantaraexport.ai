@@ -37,25 +37,27 @@ export default function AccessibilityTools() {
     const handleKeyDown = (e) => {
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+      
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (!mod) return;
 
-      if (e.key === 's' || e.key === 'S') {
+      // Menggunakan Shift + Key untuk menghindari bentrok dengan shortcut browser umum
+      if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
         toggleSpeech();
-      } else if (e.key === 'k' || e.key === 'K') {
+      } else if (e.shiftKey && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         setIsGlossaryOpen((prev) => !prev);
-      } else if (e.key === 'j' || e.key === 'J') {
+      } else if (e.shiftKey && (e.key === 'h' || e.key === 'H')) {
         e.preventDefault();
         setHighContrast((prev) => !prev);
-      } else if (e.key === '=') {
-        e.preventDefault();
-        setFontSize((prev) => prev === "base" ? "lg" : "xl");
-      } else if (e.key === '-') {
+      } else if (e.key === '[') {
         e.preventDefault();
         setFontSize((prev) => prev === "xl" ? "lg" : "base");
-      } else if (e.key === '0') {
+      } else if (e.key === ']') {
+        e.preventDefault();
+        setFontSize((prev) => prev === "base" ? "lg" : "xl");
+      } else if (e.shiftKey && e.key === '0') {
         e.preventDefault();
         setFontSize("base");
         setHighContrast(false);
@@ -114,7 +116,7 @@ export default function AccessibilityTools() {
                 {isSpeaking ? <Square size={16} fill="currentColor" /> : <Volume2 size={18} />}
               </div>
               <span className="text-sm">{isSpeaking ? "Berhenti" : "Dengarkan Suara"}</span>
-              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+S</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+⇧+S</span>
             </button>
 
             {/* Glossary */}
@@ -126,7 +128,7 @@ export default function AccessibilityTools() {
                 <Book size={18} />
               </div>
               <span className="text-sm">Kamus Ekspor</span>
-              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+K</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+⇧+K</span>
             </button>
 
             <div className="h-px bg-slate-100 my-1 mx-2" aria-hidden="true" />
@@ -140,7 +142,7 @@ export default function AccessibilityTools() {
                 <Contrast size={18} />
               </div>
               <span className="text-sm">Kontras Tinggi</span>
-              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+J</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+⇧+H</span>
             </button>
 
             {/* Font Control Layout */}
@@ -211,12 +213,12 @@ export default function AccessibilityTools() {
             <h2 className="text-xl font-black text-secondary mb-6">Pintasan Keyboard</h2>
             <div className="space-y-3">
               {[
-                { keys: `${modKey}+S`, desc: "Bacakan halaman / hentikan" },
-                { keys: `${modKey}+K`, desc: "Buka/tutup kamus ekspor" },
-                { keys: `${modKey}+J`, desc: "Mode kontras tinggi" },
-                { keys: `${modKey}+=`, desc: "Perbesar teks" },
-                { keys: `${modKey}+-`, desc: "Perkecil teks" },
-                { keys: `${modKey}+0`, desc: "Reset semua pengaturan" },
+                { keys: `${modKey}+⇧+S`, desc: "Bacakan halaman / hentikan" },
+                { keys: `${modKey}+⇧+K`, desc: "Buka/tutup kamus ekspor" },
+                { keys: `${modKey}+⇧+H`, desc: "Mode kontras tinggi" },
+                { keys: `${modKey}+[`, desc: "Perkecil teks" },
+                { keys: `${modKey}+]`, desc: "Perbesar teks" },
+                { keys: `${modKey}+⇧+0`, desc: "Reset semua pengaturan" },
                 { keys: "Tab", desc: "Navigasi antar elemen" },
                 { keys: "Enter", desc: "Aktifkan tombol/link" },
               ].map((s, i) => (

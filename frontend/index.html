@@ -132,7 +132,7 @@
         color: #f0f0f0 !important;
       }
 
-      html.high-contrast nav {
+      html.high-contrast nav:not(footer nav) {
         background-color: #0a0f1e !important;
         border-bottom: 2px solid #ffff00 !important;
       }
@@ -153,14 +153,18 @@
         box-shadow: 0 0 0 1px #4b5563 !important;
       }
 
-      html.high-contrast .bg-slate-soft,
-      html.high-contrast [class*="bg-slate"] {
+      html.high-contrast .bg-slate-soft {
         background-color: #111827 !important;
       }
 
       html.high-contrast [class*="bg-white"],
       html.high-contrast [class*="bg-accent-light"] {
         background-color: #1a2236 !important;
+      }
+
+      /* Pastikan link navigasi tidak punya background paksaan */
+      html.high-contrast nav a {
+        background-color: transparent !important;
       }
 
       html.high-contrast p,
@@ -211,6 +215,17 @@
 
       html.high-contrast .absolute.inset-0[class*="bg-black"] {
         background-color: rgba(0, 0, 0, 0.85) !important;
+      }
+
+      /* High Contrast: Enhanced Navbar Links */
+      html.high-contrast nav a {
+        color: #ffff00 !important;
+        font-weight: 800 !important;
+      }
+
+      html.high-contrast nav a:hover {
+        background-color: transparent !important;
+        text-decoration: underline !important;
       }
 
       /* Keyboard Navigation: Custom Focus Rings */
