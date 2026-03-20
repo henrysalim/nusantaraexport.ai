@@ -12,36 +12,25 @@ export default function HeroSection() {
       let tl = gsap.timeline({ repeat: -1 });
 
       WORDS.forEach((word) => {
+        // Typing effect
         tl.to(wordRef.current, {
           duration: word.length * 0.1,
-          onStart: () => {
-            let i = 0;
-            const type = () => {
-              if (i <= word.length) {
-                wordRef.current.innerText = word.slice(0, i);
-                i++;
-                setTimeout(type, 80);
-              }
-            };
-            type();
+          text: {
+            value: word,
+            delimiter: "",
           },
+          ease: "none",
         })
-          .to({}, { duration: 1.5 })
-          .to(wordRef.current, {
-            duration: word.length * 0.05,
-            onStart: () => {
-              let i = word.length;
-              const erase = () => {
-                if (i >= 0) {
-                  wordRef.current.innerText = word.slice(0, i);
-                  i--;
-                  setTimeout(erase, 40);
-                }
-              };
-              erase();
-            },
-          })
-          .to({}, { duration: 0.3 });
+        .to({}, { duration: 2 }) // Pause
+        .to(wordRef.current, {
+          duration: word.length * 0.05,
+          text: {
+            value: "",
+            delimiter: "",
+          },
+          ease: "none",
+        })
+        .to({}, { duration: 0.5 }); // Short pause before next word
       });
     }, wordRef);
     return () => ctx.revert();
