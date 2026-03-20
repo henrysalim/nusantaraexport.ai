@@ -1,92 +1,193 @@
-import { Link } from 'react-router-dom'
+import { Link } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+
+const WORDS = ["Ekspor!", "Mendunia!", "Berkembang!", "Bersaing!"];
 
 export default function HeroSection() {
+  const wordRef = useRef(null);
+
+  useEffect(() => {
+    let ctx = gsap.context(() => {
+      let tl = gsap.timeline({ repeat: -1 });
+
+      WORDS.forEach((word) => {
+        // Typing effect
+        tl.to(wordRef.current, {
+          duration: word.length * 0.1,
+          onStart: () => {
+            let i = 0;
+            const type = () => {
+              if (i <= word.length) {
+                wordRef.current.innerText = word.slice(0, i);
+                i++;
+                setTimeout(type, 80);
+              }
+            };
+            type();
+          },
+        })
+          .to({}, { duration: 1.5 }) // Stay on the word
+          // Erasing effect (Backspacing)
+          .to(wordRef.current, {
+            duration: word.length * 0.05,
+            onStart: () => {
+              let i = word.length;
+              const erase = () => {
+                if (i >= 0) {
+                  wordRef.current.innerText = word.slice(0, i);
+                  i--;
+                  setTimeout(erase, 40);
+                }
+              };
+              erase();
+            },
+          })
+          .to({}, { duration: 0.3 }); // Short pause before next word
+      });
+    }, wordRef);
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="relative min-h-[90vh] flex items-center bg-white pt-32 pb-20 px-6 overflow-hidden">
-      <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+    <section className="relative min-h-[90vh] flex items-center pt-32 pb-20 px-6 overflow-hidden">
+      {/* Layer 1: Gambar Unsplash (Paling Belakang) */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="https://images.unsplash.com/photo-1553673257-c9c9cb846dfc?q=80&w=2070&auto=format&fit=crop"
+          alt="Indonesian Rice Field"
+          className="w-full h-full object-cover"
+        />
+        {/* Layer 2: Black Overlay (Pemisah) */}
+        <div className="absolute inset-0 bg-black/50 z-10" />
+      </div>
 
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
-        <div className="animate-fadeInUp text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-light text-accent text-xs font-bold mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+      {/* Ornament Blur */}
+      <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 z-20" />
+      <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-accent/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 z-20" />
+
+      {/* Layer 3: Konten Teks (Paling Depan) */}
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-30 w-full">
+        {/* Kolom Kiri: Teks dengan Lebar Tetap */}
+        <div className="animate-fadeInUp text-center md:text-left md:max-w-xl">
+          <h1 className="text-4xl lg:text-6xl font-display font-black text-white leading-tight min-h-[160px] md:min-h-[220px]">
+            UMKM Indonesia, <br />
+            sudah saatnya <br />
+            <span
+              ref={wordRef}
+              className="text-accent underline decoration-accent/85 inline-block"
+            >
+              Ekspor!
             </span>
-            Program Transformasi Ekspor UMKM
-          </div>
-
-          <h1 className="text-4xl lg:text-6xl font-display font-black text-secondary leading-[1.1] mb-6">
-            Bantu UMKM <span className="text-accent underline decoration-accent/20">Ekspor</span> ke Luar Negeri.
           </h1>
 
-          <p className="text-lg md:text-xl text-secondary/70 mb-10 max-w-lg leading-relaxed font-medium">
-            Tanya syarat ekspor, cari pembeli, dan buat dokumen otomatis lewat suara. Gratis dan mudah untuk siapa saja.
+          <p className="text-lg md:text-xl text-white/80 mb-10 max-w-lg leading-relaxed font-medium">
+            Tanya aturan ekspor, cek peluang pasar dunia, verifikasi kemasan,
+            hingga buat dokumen otomatis melalui suara secara gratis!
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Link to="/demo" className="btn-primary px-10 py-4 text-lg w-full sm:w-auto justify-center">
+            <Link
+              to="/demo"
+              className="btn-primary px-10 py-4 text-lg w-full sm:w-auto justify-center"
+            >
               Mulai Sekarang — Gratis
             </Link>
-            <a href="#cara-kerja" className="px-8 py-4 text-secondary font-bold hover:text-accent transition-colors">
+            <a
+              href="#cara-kerja"
+              className="px-8 py-4 text-white w-full md:w-auto font-bold hover:text-accent transition-colors ease-in-out duration:200 hover:bg-white rounded-md"
+            >
               Lihat Caranya →
             </a>
           </div>
 
-          <div className="mt-12 flex items-center justify-center md:justify-start gap-6 opacity-60">
+          <div className="mt-12 flex items-center justify-center md:justify-start gap-6 opacity-80">
             <div className="text-center">
-              <div className="text-2xl font-black text-secondary">30+</div>
-              <div className="text-[10px] font-bold uppercase tracking-wider">Dialek Daerah</div>
+              <div className="text-2xl font-black text-white">30+</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">
+                Dialek Daerah
+              </div>
             </div>
-            <div className="w-px h-8 bg-slate-200" />
+            <div className="w-px h-8 bg-white/20" />
             <div className="text-center">
-              <div className="text-2xl font-black text-secondary">100%</div>
-              <div className="text-[10px] font-bold uppercase tracking-wider">Aman & Terpercaya</div>
+              <div className="text-2xl font-black text-white">100%</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">
+                Aman & Terpercaya
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="relative animate-fadeInUp hidden md:block">
-          <div className="danantara-card pb-0 overflow-hidden rounded-[2.5rem]">
+        <div className="relative animate-fadeInUp hidden md:block w-full max-w-md ml-auto">
+          <div className="bg-white/20 backdrop-blur-sm border border-white/20 pb-0 overflow-hidden rounded-[2.5rem] shadow-2xl transform translate-z-0">
             <div className="p-8 pb-4">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-accent-light rounded-2xl flex items-center justify-center text-accent">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <div className="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center text-white">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
                     <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-black text-secondary">Analisis Produk Anda</div>
-                  <div className="text-[11px] font-bold text-secondary/50 uppercase tracking-widest">Global Market Gap Detector</div>
+                  <div className="text-sm font-black text-white">
+                    Analisis Produk Anda
+                  </div>
+                  <div className="text-[11px] font-bold text-white/50 uppercase tracking-widest">
+                    Global Market Gap Detector
+                  </div>
                 </div>
               </div>
               <div className="space-y-4">
                 {[
-                  { label: 'Potensi Pasar', val: 'Tinggi (87/100)', bar: 'w-[87%]', color: 'bg-accent' },
-                  { label: 'Permintaan Dunia', val: '$14.2M / Tahun', bar: 'w-[65%]', color: 'bg-secondary' },
+                  {
+                    label: "Potensi Pasar",
+                    val: "Tinggi (87/100)",
+                    bar: "w-[87%]",
+                    color: "bg-accent",
+                  },
+                  {
+                    label: "Permintaan Dunia",
+                    val: "$14.2M / Tahun",
+                    bar: "w-[65%]",
+                    color: "bg-white",
+                  },
                 ].map((item, i) => (
-                  <div key={i} className="bg-slate-soft p-4 rounded-2xl">
+                  <div
+                    key={i}
+                    className="bg-white/5 p-4 rounded-2xl border border-white/10"
+                  >
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-bold text-secondary/60">{item.label}</span>
-                      <span className="text-xs font-black text-secondary">{item.val}</span>
+                      <span className="text-xs font-bold text-white/60">
+                        {item.label}
+                      </span>
+                      <span className="text-xs font-black text-white">
+                        {item.val}
+                      </span>
                     </div>
-                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div className={`h-full ${item.bar} ${item.color} rounded-full`} />
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${item.bar} ${item.color} rounded-full`}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-secondary p-6 mt-8">
+            <div className="bg-white/10 p-6 mt-8 backdrop-blur-sm border-t border-white/10">
               <div className="flex items-center gap-3 text-white">
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-widest opacity-80">AI Sedang Menganalisis...</span>
+                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-widest opacity-80">
+                  AI Sedang Menganalisis...
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

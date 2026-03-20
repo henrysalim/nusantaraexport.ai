@@ -30,11 +30,11 @@ export default function MarketAnalysisCard() {
       <div className="space-y-4">
         <div>
           <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">
-            Kode Produk (HS Code)
+            Nama Produk
           </label>
           <input
             type="text"
-            placeholder="Contoh: 0901 (Kopi)"
+            placeholder="Contoh: Kopi"
             className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary focus:border-accent outline-none"
             value={hsCode}
             onChange={(e) => setHsCode(e.target.value)}

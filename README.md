@@ -2,7 +2,7 @@
 
 **AI Market Gap Detector** — Sistem deteksi celah pasar ekspor untuk UMKM Indonesia, dengan antarmuka teks dan suara (_voice-first_).
 
-Dibangun untuk Hackathon Bank Indonesia & OJK.
+Dibangun untuk Hackathon Pusat Inovasi Digital Indonesia.
 
 ## Arsitektur
 

@@ -1,9 +1,11 @@
+import { Mic, Search, Package, FileText } from "lucide-react";
+
 export default function HowItWorksSection() {
   const steps = [
-    { id: '01', title: 'Bicara Lewat Suara', desc: 'Cukup tekan tombol mic dan jelaskan produk Anda dalam bahasa Indonesia atau daerah.', icon: '🎙️' },
-    { id: '02', title: 'AI Menganalisis Pasar', desc: 'Sistem kami mendeteksi negara mana yang paling butuh produk Anda saat ini.', icon: '🔎' },
-    { id: '03', title: 'Dapatkan Buyer', desc: 'Kami menghubungkan Anda langsung dengan pembeli luar negeri tanpa calo.', icon: '🤝' },
-    { id: '04', title: 'Dokumen Jadi Otomatis', desc: 'Klik satu tombol, dan dokumen ekspor resmi Anda akan langsung terbit.', icon: '📄' },
+    { id: '01', title: 'Bicara Lewat Suara', desc: 'Cukup tekan tombol mic dan jelaskan produk Anda dalam bahasa Indonesia atau daerah.', icon: <Mic /> },
+    { id: '02', title: 'AI Menganalisis Pasar', desc: 'Sistem kami mendeteksi negara mana yang paling butuh produk Anda saat ini.', icon: <Search /> },
+    { id: '03', title: 'Verifikasi Compliance', desc: 'Cek apakah kemasan dan label produk Anda sudah sesuai aturan negara tujuan.', icon: <Package /> },
+    { id: '04', title: 'Dokumen Jadi Otomatis', desc: 'Klik satu tombol, dan dokumen ekspor resmi Anda akan langsung terbit.', icon: <FileText /> },
   ]
 
   return (
@@ -22,7 +24,7 @@ export default function HowItWorksSection() {
           {steps.map((s, i) => (
             <div key={i} className="relative group animate-fadeInUp" style={{ animationDelay: `${i * 150}ms` }}>
               <div className="danantara-card p-10 h-full rounded-[2rem] flex flex-col items-center text-center">
-                <div className="text-5xl font-black text-accent/10 mb-6 group-hover:text-accent/20 transition-colors">{s.id}</div>
+                <div className="text-5xl font-black text-accent/40 mb-6 group-hover:text-accent/80 transition-colors">{s.id}</div>
                 <div className="w-16 h-16 bg-slate-soft rounded-2xl flex items-center justify-center text-3xl shadow-sm mb-6">{s.icon}</div>
                 <h3 className="text-xl font-black text-secondary mb-4 leading-tight">{s.title}</h3>
                 <p className="text-sm text-secondary/50 leading-relaxed font-bold">{s.desc}</p>
