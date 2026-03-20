@@ -126,47 +126,91 @@
         font-size: 1.3em !important; /* Scale by 30% */
       }
 
-      /* Accessibility: High Contrast Mode (Universal Overrides) */
-      html.high-contrast body,
-      html.high-contrast nav,
-      html.high-contrast footer,
-      html.high-contrast section,
-      html.high-contrast .danantara-card,
-      html.high-contrast .bg-white\/10,
-      html.high-contrast .bg-white\/20,
-      html.high-contrast .bg-white\/25,
-      html.high-contrast .bg-slate-soft,
-      html.high-contrast div:not(.ignore-contrast) {
-        background-color: #000000 !important;
+      /* Accessibility: High Contrast Mode */
+      html.high-contrast body {
+        background-color: #0a0f1e !important;
+        color: #f0f0f0 !important;
+      }
+
+      html.high-contrast nav {
+        background-color: #0a0f1e !important;
+        border-bottom: 2px solid #ffff00 !important;
+      }
+
+      html.high-contrast footer {
+        background-color: #0a0f1e !important;
+        border-top: 2px solid #ffff00 !important;
+      }
+
+      html.high-contrast section {
+        background-color: #0a0f1e !important;
         background-image: none !important;
-        color: #ffffff !important;
-        border-color: #ffffff !important;
+      }
+
+      html.high-contrast .danantara-card {
+        background-color: #111827 !important;
+        border: 2px solid #374151 !important;
+        box-shadow: 0 0 0 1px #4b5563 !important;
+      }
+
+      html.high-contrast .bg-slate-soft,
+      html.high-contrast [class*="bg-slate"] {
+        background-color: #111827 !important;
+      }
+
+      html.high-contrast [class*="bg-white"],
+      html.high-contrast [class*="bg-accent-light"] {
+        background-color: #1a2236 !important;
       }
 
       html.high-contrast p,
       html.high-contrast span,
       html.high-contrast a,
+      html.high-contrast li,
+      html.high-contrast label,
+      html.high-contrast [class*="text-secondary"] {
+        color: #e5e7eb !important;
+      }
+
       html.high-contrast h1,
       html.high-contrast h2,
       html.high-contrast h3,
-      html.high-contrast h4,
-      html.high-contrast li,
-      html.high-contrast [class*="text-secondary"] {
+      html.high-contrast h4 {
         color: #ffffff !important;
-        background-color: transparent !important;
+      }
+
+      html.high-contrast [class*="text-accent"] {
+        color: #ffff00 !important;
       }
 
       html.high-contrast .btn-primary {
         background-color: #ffff00 !important;
         color: #000000 !important;
-        border: 2px solid #ffffff !important;
+        border: 2px solid #ffff00 !important;
         font-weight: 900 !important;
       }
 
-      html.high-contrast .absolute.inset-0.bg-black\/50,
-      html.high-contrast .absolute.inset-0.bg-black\/60,
-      html.high-contrast .absolute.inset-0.bg-black\/70 {
-        background-color: rgba(0, 0, 0, 1) !important;
+      html.high-contrast .btn-primary:hover {
+        background-color: #e6e600 !important;
+      }
+
+      html.high-contrast input,
+      html.high-contrast textarea {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+        border-color: #4b5563 !important;
+      }
+
+      html.high-contrast input::placeholder {
+        color: #9ca3af !important;
+      }
+
+      html.high-contrast img {
+        filter: brightness(0.7) contrast(1.3);
+      }
+
+      html.high-contrast .absolute.inset-0[class*="bg-black"] {
+        background-color: rgba(0, 0, 0, 0.85) !important;
       }
 
       /* Keyboard Navigation: Custom Focus Rings */
