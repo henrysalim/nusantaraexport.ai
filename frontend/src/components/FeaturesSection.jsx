@@ -50,7 +50,7 @@ export default function FeaturesSection() {
             <div
               key={i}
               role="listitem"
-              className="bg-white/10 backdrop-blur-sm border border-white/20 p-10 rounded-[2rem] animate-fadeInUp shadow-2xl focus-within:ring-2 focus-within:ring-accent"
+              className="bg-white/15 border border-white/20 p-10 rounded-[2rem] animate-fadeInUp shadow-2xl focus-within:ring-2 focus-within:ring-accent"
               style={{ animationDelay: `${i * 100}ms` }}
               tabIndex={0}
               aria-label={`Fitur: ${f.title}. ${f.desc}`}

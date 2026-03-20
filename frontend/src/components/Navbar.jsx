@@ -44,7 +44,7 @@ export default function Navbar() {
     <nav
       role="navigation"
       aria-label="Navigasi utama"
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/95 backdrop-blur-sm shadow-md py-3" : "bg-white py-5"}`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-3" : "bg-white py-5"}`}
     >
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3" aria-label="NusantaraExport.AI - Halaman Utama">
@@ -79,8 +79,8 @@ export default function Navbar() {
                 <span className="text-sm font-bold text-secondary">{user.name?.split(' ')[0] || 'Profil'}</span>
               </Link>
             ) : (
-              <Link to="/login" className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-secondary/70 hover:text-accent transition-colors">
-                <LogIn size={16} /> Masuk
+              <Link to="/login" className="flex items-center gap-2 px-5 py-2.5 text-sm font-black text-secondary border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all">
+                <LogIn size={16} className="text-accent" /> Masuk
               </Link>
             )}
             <Link to="/demo" className="btn-primary">
@@ -120,8 +120,8 @@ export default function Navbar() {
                   <User size={18} /> Profil Saya
                 </Link>
               ) : (
-                <Link to="/login" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-bold text-secondary" role="menuitem">
-                  <LogIn size={18} /> Masuk
+                <Link to="/login" onClick={() => setMenuOpen(false)} className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-secondary" role="menuitem">
+                  <LogIn size={18} className="text-accent" /> Masuk
                 </Link>
               )}
             </li>
