@@ -4,13 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="NusantaraExport.AI — Platform AI untuk membantu UMKM Indonesia ekspor ke pasar global. Mudah, cepat, dan gratis." />
+    <meta
+      name="description"
+      content="NusantaraExport.AI — Platform AI untuk membantu UMKM Indonesia ekspor ke pasar global. Mudah, cepat, dan gratis."
+    />
     <title>NusantaraExport.AI — Bantu UMKM Ekspor ke Dunia</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,54 +25,78 @@
         theme: {
           extend: {
             colors: {
-              primary: '#FFFFFF',
-              secondary: '#1A1A1A',
-              accent: '#C41E3A',
-              'accent-light': '#FEE2E2',
-              'slate-soft': '#F8FAFC',
+              primary: "#FFFFFF",
+              secondary: "#1A1A1A",
+              accent: "#C41E3A",
+              "accent-light": "#FEE2E2",
+              "slate-soft": "#F8FAFC",
             },
             fontFamily: {
-              sans: ['"Inter"', 'sans-serif'],
-              display: ['"Outfit"', 'sans-serif'],
+              sans: ['"Google Sans"', "sans-serif"],
+              display: ['"Google Sans"', "sans-serif"],
             },
             animation: {
-              fadeInUp: 'fadeInUp 0.8s ease-out forwards',
+              fadeInUp: "fadeInUp 0.8s ease-out forwards",
             },
             keyframes: {
               fadeInUp: {
-                '0%': { opacity: '0', transform: 'translateY(20px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
+                "0%": { opacity: "0", transform: "translateY(20px)" },
+                "100%": { opacity: "1", transform: "translateY(0)" },
               },
             },
           },
         },
-      }
+      };
     </script>
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
       body {
-        background: #FFFFFF;
-        color: #1A1A1A;
-        font-family: 'Inter', sans-serif;
+        background: #ffffff;
+        color: #1a1a1a;
+        font-family: "Google Sans", sans-serif;
         -webkit-font-smoothing: antialiased;
         overflow-x: hidden;
       }
-      a { color: inherit; text-decoration: none; }
-      button { cursor: pointer; border: none; outline: none; font-family: inherit; }
-      .font-display { font-family: 'Outfit', sans-serif; }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button {
+        cursor: pointer;
+        border: none;
+        outline: none;
+        font-family: inherit;
+      }
+      .font-display {
+        font-family: "Google Sans", sans-serif;
+      }
       .danantara-card {
         background: white;
-        border: 1px solid #E2E8F0;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid #e2e8f0;
+        box-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
       }
       .danantara-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        box-shadow:
+          0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
       }
       .btn-primary {
-        background-color: #C41E3A;
+        background-color: #c41e3a;
         color: white;
         padding: 0.75rem 1.75rem;
         border-radius: 0.625rem;
@@ -77,8 +107,89 @@
         transition: all 0.2s;
       }
       .btn-primary:hover {
-        background-color: #A51731;
+        background-color: #a51731;
         transform: translateY(-2px);
+      }
+
+      /* Accessibility: Font Resizing (Relative Scaling) */
+      html.text-lg p,
+      html.text-lg li,
+      html.text-lg a,
+      html.text-lg span:not(h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, .font-title) {
+        font-size: 1.15em !important; /* Scale by 15% */
+      }
+
+      html.text-xl p,
+      html.text-xl li,
+      html.text-xl a,
+      html.text-xl span:not(h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, .font-title) {
+        font-size: 1.3em !important; /* Scale by 30% */
+      }
+
+      /* Accessibility: High Contrast Mode (Universal Overrides) */
+      html.high-contrast body,
+      html.high-contrast nav,
+      html.high-contrast footer,
+      html.high-contrast section,
+      html.high-contrast .danantara-card,
+      html.high-contrast .bg-white\/10,
+      html.high-contrast .bg-white\/20,
+      html.high-contrast .bg-white\/25,
+      html.high-contrast .bg-slate-soft,
+      html.high-contrast div:not(.ignore-contrast) {
+        background-color: #000000 !important;
+        background-image: none !important;
+        color: #ffffff !important;
+        border-color: #ffffff !important;
+      }
+
+      html.high-contrast p,
+      html.high-contrast span,
+      html.high-contrast a,
+      html.high-contrast h1,
+      html.high-contrast h2,
+      html.high-contrast h3,
+      html.high-contrast h4,
+      html.high-contrast li,
+      html.high-contrast [class*="text-secondary"] {
+        color: #ffffff !important;
+        background-color: transparent !important;
+      }
+
+      html.high-contrast .btn-primary {
+        background-color: #ffff00 !important;
+        color: #000000 !important;
+        border: 2px solid #ffffff !important;
+        font-weight: 900 !important;
+      }
+
+      html.high-contrast .absolute.inset-0.bg-black\/50,
+      html.high-contrast .absolute.inset-0.bg-black\/60,
+      html.high-contrast .absolute.inset-0.bg-black\/70 {
+        background-color: rgba(0, 0, 0, 1) !important;
+      }
+
+      /* Keyboard Navigation: Custom Focus Rings */
+      :focus-visible {
+        outline: 3px solid #e11d48 !important; /* accent red */
+        outline-offset: 4px;
+        border-radius: 4px;
+      }
+
+      /* Skip to Content Link */
+      .skip-link {
+        position: absolute;
+        top: -100px;
+        left: 0;
+        background: #e11d48;
+        color: white;
+        padding: 1rem 2rem;
+        z-index: 1000;
+        font-weight: 800;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
       }
     </style>
   </head>
