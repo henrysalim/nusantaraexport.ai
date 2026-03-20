@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
 
 const WORDS = ["Ekspor!", "Mendunia!", "Berkembang!", "Bersaing!"];
 
@@ -8,33 +7,35 @@ export default function HeroSection() {
   const wordRef = useRef(null);
 
   useEffect(() => {
-    let ctx = gsap.context(() => {
-      let tl = gsap.timeline({ repeat: -1 });
+    let cancelled = false;
+    let wordIdx = 0;
 
-      WORDS.forEach((word) => {
-        // Typing effect
-        tl.to(wordRef.current, {
-          duration: word.length * 0.1,
-          text: {
-            value: word,
-            delimiter: "",
-          },
-          ease: "none",
-        })
-        .to({}, { duration: 2 }) // Pause
-        .to(wordRef.current, {
-          duration: word.length * 0.05,
-          text: {
-            value: "",
-            delimiter: "",
-          },
-          ease: "none",
-        })
-        .to({}, { duration: 0.5 }); // Short pause before next word
-      });
-    }, wordRef);
-    return () => ctx.revert();
+    const runCycle = async () => {
+      while (!cancelled) {
+        const word = WORDS[wordIdx % WORDS.length];
+        // Type in
+        for (let i = 0; i <= word.length; i++) {
+          if (cancelled) return;
+          if (wordRef.current) wordRef.current.innerText = word.slice(0, i);
+          await sleep(80);
+        }
+        await sleep(1800);
+        // Erase
+        for (let i = word.length; i >= 0; i--) {
+          if (cancelled) return;
+          if (wordRef.current) wordRef.current.innerText = word.slice(0, i);
+          await sleep(40);
+        }
+        await sleep(400);
+        wordIdx++;
+      }
+    };
+
+    runCycle();
+    return () => { cancelled = true; };
   }, []);
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   return (
     <section
@@ -52,9 +53,7 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-black/50 z-10" />
       </div>
 
-      {/* Ornament Blur */}
-      <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 z-20" aria-hidden="true" />
-      <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-accent/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 z-20" aria-hidden="true" />
+
 
       {/* Content */}
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-30 w-full">
@@ -65,7 +64,7 @@ export default function HeroSection() {
             sudah saatnya <br />
             <span
               ref={wordRef}
-              className="text-accent underline decoration-accent/85 inline-block"
+              className="text-accent underline decoration-accent/85 inline-block hero-typing-underline"
               aria-label="Ekspor, Mendunia, Berkembang, Bersaing"
             >
               Ekspor!

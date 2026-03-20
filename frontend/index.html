@@ -196,10 +196,41 @@
         color: #ffffff !important;
       }
 
+      /* === HIGH CONTRAST: ACCENT RED → YELLOW === */
+
+      /* Text accent → yellow */
       html.high-contrast [class*="text-accent"] {
         color: #ffff00 !important;
       }
 
+      /* Background accent → yellow bg with black text */
+      html.high-contrast [class*="bg-accent"]:not([class*="bg-accent-light"]):not([class*="bg-accent/"]) {
+        background-color: #ffff00 !important;
+        color: #000000 !important;
+      }
+
+      /* bg-accent with opacity variants (bg-accent/10, bg-accent/20, etc.) */
+      html.high-contrast [class*="bg-accent/"] {
+        background-color: rgba(255, 255, 0, 0.15) !important;
+      }
+
+      /* bg-accent-light → subtle yellow tint */
+      html.high-contrast [class*="bg-accent-light"] {
+        background-color: #1a1d00 !important;
+        border-color: #ffff00 !important;
+      }
+
+      /* Border accent → yellow border */
+      html.high-contrast [class*="border-accent"] {
+        border-color: #ffff00 !important;
+      }
+
+      /* Ring accent → yellow ring */
+      html.high-contrast [class*="ring-accent"] {
+        --tw-ring-color: #ffff00 !important;
+      }
+
+      /* Buttons: .btn-primary → bright yellow */
       html.high-contrast .btn-primary {
         background-color: #ffff00 !important;
         color: #000000 !important;
@@ -211,27 +242,73 @@
         background-color: #e6e600 !important;
       }
 
+      /* Tab buttons with bg-secondary in active state */
+      html.high-contrast button[aria-selected="true"],
+      html.high-contrast [role="tab"][aria-selected="true"] {
+        background-color: #ffff00 !important;
+        color: #000000 !important;
+      }
+
+      html.high-contrast button[aria-selected="true"] span,
+      html.high-contrast button[aria-selected="true"] div {
+        color: #000000 !important;
+      }
+
+      /* Badges / notification dots with bg-red-500 */
+      html.high-contrast [class*="bg-red-500"],
+      html.high-contrast [class*="bg-red-600"] {
+        background-color: #ff6600 !important;
+        color: #ffffff !important;
+      }
+
+      /* Accent-colored SVG icons inside bg-accent containers */
+      html.high-contrast [class*="bg-accent"]:not([class*="bg-accent-light"]) svg {
+        color: #000000 !important;
+        stroke: #000000 !important;
+      }
+
+      /* Progress bars */
+      html.high-contrast [class*="bg-accent"][class*="rounded-full"],
+      html.high-contrast div [class*="bg-accent"].h-full {
+        background-color: #ffff00 !important;
+      }
+
+      /* Inputs, textareas, selects */
       html.high-contrast input,
-      html.high-contrast textarea {
+      html.high-contrast textarea,
+      html.high-contrast select {
         background-color: #1a2236 !important;
         color: #ffffff !important;
         border: 2px solid #ccd6f6 !important;
         box-shadow: none !important;
       }
 
-      html.high-contrast input::placeholder {
+      html.high-contrast input::placeholder,
+      html.high-contrast textarea::placeholder {
         color: #9ca3af !important;
       }
 
+      html.high-contrast select option {
+        background-color: #111827 !important;
+        color: #ffffff !important;
+      }
+
+      /* Images */
       html.high-contrast img {
         filter: brightness(0.7) contrast(1.3);
       }
 
+      /* Dark overlays */
       html.high-contrast .absolute.inset-0[class*="bg-black"] {
         background-color: rgba(0, 0, 0, 0.85) !important;
       }
 
-      /* High Contrast: Enhanced Navbar Links */
+      /* Decorative accent dots / pulses */
+      html.high-contrast [class*="bg-accent"][class*="animate-pulse"] {
+        background-color: #ffff00 !important;
+      }
+
+      /* Navbar links */
       html.high-contrast nav a {
         color: #ffff00 !important;
         font-weight: 800 !important;
@@ -240,6 +317,53 @@
       html.high-contrast nav a:hover {
         background-color: transparent !important;
         text-decoration: underline !important;
+      }
+
+      /* Accessibility toolbar itself — keep readable */
+      html.high-contrast [role="toolbar"] .bg-white\/90 {
+        background-color: #111827 !important;
+        border-color: #ffff00 !important;
+      }
+
+      html.high-contrast [role="toolbar"] button {
+        border: 1px solid #374151 !important;
+      }
+
+      html.high-contrast [role="toolbar"] .bg-slate-100 {
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+      }
+
+      /* Skip link in HC */
+      html.high-contrast .skip-link {
+        background-color: #ffff00 !important;
+        color: #000000 !important;
+      }
+
+      /* Green/yellow/red status colors stay visible */
+      html.high-contrast [class*="text-green"] {
+        color: #4ade80 !important;
+      }
+      html.high-contrast [class*="text-yellow"] {
+        color: #fbbf24 !important;
+      }
+      html.high-contrast [class*="text-red"] {
+        color: #f87171 !important;
+      }
+      html.high-contrast [class*="bg-green-50"],
+      html.high-contrast [class*="bg-green-100"] {
+        background-color: #052e16 !important;
+        border-color: #166534 !important;
+      }
+      html.high-contrast [class*="bg-yellow-50"],
+      html.high-contrast [class*="bg-yellow-100"] {
+        background-color: #1c1a00 !important;
+        border-color: #854d0e !important;
+      }
+      html.high-contrast [class*="bg-red-50"],
+      html.high-contrast [class*="bg-red-100"] {
+        background-color: #1c0000 !important;
+        border-color: #991b1b !important;
       }
 
       /* Keyboard Navigation: Custom Focus Rings */
@@ -268,6 +392,12 @@
       }
       .skip-link:focus {
         top: 0;
+      }
+      /* HC: underline decoration on hero typing text → yellow */
+      html.high-contrast .hero-typing-underline,
+      html.high-contrast [class*="decoration-accent"] {
+        text-decoration-color: #ffff00 !important;
+        -webkit-text-decoration-color: #ffff00 !important;
       }
     </style>
   </head>
