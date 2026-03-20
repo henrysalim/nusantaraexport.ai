@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AccessibilityTools from "./components/AccessibilityTools";
@@ -9,6 +10,18 @@ import ProfilePage from "./pages/ProfilePage";
 import ContactPage from "./pages/ContactPage";
 
 export default function App() {
+  const location = useLocation();
+  const lastPathname = useRef(location.pathname);
+
+  useEffect(() => {
+    // Hanya scroll jika pathname BENAR-BENAR berubah (Navigasi)
+    // Agar saat refresh browser bisa mengembalikan posisi scroll asli
+    if (lastPathname.current !== location.pathname) {
+      window.scrollTo(0, 0);
+      lastPathname.current = location.pathname;
+    }
+  }, [location.pathname]);
+
   return (
     <div className="relative">
       <AccessibilityTools />
