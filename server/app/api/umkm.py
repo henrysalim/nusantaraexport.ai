@@ -14,7 +14,7 @@ class UMKMProfile(BaseModel):
     location: str
 
 @router.post("/save")
-async def save_profile(profile: UMKMProfile):
+def save_profile(profile: UMKMProfile):
     query = """
     INSERT INTO umkm_profiles (
         user_id, business_name, owner_name, product_category, 
@@ -43,7 +43,7 @@ async def save_profile(profile: UMKMProfile):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{user_id}")
-async def get_profile(user_id: str):
+def get_profile(user_id: str):
     query = "SELECT * FROM umkm_profiles WHERE user_id = %s"
     result = execute_query(query, (user_id,), fetch=True)
     if not result:

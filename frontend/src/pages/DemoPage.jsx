@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Mic, FileText, Camera, TrendingUp, Tag, ClipboardCheck, Bell } from 'lucide-react'
+import { Mic, FileText, Camera, TrendingUp, Tag, ClipboardCheck, Bell, Truck, Handshake, CalendarDays, AlertOctagon } from 'lucide-react'
 import VoiceDemoSection from '../components/VoiceDemoSection'
 import DocumentGenerator from '../components/DocumentGenerator'
 import MarketAnalysisCard from '../components/MarketAnalysisCard'
@@ -7,6 +7,10 @@ import PackagingChecker from '../components/PackagingChecker'
 import HSCodeOptimizer from '../components/HSCodeOptimizer'
 import ExportReadinessSimulator from '../components/ExportReadinessSimulator'
 import RegulatoryAlerts from '../components/RegulatoryAlerts'
+import ExportDryRun from '../components/ExportDryRun'
+import NegoCoach from '../components/NegoCoach'
+import SmartExportCalendar from '../components/SmartExportCalendar'
+import PostExportSolver from '../components/PostExportSolver'
 
 const TABS = [
   { key: 'assistant', label: 'Konsultasi AI', icon: <Mic size={18} />, desc: 'Tanya regulasi & biaya' },
@@ -15,6 +19,10 @@ const TABS = [
   { key: 'packaging', label: 'Audit Kemasan', icon: <Camera size={18} />, desc: 'Cek kepatuhan label' },
   { key: 'hscode', label: 'HS Code & FTA', icon: <Tag size={18} />, desc: 'Klasifikasi & tarif' },
   { key: 'readiness', label: 'Simulasi Ekspor', icon: <ClipboardCheck size={18} />, desc: 'Skor kesiapan & biaya' },
+  { key: 'dryrun', label: 'Dry Run', icon: <Truck size={18} />, desc: 'Simulasi rute ekspor', isNew: true },
+  { key: 'nego', label: 'Nego Coach', icon: <Handshake size={18} />, desc: 'Analisis tawaran buyer', isNew: true },
+  { key: 'calendar', label: 'Kalender Ekspor', icon: <CalendarDays size={18} />, desc: 'Jadwal panen & demand', isNew: true },
+  { key: 'postexport', label: 'Problem Solver', icon: <AlertOctagon size={18} />, desc: 'Masalah pasca ekspor', isNew: true },
   { key: 'alerts', label: 'Notifikasi', icon: <Bell size={18} />, desc: 'Perubahan regulasi' },
 ]
 
@@ -37,6 +45,10 @@ export default function DemoPage() {
       case 'packaging': return <PackagingChecker />
       case 'hscode': return <HSCodeOptimizer />
       case 'readiness': return <ExportReadinessSimulator />
+      case 'dryrun': return <ExportDryRun />
+      case 'nego': return <NegoCoach />
+      case 'calendar': return <SmartExportCalendar />
+      case 'postexport': return <PostExportSolver />
       case 'alerts': return <RegulatoryAlerts />
       default: return <VoiceDemoSection />
     }
@@ -53,7 +65,7 @@ export default function DemoPage() {
             </div>
             <div>
               <h1 className="text-3xl font-display font-black text-secondary">Dashboard Ekspor</h1>
-              <p className="text-secondary/50 font-medium text-sm">Tujuh modul AI untuk membantu UMKM Indonesia siap ekspor</p>
+              <p className="text-secondary/50 font-medium text-sm">11 modul AI untuk membantu UMKM Indonesia siap ekspor</p>
             </div>
           </div>
         </div>
@@ -68,7 +80,7 @@ export default function DemoPage() {
                 aria-selected={activeTab === tab.key}
                 aria-controls={`panel-${tab.key}`}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-3 px-5 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap ${
+                className={`flex items-center gap-3 px-5 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap relative ${
                   activeTab === tab.key
                     ? 'bg-secondary text-white shadow-lg'
                     : 'bg-white text-secondary/60 hover:bg-white hover:text-secondary border border-slate-200 hover:border-slate-300'
@@ -79,6 +91,9 @@ export default function DemoPage() {
                   <div className="leading-tight">{tab.label}</div>
                   <div className={`text-[10px] font-medium ${activeTab === tab.key ? 'text-white/60' : 'text-secondary/30'}`}>{tab.desc}</div>
                 </div>
+                {tab.isNew && (
+                  <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-accent text-white rounded-full text-[8px] font-black">NEW</span>
+                )}
                 {tab.key === 'alerts' && (
                   <span className="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[9px] font-black ml-1">4</span>
                 )}

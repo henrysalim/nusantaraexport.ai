@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { Volume2, Square } from 'lucide-react'
+import { sendChatMessage } from '../services/api'
 
 const EXAMPLES = [
   'Apa saja syarat ekspor kopi ke Jepang?',
   'Produk saya keripik singkong, negara mana yang cocok?',
   'Berapa biaya ekspor kerajinan kayu ke Eropa?',
+  'Simulasikan dry run ekspor saya',
+  'Bantu nego harga dengan buyer',
+  'Kapan waktu terbaik ekspor kopi?',
 ]
 
-// Mock AI responses based on keywords
+// Mock AI responses (fallback when server offline)
 const MOCK_RESPONSES = {
   kopi: {
     answer: 'Untuk mengekspor kopi ke Jepang, Anda memerlukan beberapa dokumen dan sertifikasi berikut:\n\n1. Surat Keterangan Asal (SKA) Form IJEPA — untuk mendapatkan tarif preferensial 0% melalui perjanjian dagang Indonesia-Jepang.\n2. Phytosanitary Certificate dari Karantina Pertanian — wajib untuk semua produk pertanian.\n3. ICO Certificate of Origin — sertifikat khusus kopi dari International Coffee Organization.\n4. Japan Food Sanitation Act compliance — label harus mencantumkan komposisi dalam bahasa Jepang.\n5. Commercial Invoice dan Packing List dengan format standar internasional.\n\nEstimasi biaya ekspor kopi arabika (1 kontainer 20ft) ke Yokohama:\n- Freight: $1,800 - $2,200\n- Asuransi: $150 - $300\n- Bea masuk (dengan IJEPA): 0%\n- Handling & Clearance: $400 - $600\n\nTotal estimasi: $2,350 - $3,100 per kontainer.',
@@ -47,6 +51,8 @@ export default function VoiceDemoSection() {
   const [inputText, setInputText] = useState('')
   const [queryResult, setQueryResult] = useState(null)
   const [isReadingAnswer, setIsReadingAnswer] = useState(false)
+  const [detectedIntent, setDetectedIntent] = useState('')
+  const [micError, setMicError] = useState('')
   const recognitionRef = useRef(null)
 
   useEffect(() => {
@@ -57,36 +63,82 @@ export default function VoiceDemoSection() {
       recognitionRef.current.interimResults = false
       recognitionRef.current.lang = 'id-ID'
 
-      recognitionRef.current.onstart = () => setStatus('listening')
+      recognitionRef.current.onstart = () => {
+        setMicError('')
+        setStatus('listening')
+      }
       recognitionRef.current.onend = () => {}
       recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript
         setInputText(transcript)
-        simulateQuery(transcript)
+        handleQuery(transcript)
       }
-      recognitionRef.current.onerror = () => setStatus('idle')
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        if (event.error === 'not-allowed') {
+          setMicError('Izin mikrofon ditolak/diblokir. Harap izinkan mikrofon di pengaturan browser Anda (klik ikon gembok di sebelah URL).')
+        } else if (event.error === 'no-speech') {
+          setMicError('Suara tidak terdeteksi. Silakan bicara lebih dekat ke mikrofon dan coba lagi.')
+        } else if (event.error === 'network') {
+          setMicError('Server pengenalan suara browser (Google/Apple Speech Service) gagal terhubung. Ini sering terjadi karena pemblokiran DNS oleh provider internet tertentu (seperti IndiHome/Telkomsel) atau jika Anda menggunakan VPN. Silakan ketik langsung di kolom teks di bawah atau segarkan browser.')
+        } else {
+          setMicError(`Perekaman gagal (${event.error}). Silakan coba lagi.`)
+        }
+        setStatus('idle')
+      }
+    } else {
+      setMicError('Browser Anda tidak mendukung input suara bawaan. Silakan gunakan Google Chrome, Safari, atau Microsoft Edge.')
     }
   }, [])
 
-  const simulateQuery = (query) => {
+  const handleQuery = async (query) => {
     setStatus('processing')
-    // Simulate AI thinking delay
-    setTimeout(() => {
+    setQueryResult(null)
+
+    try {
+      // Try real API first
+      const response = await sendChatMessage(query, {
+        current_page: 'assistant',
+        user_commodity: 'umum'
+      })
+
+      const data = response.data
+      setQueryResult({
+        answer: data.reply,
+        context_used: data.referenced_sources
+          ? data.referenced_sources.split('\n').filter(s => s.trim()).map(s => {
+              const match = s.match(/\[(.+?)\]/)
+              return match ? match[1] : s.substring(0, 60)
+            })
+          : ['RAG Pipeline']
+      })
+      setDetectedIntent(data.detected_intent || '')
+      setStatus('speaking')
+    } catch (error) {
+      console.warn('API offline, using mock fallback:', error.message)
+      // Fallback to mock data
       const response = getMockResponse(query)
       setQueryResult(response)
+      setDetectedIntent('fallback')
       setStatus('speaking')
-    }, 1500)
+    }
   }
 
   const handleMic = () => {
     if (!recognitionRef.current) {
-      // Fallback: if no speech recognition, simulate with a default query
+      setMicError('Browser Anda tidak mendukung input suara. Mengalihkan ke pertanyaan contoh secara otomatis...')
       setInputText('Apa saja syarat ekspor kopi ke Jepang?')
-      simulateQuery('Apa saja syarat ekspor kopi ke Jepang?')
+      handleQuery('Apa saja syarat ekspor kopi ke Jepang?')
       return
     }
+    setMicError('')
     if (status === 'idle' || status === 'speaking') {
-      recognitionRef.current.start()
+      try {
+        recognitionRef.current.start()
+      } catch (err) {
+        console.error("Gagal memulai SpeechRecognition:", err)
+        setMicError("Gagal memulai perekaman suara. Silakan segarkan halaman.")
+      }
     } else {
       recognitionRef.current.stop()
       setStatus('idle')
@@ -95,7 +147,7 @@ export default function VoiceDemoSection() {
 
   const handleTextSubmit = () => {
     if (!inputText.trim()) return
-    simulateQuery(inputText)
+    handleQuery(inputText)
   }
 
   const toggleReadAnswer = () => {
@@ -140,6 +192,11 @@ export default function VoiceDemoSection() {
           <div className="px-6 py-2 bg-slate-soft rounded-full border border-slate-200" role="status" aria-live="polite">
             <span className="text-sm font-black text-secondary uppercase tracking-widest">{STATUS[status].label}</span>
           </div>
+          {micError && (
+            <div className="max-w-md mx-auto p-4 bg-red-50 border border-red-100 text-red-600 text-xs font-bold rounded-2xl animate-fadeIn text-center">
+              ⚠️ {micError}
+            </div>
+          )}
         </div>
 
         {/* Text Input */}
@@ -164,7 +221,7 @@ export default function VoiceDemoSection() {
           {EXAMPLES.map((ex, i) => (
             <button key={i}
               className="px-3 py-1.5 bg-accent-light border border-accent/10 rounded-full text-xs text-accent font-bold hover:bg-accent hover:text-white transition-all"
-              onClick={() => { setInputText(ex); simulateQuery(ex) }}
+              onClick={() => { setInputText(ex); handleQuery(ex) }}
             >
               {ex}
             </button>
@@ -183,7 +240,14 @@ export default function VoiceDemoSection() {
         {status === 'speaking' && queryResult && (
           <div className="bg-white border border-slate-200 rounded-3xl p-8 text-left animate-fadeInUp shadow-lg" role="region" aria-label="Jawaban AI" aria-live="polite">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-secondary font-black text-xs uppercase tracking-[0.2em]">Jawaban NusantaraExport.AI</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-secondary font-black text-xs uppercase tracking-[0.2em]">Jawaban NusantaraExport.AI</h4>
+                {detectedIntent && detectedIntent !== 'fallback' && (
+                  <span className="px-2 py-0.5 bg-accent-light text-accent text-[9px] font-black rounded-lg uppercase">
+                    {detectedIntent.replace('_', ' ')}
+                  </span>
+                )}
+              </div>
               <button
                 onClick={toggleReadAnswer}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -205,7 +269,7 @@ export default function VoiceDemoSection() {
               <div className="pt-6 border-t border-accent/10">
                 <p className="text-[10px] font-black text-accent/60 uppercase tracking-widest mb-3">Sumber Referensi:</p>
                 <div className="flex flex-wrap gap-2">
-                  {queryResult.context_used.map((s, i) => (
+                  {(Array.isArray(queryResult.context_used) ? queryResult.context_used : [queryResult.context_used]).map((s, i) => (
                     <span key={i} className="px-3 py-1 bg-white border border-accent/10 rounded-lg text-[10px] font-bold text-accent">{s}</span>
                   ))}
                 </div>

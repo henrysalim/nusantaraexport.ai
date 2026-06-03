@@ -15,10 +15,10 @@ class DocRequest(BaseModel):
     destination_country: str
 
 @router.post("/generate/invoice")
-async def create_invoice(request: DocRequest):
+def create_invoice(request: DocRequest):
     # 1. Fetch UMKM Profile
     try:
-        profile = await get_profile(request.user_id)
+        profile = get_profile(request.user_id)
     except Exception:
         raise HTTPException(status_code=404, detail="Profil UMKM belum diisi.")
 
@@ -44,8 +44,8 @@ async def create_invoice(request: DocRequest):
             media_type='application/pdf'
         )
 @router.post("/generate/packing-list")
-async def create_packing_list(request: DocRequest):
-    profile = await get_profile(request.user_id)
+def create_packing_list(request: DocRequest):
+    profile = get_profile(request.user_id)
     
     pl_data = {
         "business_name": profile['business_name'],

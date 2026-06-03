@@ -1,41 +1,51 @@
+"""
+RAG Route — Regulation Query with ChromaDB vector search.
+"""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.services.rag_service import get_rag_chain, format_rag_prompt
-from app.services.cendol_service import cendol_manager
+from app.services.rag_service import generate_rag_response, query_regulations
+from app.services.cendol_service import CendolNLPService
 from app.config.redis_config import get_cache, set_cache
 import hashlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 class QueryRequest(BaseModel):
-    user_id: str
+    user_id: str = "anonymous"
     query: str
 
+
 @router.post("/query")
-async def query_rag(request: QueryRequest):
-    # 1. Check Redis Cache
+def query_rag(request: QueryRequest):
+    """Query regulation database via RAG pipeline."""
+    # 1. Check cache
     cache_key = f"rag:{hashlib.md5(request.query.encode()).hexdigest()}"
     cached_res = get_cache(cache_key)
     if cached_res:
         return {"answer": cached_res, "source": "cache"}
 
-    # 2. Retrieve context from ChromaDB
-    retriever = get_rag_chain()
-    docs = retriever.invoke(request.query)
-    context = "\n".join([doc.page_content for doc in docs])
-    
-    if not context:
-        return {"answer": "Maaf, saya tidak menemukan regulasi yang relevan di pangkalan data kami."}
+    # 2. Run RAG pipeline
+    try:
+        result = generate_rag_response(request.query)
 
-    # 3. Format prompt and generate response via Cendol NLP
-    prompt = format_rag_prompt(request.query, context)
-    answer = cendol_manager.generate_response(prompt)
+        # 3. Cache the result
+        set_cache(cache_key, result["answer"])
 
-    # 4. Save to Cache (1 hour)
-    set_cache(cache_key, answer)
-
-    return {
-        "answer": answer,
-        "context_used": [doc.metadata.get("source") for doc in docs],
-        "source": "cendol_nlp"
-    }
+        return {
+            "answer": result["answer"],
+            "context_used": result["context_used"],
+            "source": result["source"]
+        }
+    except Exception as e:
+        logger.error(f"RAG query error: {e}")
+        # Fallback to CendolNLP without RAG context
+        fallback_answer = CendolNLPService.generate_response(request.query)
+        return {
+            "answer": fallback_answer,
+            "context_used": [],
+            "source": "fallback"
+        }

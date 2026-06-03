@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Globe } from 'lucide-react'
+import { analyzeMarketGap } from '../services/api'
 
 const MOCK_RESULTS = {
   kopi: {
@@ -61,13 +62,19 @@ export default function MarketAnalysisCard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!productName) return
     setLoading(true)
-    setTimeout(() => {
+    try {
+      const response = await analyzeMarketGap({ product_name: productName })
+      setData(response.data)
+    } catch (error) {
+      console.warn('API offline, using mock:', error.message)
+      await new Promise(r => setTimeout(r, 800))
       setData(getMockMarket(productName))
+    } finally {
       setLoading(false)
-    }, 1200)
+    }
   }
 
   return (
@@ -137,6 +144,15 @@ export default function MarketAnalysisCard() {
             <div className="mt-3 p-3 bg-accent-light rounded-xl text-center">
               <span className="text-[9px] text-accent/60 font-bold uppercase tracking-widest block mb-0.5">Skor Peluang Pasar</span>
               <span className="text-2xl font-black text-accent">{data.gap_score}%</span>
+            </div>
+          )}
+          {data.ai_summary && (
+            <div className="mt-4 p-4 border border-accent/20 bg-accent-light/30 rounded-xl">
+              <div className="flex items-center gap-2 mb-2 text-accent">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest">AI Market Insights</span>
+              </div>
+              <p className="text-sm font-medium text-secondary/80 leading-relaxed">{data.ai_summary}</p>
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Upload, CheckCircle2, AlertTriangle, XCircle, Camera } from 'lucide-react'
+import { checkPackaging } from '../services/api'
 
 const MOCK_RESULTS = {
   good: {
@@ -37,16 +38,25 @@ export default function PackagingChecker() {
   const [analyzing, setAnalyzing] = useState(false)
   const [result, setResult] = useState(null)
 
-  const handleUpload = () => {
-    // Simulate file selection
+  const handleUpload = async () => {
     setFileName('kemasan_keripik_singkong.jpg')
     setAnalyzing(true)
     setResult(null)
-    setTimeout(() => {
-      // Randomly pick good or bad result for demo variation
+
+    try {
+      const response = await checkPackaging({
+        destination_country: 'us',
+        product_type: 'makanan',
+        filename: 'kemasan_keripik_singkong.jpg'
+      })
+      setResult(response.data)
+    } catch (error) {
+      console.warn('API offline, using mock:', error.message)
+      await new Promise(r => setTimeout(r, 1500))
       setResult(Math.random() > 0.4 ? MOCK_RESULTS.good : MOCK_RESULTS.bad)
+    } finally {
       setAnalyzing(false)
-    }, 2000)
+    }
   }
 
   const statusIcon = (s) => {

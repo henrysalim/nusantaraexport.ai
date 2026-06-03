@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ClipboardCheck, CheckCircle2, AlertTriangle, XCircle, TrendingUp } from 'lucide-react'
+import { simulateReadiness } from '../services/api'
 
 const MOCK_SIM = {
   kopi: {
@@ -72,14 +73,28 @@ export default function ExportReadinessSimulator() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
-  const handleSimulate = () => {
+  const handleSimulate = async () => {
     if (!product) return
     setLoading(true)
     setResult(null)
-    setTimeout(() => {
+
+    try {
+      // Try real API first
+      const response = await simulateReadiness({
+        commodity: product,
+        destination: destination || 'jp',
+        documents: ['NIB', 'Commercial Invoice', 'Packing List'],
+        packaging_ready: true,
+      })
+      setResult(response.data)
+    } catch (error) {
+      console.warn('API offline, using mock fallback:', error.message)
+      // Fallback to mock data
+      await new Promise(r => setTimeout(r, 1500))
       setResult(MOCK_SIM.kopi)
+    } finally {
       setLoading(false)
-    }, 2500)
+    }
   }
 
   const statusIcon = (s) => {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Search, Tag, ArrowRight } from 'lucide-react'
+import { classifyHSCode } from '../services/api'
 
 const MOCK_HS = {
   kopi: {
@@ -62,14 +63,20 @@ export default function HSCodeOptimizer() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
-  const handleClassify = () => {
+  const handleClassify = async () => {
     if (!product) return
     setLoading(true)
     setResult(null)
-    setTimeout(() => {
+    try {
+      const response = await classifyHSCode({ product_name: product })
+      setResult(response.data)
+    } catch (error) {
+      console.warn('API offline, using mock:', error.message)
+      await new Promise(r => setTimeout(r, 1000))
       setResult(getMockHS(product))
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   return (
