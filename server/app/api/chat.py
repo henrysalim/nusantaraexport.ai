@@ -3,9 +3,10 @@ Chatbot RAG Route — Main AI assistant endpoint.
 Orchestrates dialog, intent detection, RAG retrieval, and CendolNLP response generation.
 Supports all modules: Dry Run, Nego Coach, Smart Calendar, Post-Export Solver, and general QA.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
+from app.middleware import get_current_user
 from app.services.rag_service import query_regulations, generate_rag_response
 from app.services.cendol_service import CendolNLPService
 import logging
@@ -27,7 +28,7 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/send", response_model=ChatResponse)
-def process_chat(req: ChatRequest):
+def process_chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
     """
     Main chatbot endpoint. Processes user messages through:
     1. Intent classification

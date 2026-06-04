@@ -1,9 +1,10 @@
 """
 Compliance Routes — Packaging Checker & HS Code Optimizer.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
+from app.middleware import get_current_user
 from app.services.mock_data import HS_CODE_DB, PACKAGING_PASS, PACKAGING_FAIL
 from app.services.cendol_service import CendolNLPService
 import random
@@ -32,7 +33,7 @@ class PackagingResponse(BaseModel):
 
 
 @router.post("/packaging-check", response_model=PackagingResponse)
-def check_packaging(req: PackagingRequest):
+def check_packaging(req: PackagingRequest, current_user: dict = Depends(get_current_user)):
     """
     Analyze product packaging for export compliance.
     Uses AI to generate contextual suggestions.
@@ -101,7 +102,7 @@ class HSCodeResponse(BaseModel):
 
 
 @router.post("/hs-code", response_model=HSCodeResponse)
-def classify_hs_code(req: HSCodeRequest):
+def classify_hs_code(req: HSCodeRequest, current_user: dict = Depends(get_current_user)):
     """Classify product HS Code and calculate FTA tariff benefits."""
     product_lower = req.product_name.lower()
 

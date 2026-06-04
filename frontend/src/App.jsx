@@ -1,5 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AccessibilityTools from "./components/AccessibilityTools";
@@ -9,7 +11,7 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import ContactPage from "./pages/ContactPage";
 
-export default function App() {
+function AppContent() {
   const location = useLocation();
   const lastPathname = useRef(location.pathname);
 
@@ -29,9 +31,17 @@ export default function App() {
       <main id="main-content">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/demo" element={<DemoPage />} />
+          <Route path="/demo" element={
+            <ProtectedRoute>
+              <DemoPage />
+            </ProtectedRoute>
+          } />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/profil" element={<ProfilePage />} />
+          <Route path="/profil" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
           <Route path="/kontak" element={<ContactPage />} />
         </Routes>
       </main>
@@ -39,3 +49,12 @@ export default function App() {
     </div>
   );
 }
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+

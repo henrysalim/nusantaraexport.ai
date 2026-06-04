@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { User, LogIn, Phone } from "lucide-react";
+import { User, LogIn, LogOut, Phone } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const navLinks = [
   { href: "/#tentang", label: "Tentang" },
@@ -12,7 +13,7 @@ const navLinks = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -20,12 +21,6 @@ export default function Navbar() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // Check localStorage for logged in user
-  useEffect(() => {
-    const stored = localStorage.getItem('ne_user');
-    if (stored) setUser(JSON.parse(stored));
-  }, [location]);
 
   useEffect(() => {
     if (location.hash && location.pathname === "/") {
@@ -39,6 +34,11 @@ export default function Navbar() {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [menuOpen]);
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+  };
 
   return (
     <nav
@@ -71,13 +71,22 @@ export default function Navbar() {
           </ul>
 
           <div className="flex items-center gap-2">
-            {user ? (
-              <Link to="/profil" className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors" aria-label="Edit profil saya">
-                <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black">
-                  {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-                <span className="text-sm font-bold text-secondary">{user.name?.split(' ')[0] || 'Profil'}</span>
-              </Link>
+            {isAuthenticated ? (
+              <>
+                <Link to="/profil" className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors" aria-label="Edit profil saya">
+                  <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black">
+                    {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-sm font-bold text-secondary">{user?.full_name?.split(' ')[0] || 'Profil'}</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-secondary/60 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all"
+                  aria-label="Keluar"
+                >
+                  <LogOut size={16} /> Keluar
+                </button>
+              </>
             ) : (
               <Link to="/login" className="flex items-center gap-2 px-5 py-2.5 text-sm font-black text-secondary border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all">
                 <LogIn size={16} className="text-accent" /> Masuk
@@ -115,10 +124,19 @@ export default function Navbar() {
               </li>
             ))}
             <li role="none">
-              {user ? (
-                <Link to="/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-bold text-secondary" role="menuitem">
-                  <User size={18} /> Profil Saya
-                </Link>
+              {isAuthenticated ? (
+                <div className="flex flex-col gap-3">
+                  <Link to="/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-bold text-secondary" role="menuitem">
+                    <User size={18} /> Profil Saya
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 text-lg font-bold text-red-500 hover:text-red-600"
+                    role="menuitem"
+                  >
+                    <LogOut size={18} /> Keluar
+                  </button>
+                </div>
               ) : (
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-secondary" role="menuitem">
                   <LogIn size={18} className="text-accent" /> Masuk
@@ -134,3 +152,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

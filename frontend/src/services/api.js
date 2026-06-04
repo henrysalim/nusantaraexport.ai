@@ -4,10 +4,101 @@ import { API_BASE_URL } from '../config';
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
+  withCredentials: true, // Send httpOnly cookies with every request
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// --- Request Interceptor: Attach JWT Bearer token ---
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('ne_access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// --- Response Interceptor: Handle 401 and token refresh ---
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Skip refresh for auth endpoints to avoid infinite loops
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/api/auth/login') &&
+      !originalRequest.url?.includes('/api/auth/register') &&
+      !originalRequest.url?.includes('/api/auth/refresh')
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = localStorage.getItem('ne_refresh_token');
+        if (!refreshToken) {
+          isRefreshing = false;
+          return Promise.reject(error);
+        }
+        const res = await api.post('/api/auth/refresh', {
+          refresh_token: refreshToken,
+        });
+
+        const newToken = res.data.access_token;
+        localStorage.setItem('ne_access_token', newToken);
+        localStorage.setItem('ne_refresh_token', res.data.refresh_token);
+
+        processQueue(null, newToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        // Clear tokens on refresh failure
+        localStorage.removeItem('ne_access_token');
+        localStorage.removeItem('ne_refresh_token');
+        localStorage.removeItem('ne_user');
+        // Redirect to login
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // --- Health Check ---
 export const checkHealth = () => api.get('/health');
@@ -66,3 +157,4 @@ export const synthesizeSpeech = (text) =>
   api.post('/tts/synthesize', { text }, { responseType: 'blob' });
 
 export default api;
+

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, Save, CheckCircle2 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
   const [saved, setSaved] = useState(false)
+  const { user } = useAuth()
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -16,35 +18,23 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
-    const stored = localStorage.getItem('ne_user')
-    if (stored) {
-      const u = JSON.parse(stored)
+    if (user) {
       setForm({
-        name: u.name || '',
-        email: u.email || '',
-        phone: u.phone || '+62 ',
-        business: u.business || '',
-        province: u.province || '',
-        products: u.products || 'Kopi Arabika, Keripik Singkong',
-        destinations: u.destinations || 'Jepang, Tiongkok',
-      })
-    } else {
-      // Demo default
-      setForm({
-        name: 'Pengguna UMKM',
-        email: 'umkm@nusantara.id',
-        phone: '+62 812-3456-7890',
-        business: 'CV Nusantara Jaya',
-        province: 'Jawa Barat',
+        name: user.full_name || '',
+        email: user.email || '',
+        phone: '+62 ',
+        business: '',
+        province: '',
         products: 'Kopi Arabika, Keripik Singkong',
         destinations: 'Jepang, Tiongkok',
       })
     }
-  }, [])
+  }, [user])
 
   const handleSave = (e) => {
     e.preventDefault()
-    localStorage.setItem('ne_user', JSON.stringify(form))
+    // Save to localStorage for now (future: PUT /api/auth/profile)
+    localStorage.setItem('ne_user_profile', JSON.stringify(form))
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -76,7 +66,17 @@ export default function ProfilePage() {
         <form onSubmit={handleSave} className="bg-white rounded-3xl shadow-lg border border-slate-100 p-8 space-y-6">
           <div className="grid sm:grid-cols-2 gap-5">
             <Field id="name" label="Nama Lengkap" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Field id="email" label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <div>
+              <label htmlFor="email" className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Email</label>
+              <input
+                id="email"
+                type="email"
+                className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary/50 outline-none cursor-not-allowed"
+                value={form.email}
+                disabled
+              />
+              <p className="text-[10px] text-secondary/30 mt-1 font-medium">Email tidak dapat diubah</p>
+            </div>
           </div>
           <div className="grid sm:grid-cols-2 gap-5">
             <Field id="phone" label="Nomor Telepon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
@@ -114,3 +114,4 @@ export default function ProfilePage() {
     </div>
   )
 }
+

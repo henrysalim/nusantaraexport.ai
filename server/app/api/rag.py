@@ -1,8 +1,9 @@
 """
 RAG Route — Regulation Query with ChromaDB vector search.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from app.middleware import get_current_user
 from app.services.rag_service import generate_rag_response, query_regulations
 from app.services.cendol_service import CendolNLPService
 from app.config.redis_config import get_cache, set_cache
@@ -20,7 +21,7 @@ class QueryRequest(BaseModel):
 
 
 @router.post("/query")
-def query_rag(request: QueryRequest):
+def query_rag(request: QueryRequest, current_user: dict = Depends(get_current_user)):
     """Query regulation database via RAG pipeline."""
     # 1. Check cache
     cache_key = f"rag:{hashlib.md5(request.query.encode()).hexdigest()}"

@@ -1,8 +1,9 @@
 """
 Market Routes — Market Gap Analysis with UN COMTRADE integration + mock fallback.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from app.middleware import get_current_user
 from app.services.comtrade_service import get_market_data, calculate_market_gap
 from app.services.mock_data import MARKET_DATA
 from app.services.cendol_service import CendolNLPService
@@ -32,7 +33,7 @@ class GapResponse(BaseModel):
 
 
 @router.post("/analyze")
-def analyze_gap(request: GapRequest):
+def analyze_gap(request: GapRequest, current_user: dict = Depends(get_current_user)):
     """Analyze market gap with COMTRADE data + mock fallback."""
     # Try real COMTRADE API first
     try:
@@ -81,9 +82,9 @@ def analyze_gap(request: GapRequest):
 
 
 @router.post("/gap-analysis")
-def gap_analysis(request: GapRequest):
+def gap_analysis(request: GapRequest, current_user: dict = Depends(get_current_user)):
     """Alias endpoint for frontend compatibility."""
-    return analyze_gap(request)
+    return analyze_gap(request, current_user)
 
 
 def _match_product(name: str) -> str:

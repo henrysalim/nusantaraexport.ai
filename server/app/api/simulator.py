@@ -2,9 +2,10 @@
 Simulator Routes — Export Readiness Calculator & Post-Export Problem Solver.
 Includes Dry Run Simulator, Smart Calendar, and Nego Coach endpoints.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Optional
+from app.middleware import get_current_user
 from app.services.mock_data import (
     COUNTRY_NAMES, REQUIRED_DOCS_BY_COUNTRY,
     DRY_RUN_CHECKPOINTS, CALENDAR_EVENTS
@@ -41,7 +42,7 @@ class ReadinessResponse(BaseModel):
 
 
 @router.post("/readiness", response_model=ReadinessResponse)
-def calculate_readiness(req: ReadinessRequest):
+def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_current_user)):
     """Rule engine for calculating UMKM export readiness score."""
     commodity = req.commodity or "Produk Umum"
     dest_code = req.destination or "jp"
@@ -174,7 +175,7 @@ class PostExportResponse(BaseModel):
 
 
 @router.post("/post-export-solve", response_model=PostExportResponse)
-def solve_post_export_problem(req: PostExportRequest):
+def solve_post_export_problem(req: PostExportRequest, current_user: dict = Depends(get_current_user)):
     """AI Rule Engine for post-export problem resolution."""
     if req.problem_type == "customs_hold":
         return PostExportResponse(
@@ -314,7 +315,7 @@ class DryRunResponse(BaseModel):
 
 
 @router.post("/dry-run", response_model=DryRunResponse)
-def simulate_dry_run(req: DryRunRequest):
+def simulate_dry_run(req: DryRunRequest, current_user: dict = Depends(get_current_user)):
     """Simulate the full export journey with document verification at each checkpoint."""
     checkpoints = []
     risk_count = {"low": 0, "medium": 0, "high": 0, "very_high": 0}
@@ -382,7 +383,7 @@ class NegoResponse(BaseModel):
 
 
 @router.post("/nego-coach", response_model=NegoResponse)
-def analyze_negotiation(req: NegoRequest):
+def analyze_negotiation(req: NegoRequest, current_user: dict = Depends(get_current_user)):
     """Compare buyer offer against market data and generate counter-offer."""
     # Market benchmarks (from COMTRADE-like data)
     benchmarks = {
@@ -459,7 +460,7 @@ class CalendarResponse(BaseModel):
 
 
 @router.post("/smart-calendar", response_model=CalendarResponse)
-def get_smart_calendar(req: CalendarRequest):
+def get_smart_calendar(req: CalendarRequest, current_user: dict = Depends(get_current_user)):
     """Generate personalized export calendar based on commodity and destination."""
     dest = req.destination or "Jepang"
 

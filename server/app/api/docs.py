@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from app.middleware import get_current_user
 from app.services.pdf_service import generate_invoice_pdf
 from app.api.umkm import get_profile
 import uuid
@@ -15,10 +16,10 @@ class DocRequest(BaseModel):
     destination_country: str
 
 @router.post("/generate/invoice")
-def create_invoice(request: DocRequest):
+def create_invoice(request: DocRequest, current_user: dict = Depends(get_current_user)):
     # 1. Fetch UMKM Profile
     try:
-        profile = get_profile(request.user_id)
+        profile = get_profile(request.user_id, current_user)
     except Exception:
         raise HTTPException(status_code=404, detail="Profil UMKM belum diisi.")
 
@@ -44,8 +45,8 @@ def create_invoice(request: DocRequest):
             media_type='application/pdf'
         )
 @router.post("/generate/packing-list")
-def create_packing_list(request: DocRequest):
-    profile = get_profile(request.user_id)
+def create_packing_list(request: DocRequest, current_user: dict = Depends(get_current_user)):
+    profile = get_profile(request.user_id, current_user)
     
     pl_data = {
         "business_name": profile['business_name'],

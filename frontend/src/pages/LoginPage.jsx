@@ -1,29 +1,54 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const { login, register, isAuthenticated } = useAuth()
 
-  const handleSubmit = (e) => {
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    const from = location.state?.from || '/demo'
+    navigate(from, { replace: true })
+    return null
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      // Mock login — store to localStorage
-      localStorage.setItem('ne_user', JSON.stringify({
-        name: form.name || 'Pengguna UMKM',
-        email: form.email || 'umkm@nusantara.id',
-        business: 'CV Nusantara Jaya',
-        phone: '+62 812-3456-7890',
-        province: 'Jawa Barat',
-      }))
+    setError('')
+
+    try {
+      if (isRegister) {
+        // Register
+        if (!form.name || form.name.trim().length < 2) {
+          setError('Nama lengkap minimal 2 karakter')
+          setLoading(false)
+          return
+        }
+        await register(form.name.trim(), form.email.trim(), form.password)
+      } else {
+        // Login
+        await login(form.email.trim(), form.password)
+      }
+
+      // Redirect to intended page or demo
+      const from = location.state?.from || '/demo'
+      navigate(from, { replace: true })
+    } catch (err) {
+      console.log(err)
+      const msg = err.response?.data?.detail || err.message || 'Terjadi kesalahan. Silakan coba lagi.'
+      setError(msg)
+    } finally {
       setLoading(false)
-      navigate('/demo')
-    }, 1200)
+    }
   }
 
   return (
@@ -47,6 +72,13 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+          {/* Error message */}
+          {error && (
+            <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm font-bold animate-fadeInUp">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {isRegister && (
               <div>
@@ -79,7 +111,7 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Minimal 8 karakter"
+                  placeholder="Minimal 8 karakter (huruf + angka)"
                   className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 pr-12"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -94,6 +126,11 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              {isRegister && (
+                <p className="text-[10px] text-secondary/40 mt-2 font-medium">
+                  Minimal 8 karakter, harus mengandung huruf dan angka
+                </p>
+              )}
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-4 text-base">
               {loading ? (
@@ -110,7 +147,7 @@ export default function LoginPage() {
               {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
               <button
                 type="button"
-                onClick={() => setIsRegister(!isRegister)}
+                onClick={() => { setIsRegister(!isRegister); setError(''); }}
                 className="text-accent underline decoration-accent/30 hover:decoration-accent transition-all"
               >
                 {isRegister ? 'Masuk' : 'Daftar gratis'}
@@ -126,3 +163,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

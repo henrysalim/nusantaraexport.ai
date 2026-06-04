@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.config.db_config import execute_query
+from app.middleware import get_current_user
 
 router = APIRouter()
 
@@ -14,7 +15,7 @@ class UMKMProfile(BaseModel):
     location: str
 
 @router.post("/save")
-def save_profile(profile: UMKMProfile):
+def save_profile(profile: UMKMProfile, current_user: dict = Depends(get_current_user)):
     query = """
     INSERT INTO umkm_profiles (
         user_id, business_name, owner_name, product_category, 
@@ -43,7 +44,7 @@ def save_profile(profile: UMKMProfile):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{user_id}")
-def get_profile(user_id: str):
+def get_profile(user_id: str, current_user: dict = Depends(get_current_user)):
     query = "SELECT * FROM umkm_profiles WHERE user_id = %s"
     result = execute_query(query, (user_id,), fetch=True)
     if not result:
