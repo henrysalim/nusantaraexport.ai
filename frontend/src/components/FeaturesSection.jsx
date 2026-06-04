@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mic, TrendingUp, FileText, ClipboardList, Scale, Package, Bell } from "lucide-react";
+import { Mic, TrendingUp, FileText, ClipboardList, Scale, Package, Bell, Handshake, CalendarDays, AlertOctagon } from "lucide-react";
 
 export default function FeaturesSection() {
   const features = [
@@ -10,6 +10,9 @@ export default function FeaturesSection() {
     { icon: <Package />, title: "Audit Kepatuhan Kemasan", desc: "Foto kemasan Anda, AI periksa apakah label, bahasa, dan informasi nutrisi sudah sesuai aturan negara tujuan." },
     { icon: <ClipboardList />, title: "Simulasi Kesiapan Ekspor", desc: "Cek kelengkapan dokumen, sertifikasi, dan hitung seluruh biaya ekspor sebelum berkomitmen mengirim barang." },
     { icon: <Bell />, title: "Notifikasi Perubahan Regulasi", desc: "Dapat pemberitahuan otomatis jika aturan ekspor berubah yang mempengaruhi produk dan negara tujuan Anda." },
+    { icon: <Handshake />, title: "Nego Coach", desc: "Bandingkan tawaran buyer dengan harga pasar internasional. AI buatkan counter-offer dan draft email negosiasi siap kirim.", isNew: true },
+    { icon: <CalendarDays />, title: "Smart Export Calendar", desc: "Jadwal ekspor optimal berdasarkan musim panen, permintaan global, dan slot logistik. Tidak pernah ketinggalan momen.", isNew: true },
+    { icon: <AlertOctagon />, title: "Post-Export Problem Solver", desc: "Solusi cepat untuk masalah setelah barang dikirim — barang tertahan pabean, kerusakan transit, atau sengketa buyer.", isNew: true },
   ];
 
   return (
@@ -29,7 +32,7 @@ export default function FeaturesSection() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 animate-fadeInUp">
           <div className="max-w-2xl">
             <h2 id="fitur-heading" className="text-4xl lg:text-5xl font-display font-black text-white leading-tight mb-4">
-              Tujuh Fitur yang <span className="text-accent">Memudahkan</span> Bisnis
+              Sepuluh Fitur yang <span className="text-accent">Memudahkan</span> Bisnis
               Anda.
             </h2>
             <p className="text-white/70 font-medium text-lg leading-relaxed">
@@ -55,8 +58,9 @@ export default function FeaturesSection() {
               tabIndex={0}
               aria-label={`Fitur: ${f.title}. ${f.desc}`}
             >
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-white text-4xl mb-8 shadow-inner" aria-hidden="true">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-white text-4xl mb-8 shadow-inner relative" aria-hidden="true">
                 {f.icon}
+                {f.isNew && <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-accent text-white rounded-full text-[8px] font-black">NEW</span>}
               </div>
               <h3 className="text-2xl font-black text-white mb-4 leading-tight">
                 {f.title}

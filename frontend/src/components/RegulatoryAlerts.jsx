@@ -1,9 +1,9 @@
 import { Bell, CheckCircle2, AlertTriangle } from 'lucide-react'
 
-const MOCK_ALERTS = [
+const REGULATION_ALERTS = [
   {
     id: 1,
-    date: '18 Maret 2025',
+    date: '18 Maret 2026',
     severity: 'high',
     title: 'Perubahan Regulasi Ekspor Kopi ke UE',
     desc: 'Uni Eropa memberlakukan EU Deforestation Regulation (EUDR) mulai 30 Desember 2024. Semua eksportir kopi wajib menyertakan bukti bahwa produk tidak berasal dari lahan deforestasi.',
@@ -12,16 +12,16 @@ const MOCK_ALERTS = [
   },
   {
     id: 2,
-    date: '15 Maret 2025',
+    date: '15 Maret 2026',
     severity: 'medium',
     title: 'Update Tarif RCEP untuk Keripik Olahan',
-    desc: 'Tarif preferensial RCEP untuk HS Code 2005.99 (keripik olahan) diturunkan dari 5% menjadi 2.5% untuk pengiriman ke Korea Selatan mulai April 2025.',
+    desc: 'Tarif preferensial RCEP untuk HS Code 2005.99 (keripik olahan) diturunkan dari 5% menjadi 2.5% untuk pengiriman ke Korea Selatan mulai April 2026.',
     affected: ['Keripik Singkong', 'Keripik Pisang', 'Keripik Kentang'],
     action: 'Gunakan SKA Form RCEP untuk mendapatkan tarif baru yang lebih rendah.',
   },
   {
     id: 3,
-    date: '10 Maret 2025',
+    date: '10 Maret 2026',
     severity: 'low',
     title: 'Pembaruan Sistem INSW 2.0',
     desc: 'Indonesia National Single Window (INSW) meluncurkan versi 2.0 yang menyederhanakan proses pengajuan dokumen ekspor secara elektronik.',
@@ -30,7 +30,7 @@ const MOCK_ALERTS = [
   },
   {
     id: 4,
-    date: '5 Maret 2025',
+    date: '5 Maret 2026',
     severity: 'medium',
     title: 'Jepang Memperketat Standar Residu Pestisida',
     desc: 'Kementerian Kesehatan Jepang menurunkan batas maksimum residu pestisida Chlorpyrifos pada produk pertanian impor dari 0.05 ppm menjadi 0.01 ppm.',
@@ -46,7 +46,7 @@ export default function RegulatoryAlerts() {
         <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white relative" aria-hidden="true">
           <Bell size={20} />
           <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-            <span className="text-[9px] text-white font-black">{MOCK_ALERTS.length}</span>
+            <span className="text-[9px] text-white font-black">{REGULATION_ALERTS.length}</span>
           </div>
         </div>
         <div>
@@ -56,7 +56,7 @@ export default function RegulatoryAlerts() {
       </div>
 
       <div className="space-y-4">
-        {MOCK_ALERTS.map((alert) => (
+        {REGULATION_ALERTS.map((alert) => (
           <div key={alert.id} className={`border rounded-2xl overflow-hidden ${
             alert.severity === 'high' ? 'border-red-200' : alert.severity === 'medium' ? 'border-yellow-200' : 'border-slate-200'
           }`}>

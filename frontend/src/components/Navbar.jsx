@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { User, LogIn, Phone } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { User, LogIn, LogOut, Phone } from "lucide-react";
 
 const navLinks = [
   { href: "/#tentang", label: "Tentang" },
@@ -14,6 +14,13 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('ne_user');
+    setUser(null);
+    navigate('/');
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -72,12 +79,21 @@ export default function Navbar() {
 
           <div className="flex items-center gap-2">
             {user ? (
-              <Link to="/profil" className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors" aria-label="Edit profil saya">
-                <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black">
-                  {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-                <span className="text-sm font-bold text-secondary">{user.name?.split(' ')[0] || 'Profil'}</span>
-              </Link>
+              <>
+                <Link to="/profil" className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors" aria-label="Edit profil saya">
+                  <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black">
+                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-sm font-bold text-secondary">{user.name?.split(' ')[0] || 'Profil'}</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                  aria-label="Keluar dari akun"
+                >
+                  <LogOut size={15} /> Keluar
+                </button>
+              </>
             ) : (
               <Link to="/login" className="flex items-center gap-2 px-5 py-2.5 text-sm font-black text-secondary border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all">
                 <LogIn size={16} className="text-accent" /> Masuk
@@ -116,9 +132,18 @@ export default function Navbar() {
             ))}
             <li role="none">
               {user ? (
-                <Link to="/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-bold text-secondary" role="menuitem">
-                  <User size={18} /> Profil Saya
-                </Link>
+                <div className="flex flex-col gap-2">
+                  <Link to="/profil" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-lg font-bold text-secondary" role="menuitem">
+                    <User size={18} /> Profil Saya
+                  </Link>
+                  <button
+                    onClick={() => { handleLogout(); setMenuOpen(false); }}
+                    className="flex items-center gap-2 text-lg font-bold text-red-500"
+                    role="menuitem"
+                  >
+                    <LogOut size={18} /> Keluar
+                  </button>
+                </div>
               ) : (
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="flex items-center justify-center gap-2 w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-secondary" role="menuitem">
                   <LogIn size={18} className="text-accent" /> Masuk

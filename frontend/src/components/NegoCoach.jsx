@@ -2,32 +2,6 @@ import { useState } from 'react'
 import { Handshake, TrendingUp, TrendingDown, Mail, DollarSign } from 'lucide-react'
 import { analyzeNegotiation } from '../services/api'
 
-const MOCK_RESULT = {
-  buyer_offer: 'USD 3.50/kg (FOB Jepang)',
-  market_benchmark: 'USD 3.80 - 4.80/kg (Avg: USD 4.25)',
-  margin_pct: -17.6,
-  counter_offer: 'USD 4.12/kg (FOB Jepang)',
-  profitability_analysis: {
-    buyer_total: 'USD 7,000',
-    counter_total: 'USD 8,240',
-    difference: 'USD 1,240',
-    market_position: 'Di bawah rata-rata',
-  },
-  email_draft: `Dear [Buyer Name],
-
-Thank you for your valuable offer of USD 3.50/kg for our premium Kopi Arabika.
-
-After carefully analyzing our production costs and current market benchmarks (UN COMTRADE average: USD 4.25/kg), we would like to propose a counter-offer of USD 4.12/kg (FOB Jepang).
-
-We can commit to 2,000 kg with a shipping window within 30 days of receiving the advance payment (30% T/T, 70% Irrevocable L/C at Sight).
-
-We look forward to your favorable response.
-
-Warm regards,
-[Your Company Name]`,
-  recommendation: '⚠️ Tawaran buyer TERLALU RENDAH. Wajib counter-offer!'
-}
-
 export default function NegoCoach() {
   const [commodity, setCommodity] = useState('Kopi Arabika')
   const [buyerOffer, setBuyerOffer] = useState('')
@@ -36,11 +10,13 @@ export default function NegoCoach() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [showEmail, setShowEmail] = useState(false)
+  const [error, setError] = useState('')
 
   const handleAnalyze = async () => {
     if (!buyerOffer) return
     setLoading(true)
     setResult(null)
+    setError('')
     try {
       const response = await analyzeNegotiation({
         commodity,
@@ -50,10 +26,9 @@ export default function NegoCoach() {
         incoterm: 'FOB'
       })
       setResult(response.data)
-    } catch (error) {
-      console.warn('API offline, using mock:', error.message)
-      await new Promise(r => setTimeout(r, 1500))
-      setResult(MOCK_RESULT)
+    } catch (err) {
+      console.error('Nego API error:', err)
+      setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
     } finally {
       setLoading(false)
     }
@@ -98,6 +73,12 @@ export default function NegoCoach() {
           </span>
         ) : '🤝 Analisis Tawaran Buyer'}
       </button>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl mb-4 animate-fadeInUp">
+          <p className="text-sm font-bold text-red-600">{error}</p>
+        </div>
+      )}
 
       {loading && <div className="space-y-4 animate-pulse"><div className="h-20 bg-slate-100 rounded-2xl" /><div className="h-32 bg-slate-100 rounded-2xl" /></div>}
 

@@ -9,43 +9,24 @@ const TYPE_CONFIG = {
   doc: { icon: <FileText size={14} />, color: 'bg-yellow-100 text-yellow-700', label: 'Dokumen' },
 }
 
-const MOCK_RESULT = {
-  commodity: 'Kopi',
-  destination: 'Jepang',
-  best_shipping_window: 'September-Oktober (Panen raya selesai → peak demand Eropa/AS)',
-  key_deadlines: [
-    { deadline: 'SKA (Certificate of Origin)', rule: 'Maks. 7 hari setelah kapal berangkat', priority: 'high' },
-    { deadline: 'Phytosanitary Certificate', rule: 'Berlaku 14 hari dari tanggal diterbitkan', priority: 'high' },
-    { deadline: 'PEB', rule: 'Diajukan maks. 7 hari sebelum kapal berangkat', priority: 'high' },
-    { deadline: 'Booking Kontainer', rule: 'Minimal 14 hari sebelum target sailing date', priority: 'medium' },
-  ],
-  calendar: [
-    { month: 'Januari', events: [{ type: 'demand', title: 'Imlek', desc: 'Permintaan rempah & makanan olahan meningkat', priority: 'high' }] },
-    { month: 'Maret-April', events: [{ type: 'demand', title: 'Ramadan', desc: 'Permintaan makanan olahan meningkat', priority: 'high' }, { type: 'harvest', title: 'Awal Panen Kopi', desc: 'Mulai pengumpulan bahan baku', priority: 'medium' }] },
-    { month: 'Juni-Agustus', events: [{ type: 'harvest', title: 'Musim Panen Raya', desc: 'Periode produksi maksimal', priority: 'high' }, { type: 'doc', title: 'Sertifikasi Phytosanitary', desc: 'Waktu terbaik mengurus sertifikat', priority: 'high' }] },
-    { month: 'September', events: [{ type: 'logistics', title: 'Booking Kontainer FCL', desc: 'Waktu tempuh ke UE/AS: 25-30 hari', priority: 'high' }] },
-    { month: 'Oktober-November', events: [{ type: 'demand', title: 'Thanksgiving & Pre-Christmas', desc: 'Peak demand! Harga tertinggi', priority: 'high' }] },
-    { month: 'Desember', events: [{ type: 'demand', title: 'Christmas & New Year', desc: 'Permintaan kerajinan & kopi premium', priority: 'high' }] },
-  ]
-}
-
 export default function SmartExportCalendar() {
   const [commodity, setCommodity] = useState('Kopi')
   const [destination, setDestination] = useState('Jepang')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
 
   const handleGenerate = async () => {
     if (!commodity) return
     setLoading(true)
     setResult(null)
+    setError('')
     try {
       const response = await getSmartCalendar({ commodity, destination })
       setResult(response.data)
-    } catch (error) {
-      console.warn('API offline, using mock:', error.message)
-      await new Promise(r => setTimeout(r, 1500))
-      setResult(MOCK_RESULT)
+    } catch (err) {
+      console.error('Calendar API error:', err)
+      setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
     } finally {
       setLoading(false)
     }
@@ -82,6 +63,12 @@ export default function SmartExportCalendar() {
           </span>
         ) : '📅 Buat Kalender Ekspor'}
       </button>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl mb-4 animate-fadeInUp">
+          <p className="text-sm font-bold text-red-600">{error}</p>
+        </div>
+      )}
 
       {loading && <div className="space-y-3 animate-pulse">{[1,2,3,4].map(i => <div key={i} className="h-16 bg-slate-100 rounded-2xl" />)}</div>}
 

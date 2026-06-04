@@ -1,30 +1,62 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [isRegister, setIsRegister] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState({})
+  const [success, setSuccess] = useState('')
   const navigate = useNavigate()
+
+  const validate = () => {
+    const errs = {}
+    if (isRegister && !form.name.trim()) {
+      errs.name = 'Nama lengkap wajib diisi'
+    }
+    if (!form.email.trim()) {
+      errs.email = 'Email wajib diisi'
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      errs.email = 'Format email tidak valid'
+    }
+    if (!form.password) {
+      errs.password = 'Kata sandi wajib diisi'
+    } else if (form.password.length < 8) {
+      errs.password = 'Kata sandi minimal 8 karakter'
+    }
+    return errs
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const errs = validate()
+    setErrors(errs)
+
+    if (Object.keys(errs).length > 0) return
+
     setLoading(true)
     setTimeout(() => {
-      // Mock login — store to localStorage
       localStorage.setItem('ne_user', JSON.stringify({
-        name: form.name || 'Pengguna UMKM',
-        email: form.email || 'umkm@nusantara.id',
+        name: form.name || form.email.split('@')[0],
+        email: form.email,
         business: 'CV Nusantara Jaya',
-        phone: '+62 812-3456-7890',
-        province: 'Jawa Barat',
+        phone: '+62 ',
+        province: '',
       }))
       setLoading(false)
-      navigate('/demo')
+      setSuccess(isRegister ? 'Akun berhasil dibuat! Mengalihkan...' : 'Berhasil masuk! Mengalihkan...')
+      setTimeout(() => navigate('/demo'), 1000)
     }, 1200)
   }
+
+  const FieldError = ({ error }) => error ? (
+    <div className="flex items-center gap-1.5 mt-1.5">
+      <AlertCircle size={12} className="text-red-500 flex-shrink-0" />
+      <span className="text-xs font-bold text-red-500">{error}</span>
+    </div>
+  ) : null
 
   return (
     <div className="min-h-screen bg-slate-soft flex items-center justify-center px-6 pt-24 pb-12">
@@ -46,8 +78,16 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* Success Toast */}
+        {success && (
+          <div className="mb-6 flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-2xl animate-fadeInUp">
+            <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" />
+            <span className="text-sm font-bold text-green-700">{success}</span>
+          </div>
+        )}
+
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {isRegister && (
               <div>
                 <label htmlFor="name" className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Nama Lengkap</label>
@@ -55,10 +95,11 @@ export default function LoginPage() {
                   id="name"
                   type="text"
                   placeholder="Nama Anda"
-                  className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                  className={`w-full px-5 py-4 bg-slate-soft border rounded-2xl font-bold text-secondary outline-none focus:ring-2 focus:ring-accent/20 ${errors.name ? 'border-red-300 focus:border-red-400' : 'border-slate-200 focus:border-accent'}`}
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e) => { setForm({ ...form, name: e.target.value }); setErrors({ ...errors, name: '' }) }}
                 />
+                <FieldError error={errors.name} />
               </div>
             )}
             <div>
@@ -67,11 +108,11 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="email@bisnis-anda.com"
-                className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                className={`w-full px-5 py-4 bg-slate-soft border rounded-2xl font-bold text-secondary outline-none focus:ring-2 focus:ring-accent/20 ${errors.email ? 'border-red-300 focus:border-red-400' : 'border-slate-200 focus:border-accent'}`}
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
+                onChange={(e) => { setForm({ ...form, email: e.target.value }); setErrors({ ...errors, email: '' }) }}
               />
+              <FieldError error={errors.email} />
             </div>
             <div>
               <label htmlFor="password" className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Kata Sandi</label>
@@ -80,10 +121,9 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Minimal 8 karakter"
-                  className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 pr-12"
+                  className={`w-full px-5 py-4 bg-slate-soft border rounded-2xl font-bold text-secondary outline-none focus:ring-2 focus:ring-accent/20 pr-12 ${errors.password ? 'border-red-300 focus:border-red-400' : 'border-slate-200 focus:border-accent'}`}
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
+                  onChange={(e) => { setForm({ ...form, password: e.target.value }); setErrors({ ...errors, password: '' }) }}
                 />
                 <button
                   type="button"
@@ -94,6 +134,7 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <FieldError error={errors.password} />
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-4 text-base">
               {loading ? (
@@ -110,7 +151,7 @@ export default function LoginPage() {
               {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
               <button
                 type="button"
-                onClick={() => setIsRegister(!isRegister)}
+                onClick={() => { setIsRegister(!isRegister); setErrors({}); setSuccess('') }}
                 className="text-accent underline decoration-accent/30 hover:decoration-accent transition-all"
               >
                 {isRegister ? 'Masuk' : 'Daftar gratis'}
