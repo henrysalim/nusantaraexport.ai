@@ -18,10 +18,13 @@ export default function PostExportSolver() {
   const [showEmail, setShowEmail] = useState(false)
   const [showClaim, setShowClaim] = useState(false)
 
+  const [error, setError] = useState('')
+
   const handleSolve = async () => {
     if (!problemType) return
     setLoading(true)
     setResult(null)
+    setError('')
     try {
       const response = await solvePostExport({
         problem_type: problemType,
@@ -29,28 +32,9 @@ export default function PostExportSolver() {
         description,
       })
       setResult(response.data)
-    } catch (error) {
-      console.warn('API offline, using mock:', error.message)
-      await new Promise(r => setTimeout(r, 1500))
-      // Mock fallback
-      setResult({
-        problem_title: PROBLEM_TYPES.find(p => p.value === problemType)?.label || 'Masalah Ekspor',
-        resolution_steps: [
-          'Hubungi agen kepabeanan untuk meminta alasan formal.',
-          'Ajukan permohonan re-labeling lokal di Bonded Warehouse.',
-          'Kirimkan revisi label kemasan dalam 48 jam.',
-          'Minta perpanjangan Free Time di terminal.',
-        ],
-        financial_impact: {
-          relabeling_cost: 'USD 500',
-          return_cost: 'USD 3,500',
-          demurrage_per_day: 'USD 150',
-          recommendation: 'Re-labeling lokal (hemat 75% vs retur barang)',
-        },
-        email_draft: 'Dear Customs Agent,\n\nWe have submitted the revised label layouts in accordance with your guidelines.\n\nPlease approve the release at your earliest convenience.\n\nSincerely,\n[Your Company Name]',
-        claim_form_template: 'FORM KLAIM RE-LABELING: ID SH-001 | BIAYA: USD 500',
-        timeline: '3-7 hari kerja untuk resolusi',
-      })
+    } catch (err) {
+      console.error('Post-export API error:', err)
+      setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
     } finally {
       setLoading(false)
     }
@@ -109,6 +93,12 @@ export default function PostExportSolver() {
           </span>
         ) : '🚨 Cari Solusi'}
       </button>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl mb-4 animate-fadeInUp">
+          <p className="text-sm font-bold text-red-600">{error}</p>
+        </div>
+      )}
 
       {loading && <div className="space-y-3 animate-pulse"><div className="h-20 bg-slate-100 rounded-2xl" /><div className="h-32 bg-slate-100 rounded-2xl" /></div>}
 

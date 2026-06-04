@@ -2,76 +2,23 @@ import { useState } from 'react'
 import { Globe } from 'lucide-react'
 import { analyzeMarketGap } from '../services/api'
 
-const MOCK_RESULTS = {
-  kopi: {
-    top_destinations: [
-      { country: '🇯🇵 Jepang', score: 92 },
-      { country: '🇺🇸 Amerika Serikat', score: 88 },
-      { country: '🇩🇪 Jerman', score: 85 },
-      { country: '🇰🇷 Korea Selatan', score: 79 },
-    ],
-    gap_score: 87,
-    avg_price: '$4,200/ton',
-    growth: '+12.3%',
-  },
-  singkong: {
-    top_destinations: [
-      { country: '🇨🇳 Tiongkok', score: 94 },
-      { country: '🇯🇵 Jepang', score: 82 },
-      { country: '🇰🇷 Korea Selatan', score: 78 },
-      { country: '🇦🇪 Uni Emirat Arab', score: 71 },
-    ],
-    gap_score: 91,
-    avg_price: '$1,800/ton',
-    growth: '+23.1%',
-  },
-  kayu: {
-    top_destinations: [
-      { country: '🇳🇱 Belanda', score: 89 },
-      { country: '🇬🇧 Inggris', score: 84 },
-      { country: '🇦🇺 Australia', score: 80 },
-      { country: '🇸🇬 Singapura', score: 76 },
-    ],
-    gap_score: 72,
-    avg_price: '€25-45/unit',
-    growth: '+8.7%',
-  },
-  default: {
-    top_destinations: [
-      { country: '🇨🇳 Tiongkok', score: 88 },
-      { country: '🇯🇵 Jepang', score: 85 },
-      { country: '🇺🇸 Amerika Serikat', score: 82 },
-      { country: '🇸🇬 Singapura', score: 78 },
-    ],
-    gap_score: 76,
-    avg_price: 'Bervariasi',
-    growth: '+10.5%',
-  },
-}
-
-function getMockMarket(product) {
-  const p = product.toLowerCase()
-  if (p.includes('kopi') || p.includes('coffee')) return MOCK_RESULTS.kopi
-  if (p.includes('singkong') || p.includes('keripik') || p.includes('cassava')) return MOCK_RESULTS.singkong
-  if (p.includes('kayu') || p.includes('wood') || p.includes('kerajinan')) return MOCK_RESULTS.kayu
-  return MOCK_RESULTS.default
-}
-
 export default function MarketAnalysisCard() {
   const [productName, setProductName] = useState('')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleAnalyze = async () => {
     if (!productName) return
     setLoading(true)
+    setError('')
     try {
       const response = await analyzeMarketGap({ product_name: productName })
       setData(response.data)
-    } catch (error) {
-      console.warn('API offline, using mock:', error.message)
-      await new Promise(r => setTimeout(r, 800))
-      setData(getMockMarket(productName))
+    } catch (err) {
+      console.error('Market API error:', err)
+      setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
+      setData(null)
     } finally {
       setLoading(false)
     }
@@ -111,6 +58,12 @@ export default function MarketAnalysisCard() {
           {loading ? 'Menganalisis...' : 'Analisis Celah Pasar'}
         </button>
       </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl mt-4 animate-fadeInUp">
+          <p className="text-sm font-bold text-red-600">{error}</p>
+        </div>
+      )}
 
       {data && (
         <div className="mt-2 pt-4 border-t border-slate-100 animate-fadeInUp" aria-live="polite">

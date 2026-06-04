@@ -2,78 +2,23 @@ import { useState } from 'react'
 import { Search, Tag, ArrowRight } from 'lucide-react'
 import { classifyHSCode } from '../services/api'
 
-const MOCK_HS = {
-  kopi: {
-    product: 'Kopi Arabika Gayo',
-    hs_code: '0901.21.10',
-    description: 'Kopi, tidak disangrai, tidak dihilangkan kafeinnya — Arabika WIB',
-    chapter: 'Chapter 09 — Kopi, Teh, Mate dan Rempah-rempah',
-    mfn_tariff: '5-15%',
-    fta_results: [
-      { agreement: 'IJEPA (Jepang)', tariff: '0%', saving: '¥180,000/kontainer', status: 'Berlaku' },
-      { agreement: 'ACFTA (Tiongkok)', tariff: '0%', saving: '¥120,000/kontainer', status: 'Berlaku' },
-      { agreement: 'AKFTA (Korea)', tariff: '2%', saving: '₩95,000/kontainer', status: 'Berlaku' },
-      { agreement: 'AIFTA (India)', tariff: '5%', saving: '₹85,000/kontainer', status: 'Berlaku' },
-      { agreement: 'IA-CEPA (Australia)', tariff: '0%', saving: 'A$2,100/kontainer', status: 'Berlaku' },
-      { agreement: 'RCEP', tariff: '0%', saving: 'Bervariasi', status: 'Berlaku' },
-    ],
-    best_fta: 'IJEPA (Jepang)',
-    best_saving: '¥180,000/kontainer (~Rp 19.800.000)',
-  },
-  singkong: {
-    product: 'Keripik Singkong',
-    hs_code: '2005.99.90',
-    description: 'Sayuran lainnya, disiapkan atau diawetkan — keripik singkong',
-    chapter: 'Chapter 20 — Olahan Sayuran, Buah, dan Kacang',
-    mfn_tariff: '10-25%',
-    fta_results: [
-      { agreement: 'ACFTA (Tiongkok)', tariff: '0%', saving: '¥95,000/kontainer', status: 'Berlaku' },
-      { agreement: 'AANZFTA (ASEAN-ANZ)', tariff: '0%', saving: 'A$1,800/kontainer', status: 'Berlaku' },
-      { agreement: 'RCEP', tariff: '5%', saving: 'Bervariasi', status: 'Berlaku' },
-      { agreement: 'IJEPA (Jepang)', tariff: '8.5%', saving: '¥42,000/kontainer', status: 'Berlaku' },
-    ],
-    best_fta: 'ACFTA (Tiongkok)',
-    best_saving: '¥95,000/kontainer (~Rp 10.450.000)',
-  },
-  default: {
-    product: 'Produk Umum',
-    hs_code: '9999.99.00',
-    description: 'Masukkan nama produk spesifik untuk klasifikasi akurat',
-    chapter: 'Chapter — Memerlukan analisis lebih lanjut',
-    mfn_tariff: '5-30%',
-    fta_results: [
-      { agreement: 'ACFTA (Tiongkok)', tariff: '0-5%', saving: 'Bervariasi', status: 'Perlu Cek' },
-      { agreement: 'IJEPA (Jepang)', tariff: '0-8%', saving: 'Bervariasi', status: 'Perlu Cek' },
-      { agreement: 'RCEP', tariff: '0-10%', saving: 'Bervariasi', status: 'Perlu Cek' },
-    ],
-    best_fta: 'Tergantung produk',
-    best_saving: 'Masukkan produk spesifik',
-  }
-}
-
-function getMockHS(product) {
-  const p = product.toLowerCase()
-  if (p.includes('kopi') || p.includes('coffee')) return MOCK_HS.kopi
-  if (p.includes('singkong') || p.includes('keripik') || p.includes('cassava')) return MOCK_HS.singkong
-  return MOCK_HS.default
-}
-
 export default function HSCodeOptimizer() {
   const [product, setProduct] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
 
   const handleClassify = async () => {
     if (!product) return
     setLoading(true)
     setResult(null)
+    setError('')
     try {
       const response = await classifyHSCode({ product_name: product })
       setResult(response.data)
-    } catch (error) {
-      console.warn('API offline, using mock:', error.message)
-      await new Promise(r => setTimeout(r, 1000))
-      setResult(getMockHS(product))
+    } catch (err) {
+      console.error('HS Code API error:', err)
+      setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
     } finally {
       setLoading(false)
     }
@@ -104,6 +49,12 @@ export default function HSCodeOptimizer() {
           {loading ? <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg> : <Search size={20} />}
         </button>
       </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl mb-4 animate-fadeInUp">
+          <p className="text-sm font-bold text-red-600">{error}</p>
+        </div>
+      )}
 
       {result && (
         <div className="animate-fadeInUp space-y-4">

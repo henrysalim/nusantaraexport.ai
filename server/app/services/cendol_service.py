@@ -158,8 +158,8 @@ class CendolNLPService:
             return response.json().get("text", "")
 
     @staticmethod
-    def _call_backup_llm(prompt: str, context: str) -> Optional[str]:
-        """Call backup LLM API (Gemini / OpenAI / HuggingFace)."""
+    def _call_backup_llm(prompt: str, context: str, image_base64: str = None, mime_type: str = "image/jpeg") -> Optional[str]:
+        """Call backup LLM API (Gemini / OpenAI / HuggingFace). Supports optional base64 image for Gemini Vision."""
         system_prompt = f"Anda adalah asisten ekspor AI NusantaraExport.AI. Jawab dengan profesional dan detail dalam bahasa Indonesia. \n\nKonteks Regulasi:\n{context}"
         
         # 1. Try Gemini API first (Generous free tier, great for Hackathons)
@@ -168,7 +168,18 @@ class CendolNLPService:
             try:
                 # Menggunakan REST API langsung untuk menghindari bug SDK "google.generativeai" yang usang/hang
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
-                payload = {"contents": [{"parts": [{"text": f"{system_prompt}\n\nPertanyaan: {prompt}"}]}]}
+                # Payload structure
+                parts = [{"text": f"{system_prompt}\n\nPertanyaan: {prompt}"}]
+                if image_base64:
+                    # Append inline image data for Gemini Vision capabilities
+                    parts.append({
+                        "inlineData": {
+                            "mimeType": mime_type,
+                            "data": image_base64
+                        }
+                    })
+
+                payload = {"contents": [{"parts": parts}]}
                 
                 logger.info("Mencoba memanggil Gemini API (Tier 2)...")
                 response = requests.post(url, json=payload, timeout=15)

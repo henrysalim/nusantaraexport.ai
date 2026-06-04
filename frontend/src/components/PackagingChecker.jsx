@@ -1,59 +1,83 @@
 import { useState } from 'react'
-import { Upload, CheckCircle2, AlertTriangle, XCircle, Camera } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, XCircle, Camera, Search, Upload, X } from 'lucide-react'
 import { checkPackaging } from '../services/api'
 
-const MOCK_RESULTS = {
-  good: {
-    score: 92,
-    status: 'Siap Ekspor',
-    items: [
-      { label: 'Label Bahasa Inggris', status: 'pass', note: 'Terdeteksi — sudah sesuai standar internasional' },
-      { label: 'Informasi Nutrisi', status: 'pass', note: 'Format Nutrition Facts sesuai FDA style' },
-      { label: 'Tanggal Kedaluwarsa', status: 'pass', note: 'Format DD/MM/YYYY terdeteksi dengan jelas' },
-      { label: 'Kode Barcode', status: 'pass', note: 'EAN-13 valid terdeteksi' },
-      { label: 'Berat Bersih / Netto', status: 'warning', note: 'Tambahkan satuan oz untuk pasar AS' },
-      { label: 'Sertifikasi Halal', status: 'pass', note: 'Logo MUI terdeteksi' },
-      { label: 'Negara Asal', status: 'pass', note: '"Made in Indonesia" terdeteksi' },
-    ],
-    suggestion: 'Kemasan Anda sudah 92% siap ekspor. Tambahkan satuan oz di samping gram untuk memenuhi standar FDA Amerika Serikat.'
-  },
-  bad: {
-    score: 45,
-    status: 'Perlu Perbaikan',
-    items: [
-      { label: 'Label Bahasa Inggris', status: 'fail', note: 'Tidak ditemukan — wajib untuk ekspor' },
-      { label: 'Informasi Nutrisi', status: 'fail', note: 'Belum ada Nutrition Facts panel' },
-      { label: 'Tanggal Kedaluwarsa', status: 'warning', note: 'Format tidak standar, gunakan DD/MM/YYYY' },
-      { label: 'Kode Barcode', status: 'pass', note: 'EAN-13 valid terdeteksi' },
-      { label: 'Berat Bersih / Netto', status: 'fail', note: 'Tidak terlihat pada kemasan' },
-      { label: 'Sertifikasi Halal', status: 'warning', note: 'Logo tidak jelas, resolusi rendah' },
-      { label: 'Negara Asal', status: 'fail', note: '"Made in Indonesia" belum tercantum' },
-    ],
-    suggestion: 'Kemasan Anda belum siap ekspor. Prioritas utama: tambahkan label bahasa Inggris, Nutrition Facts, dan tulisan "Made in Indonesia".'
-  }
-}
+const DESTINATIONS = [
+  { value: 'us', label: 'Amerika Serikat' },
+  { value: 'jp', label: 'Jepang' },
+  { value: 'cn', label: 'Tiongkok' },
+  { value: 'eu', label: 'Uni Eropa' },
+  { value: 'kr', label: 'Korea Selatan' },
+  { value: 'au', label: 'Australia' },
+  { value: 'sg', label: 'Singapura' },
+]
 
 export default function PackagingChecker() {
-  const [fileName, setFileName] = useState('')
+  const [productType, setProductType] = useState('')
+  const [destination, setDestination] = useState('')
   const [analyzing, setAnalyzing] = useState(false)
   const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
 
-  const handleUpload = async () => {
-    setFileName('kemasan_keripik_singkong.jpg')
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Ukuran gambar maksimal 5MB')
+        return
+      }
+      setImageFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+      setError('')
+    }
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    setImagePreview(null)
+  }
+
+  const handleAnalyze = async () => {
+    if (!productType || !destination) return
     setAnalyzing(true)
     setResult(null)
+    setError('')
 
     try {
+      let imageBase64 = ""
+      let imageMimeType = "image/jpeg"
+      
+      if (imagePreview) {
+        // Base64 from FileReader looks like "data:image/jpeg;base64,/9j/4AAQ..."
+        const parts = imagePreview.split(',')
+        if (parts.length === 2) {
+          const meta = parts[0].match(/:(.*?);/)
+          if (meta && meta[1]) {
+            imageMimeType = meta[1]
+          }
+          imageBase64 = parts[1]
+        }
+      }
+
       const response = await checkPackaging({
-        destination_country: 'us',
-        product_type: 'makanan',
-        filename: 'kemasan_keripik_singkong.jpg'
+        destination_country: destination,
+        product_type: productType,
+        filename: imageFile ? imageFile.name : '',
+        image_base64: imageBase64,
+        image_mime_type: imageMimeType,
       })
       setResult(response.data)
-    } catch (error) {
-      console.warn('API offline, using mock:', error.message)
-      await new Promise(r => setTimeout(r, 1500))
-      setResult(Math.random() > 0.4 ? MOCK_RESULTS.good : MOCK_RESULTS.bad)
+    } catch (err) {
+      console.error('Packaging check error:', err)
+      setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
     } finally {
       setAnalyzing(false)
     }
@@ -79,32 +103,76 @@ export default function PackagingChecker() {
         </div>
         <div>
           <h3 className="text-xl font-black text-secondary">Audit Kemasan Produk</h3>
-          <p className="text-xs text-secondary/50 font-medium">Upload foto kemasan untuk dicek kesesuaian regulasi negara tujuan</p>
+          <p className="text-xs text-secondary/50 font-medium">Cek kesesuaian kemasan berdasarkan regulasi negara tujuan</p>
         </div>
       </div>
-
-      {/* Upload Area */}
-      <div
-        onClick={handleUpload}
-        className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center cursor-pointer hover:border-accent/40 hover:bg-slate-soft/50 transition-all group"
-        role="button"
-        tabIndex={0}
-        aria-label="Klik untuk upload foto kemasan"
-        onKeyDown={(e) => e.key === 'Enter' && handleUpload()}
-      >
-        <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/10 transition-colors">
-          <Upload size={28} className="text-secondary/30 group-hover:text-accent transition-colors" />
-        </div>
-        <p className="font-bold text-secondary/60 mb-1">Klik untuk upload foto kemasan</p>
-        <p className="text-xs text-secondary/30">JPG, PNG (maks. 5MB)</p>
+      {/* Image Upload Area */}
+      <div className="mb-6">
+        <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Foto Kemasan (Opsional)</label>
+        {!imagePreview ? (
+          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Upload className="w-8 h-8 text-secondary/40 mb-2" />
+              <p className="text-sm font-bold text-secondary/60">Klik untuk unggah foto</p>
+              <p className="text-xs text-secondary/40">PNG, JPG, JPEG (Max 5MB)</p>
+            </div>
+            <input type="file" className="hidden" accept="image/png, image/jpeg, image/jpg" onChange={handleImageUpload} />
+          </label>
+        ) : (
+          <div className="relative w-full h-40 rounded-2xl overflow-hidden border border-slate-200 group">
+            <img src={imagePreview} alt="Preview kemasan" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <button onClick={removeImage} className="bg-white/20 p-2 rounded-full text-white hover:bg-red-500 transition-colors" title="Hapus gambar">
+                <X size={24} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* File selected */}
-      {fileName && (
-        <div className="mt-4 flex items-center gap-3 px-4 py-3 bg-slate-soft rounded-xl">
-          <Camera size={16} className="text-accent" />
-          <span className="text-sm font-bold text-secondary">{fileName}</span>
-          {analyzing && <span className="text-xs font-bold text-secondary/40 animate-pulse ml-auto">Menganalisis...</span>}
+      {/* Input Form */}
+      <div className="grid sm:grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Jenis Produk</label>
+          <input
+            type="text"
+            placeholder="Contoh: Kopi Arabika, Keripik Singkong"
+            className="w-full px-4 py-3 bg-slate-soft border border-slate-200 rounded-xl font-bold text-secondary outline-none focus:border-accent text-sm"
+            value={productType}
+            onChange={(e) => setProductType(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Negara Tujuan</label>
+          <select
+            className="w-full px-4 py-3 bg-slate-soft border border-slate-200 rounded-xl font-bold text-secondary outline-none focus:border-accent text-sm"
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+          >
+            <option value="">Pilih negara</option>
+            {DESTINATIONS.map(d => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <button onClick={handleAnalyze} disabled={analyzing || !productType || !destination} className="btn-primary w-full justify-center py-4 mb-6">
+        {analyzing ? (
+          <span className="flex items-center gap-2">
+            <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+            Menganalisis kepatuhan kemasan...
+          </span>
+        ) : (
+          <span className="flex items-center gap-2">
+            <Search size={18} /> Audit Kemasan
+          </span>
+        )}
+      </button>
+
+      {/* Error */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl mb-4 animate-fadeInUp">
+          <p className="text-sm font-bold text-red-600">{error}</p>
         </div>
       )}
 

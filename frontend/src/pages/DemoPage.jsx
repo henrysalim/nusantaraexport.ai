@@ -1,13 +1,12 @@
 import { useState } from 'react'
-import { Mic, FileText, Camera, TrendingUp, Tag, ClipboardCheck, Bell, Truck, Handshake, CalendarDays, AlertOctagon } from 'lucide-react'
+import { Mic, FileText, Camera, TrendingUp, Tag, ClipboardCheck, Bell, Handshake, CalendarDays, AlertOctagon } from 'lucide-react'
 import VoiceDemoSection from '../components/VoiceDemoSection'
 import DocumentGenerator from '../components/DocumentGenerator'
 import MarketAnalysisCard from '../components/MarketAnalysisCard'
 import PackagingChecker from '../components/PackagingChecker'
 import HSCodeOptimizer from '../components/HSCodeOptimizer'
-import ExportReadinessSimulator from '../components/ExportReadinessSimulator'
+import ExportSimulator from '../components/ExportSimulator'
 import RegulatoryAlerts from '../components/RegulatoryAlerts'
-import ExportDryRun from '../components/ExportDryRun'
 import NegoCoach from '../components/NegoCoach'
 import SmartExportCalendar from '../components/SmartExportCalendar'
 import PostExportSolver from '../components/PostExportSolver'
@@ -18,8 +17,7 @@ const TABS = [
   { key: 'docs', label: 'Buat Dokumen', icon: <FileText size={18} />, desc: '7 jenis dokumen ekspor' },
   { key: 'packaging', label: 'Audit Kemasan', icon: <Camera size={18} />, desc: 'Cek kepatuhan label' },
   { key: 'hscode', label: 'HS Code & FTA', icon: <Tag size={18} />, desc: 'Klasifikasi & tarif' },
-  { key: 'readiness', label: 'Simulasi Ekspor', icon: <ClipboardCheck size={18} />, desc: 'Skor kesiapan & biaya' },
-  { key: 'dryrun', label: 'Dry Run', icon: <Truck size={18} />, desc: 'Simulasi rute ekspor', isNew: true },
+  { key: 'simulator', label: 'Simulasi Ekspor', icon: <ClipboardCheck size={18} />, desc: 'Kesiapan & rute ekspor' },
   { key: 'nego', label: 'Nego Coach', icon: <Handshake size={18} />, desc: 'Analisis tawaran buyer', isNew: true },
   { key: 'calendar', label: 'Kalender Ekspor', icon: <CalendarDays size={18} />, desc: 'Jadwal panen & demand', isNew: true },
   { key: 'postexport', label: 'Problem Solver', icon: <AlertOctagon size={18} />, desc: 'Masalah pasca ekspor', isNew: true },
@@ -44,8 +42,7 @@ export default function DemoPage() {
       )
       case 'packaging': return <PackagingChecker />
       case 'hscode': return <HSCodeOptimizer />
-      case 'readiness': return <ExportReadinessSimulator />
-      case 'dryrun': return <ExportDryRun />
+      case 'simulator': return <ExportSimulator />
       case 'nego': return <NegoCoach />
       case 'calendar': return <SmartExportCalendar />
       case 'postexport': return <PostExportSolver />
@@ -65,7 +62,7 @@ export default function DemoPage() {
             </div>
             <div>
               <h1 className="text-3xl font-display font-black text-secondary">Dashboard Ekspor</h1>
-              <p className="text-secondary/50 font-medium text-sm">11 modul AI untuk membantu UMKM Indonesia siap ekspor</p>
+              <p className="text-secondary/50 font-medium text-sm">10 modul AI untuk membantu UMKM Indonesia siap ekspor</p>
             </div>
           </div>
         </div>
