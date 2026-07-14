@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FileText, Package, Download, CheckCircle2, X } from "lucide-react";
 
-const MOCK_INVOICE = {
+const TEMPLATE_INVOICE = {
   type: 'Commercial Invoice',
   number: 'INV-2025-NE-00147',
   date: '20 Maret 2025',
@@ -18,7 +18,7 @@ const MOCK_INVOICE = {
   incoterm: 'CIF Yokohama',
 }
 
-const MOCK_PACKING = {
+const TEMPLATE_PACKING = {
   type: 'Packing List',
   number: 'PL-2025-NE-00147',
   date: '20 Maret 2025',
@@ -55,7 +55,7 @@ export default function DocumentGenerator() {
     }, 1500)
   }
 
-  const doc = preview === 'invoice' ? MOCK_INVOICE : MOCK_PACKING
+  const doc = preview === 'invoice' ? TEMPLATE_INVOICE : TEMPLATE_PACKING
 
   return (
     <div className="flex flex-col gap-4" role="region" aria-label="Pembuat dokumen ekspor otomatis">

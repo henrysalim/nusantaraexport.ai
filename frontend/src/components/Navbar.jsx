@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { User, LogIn, LogOut, Phone } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { User, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const navLinks = [
@@ -16,6 +16,13 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('ne_user');
+    setUser(null);
+    navigate('/');
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
