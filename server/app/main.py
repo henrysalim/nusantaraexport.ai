@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from app.api import rag, market, umkm, docs, chat, simulator, compliance, auth
+from app.api import rag, market, umkm, docs, chat, simulator, compliance, auth, community
 from app.services.vector_store import bootstrap_regulations
 import os
 import logging
@@ -101,7 +101,8 @@ async def health_check():
             "Market Gap Analysis",
             "Packaging Compliance Checker",
             "HS Code & FTA Optimizer",
-            "PDF Document Generator"
+            "PDF Document Generator",
+            "B2B Community Forum"
         ]
     }
 
@@ -115,6 +116,7 @@ app.include_router(market.router, prefix="/api/market", tags=["Market"])
 app.include_router(rag.router, prefix="/api/rag", tags=["RAG"])
 app.include_router(umkm.router, prefix="/api/umkm", tags=["UMKM"])
 app.include_router(docs.router, prefix="/api/docs", tags=["Documents"])
+app.include_router(community.router, prefix="/api/community", tags=["Community Forum"])
 
 
 if __name__ == "__main__":

@@ -10,6 +10,8 @@ import DemoPage from "./pages/DemoPage";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import ContactPage from "./pages/ContactPage";
+import CommunityPage from "./pages/CommunityPage";
+import PostDetailPage from "./pages/PostDetailPage";
 
 function AppContent() {
   const location = useLocation();
@@ -43,6 +45,8 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/kontak" element={<ContactPage />} />
+          <Route path="/komunitas" element={<CommunityPage />} />
+          <Route path="/komunitas/diskusi/:postId" element={<PostDetailPage />} />
         </Routes>
       </main>
       <Footer />

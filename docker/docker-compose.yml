@@ -7,9 +7,9 @@ services:
     env_file:
       - ../.env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: nusantaraexport
+      POSTGRES_PASSWORD: Nusantar43xport!
+      POSTGRES_DB: nusantaraexport_ai
     ports:
       - "5433:5432"
     volumes:
@@ -45,7 +45,8 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      DATABASE_URL: postgresql://nusantaraexport:Nusantar43xport!@db:5432/nusantaraexport_ai
+      AUTH_DATABASE_URL: postgresql://nusantaraexport:Nusantar43xport!@db:5432/nusantaraexport_ai
       REDIS_URL: redis://redis:6379/0
       PORT: 8000
     ports:
