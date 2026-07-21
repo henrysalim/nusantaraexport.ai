@@ -57,13 +57,13 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-6">
           <ul className="flex items-center gap-1" role="list">
             {navLinks.map((l) => (
               <li key={l.href}>
                 <Link
                   to={l.href}
-                  className="px-4 py-2 text-[15px] font-bold text-secondary/70 hover:text-accent transition-colors rounded-lg hover:bg-slate-50"
+                  className="px-4 py-2 text-[15px] font-bold text-secondary/70 hover:text-accent transition-colors rounded-lg hover:bg-slate-50 whitespace-nowrap"
                 >
                   {l.label}
                 </Link>
@@ -71,36 +71,36 @@ export default function Navbar() {
             ))}
           </ul>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {isAuthenticated ? (
               <>
-                <Link to="/profil" className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors" aria-label="Edit profil saya">
-                  <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black">
+                <Link to="/profil" className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors shrink-0" aria-label="Edit profil saya">
+                  <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black shrink-0">
                     {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
-                  <span className="text-sm font-bold text-secondary">{user?.full_name?.split(' ')[0] || 'Profil'}</span>
+                  <span className="text-sm font-bold text-secondary shrink-0">{user?.full_name?.split(' ')[0] || 'Profil'}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-secondary/60 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-secondary/60 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all shrink-0"
                   aria-label="Keluar"
                 >
                   <LogOut size={16} /> Keluar
                 </button>
               </>
             ) : (
-              <Link to="/login" className="flex items-center gap-2 px-5 py-2.5 text-sm font-black text-secondary border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all">
+              <Link to="/login" className="flex items-center gap-2 px-5 py-2.5 text-sm font-black text-secondary border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shrink-0">
                 <LogIn size={16} className="text-accent" /> Masuk
               </Link>
             )}
-            <Link to="/demo" className="btn-primary">
+            <Link to="/demo" className="btn-primary shrink-0">
               Coba Sekarang
             </Link>
           </div>
         </div>
 
         <button
-          className="md:hidden p-2 text-secondary"
+          className="lg:hidden p-2 text-secondary"
           onClick={() => setMenuOpen((o) => !o)}
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"
@@ -117,7 +117,7 @@ export default function Navbar() {
       </div>
 
       {menuOpen && (
-        <div id="mobile-menu" className="md:hidden bg-white border-t border-slate-100 shadow-xl py-6 px-6" role="menu">
+        <div id="mobile-menu" className="lg:hidden bg-white border-t border-slate-100 shadow-xl py-6 px-6" role="menu">
           <ul className="flex flex-col gap-4">
             {navLinks.map((l) => (
               <li key={l.href} role="none">

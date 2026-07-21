@@ -21,6 +21,7 @@ from app.services.readiness_service import (
     get_dry_run_checkpoints,
     get_shipping_timeline,
 )
+from app.services.post_export_service import solve_post_export
 import logging
 
 logger = logging.getLogger(__name__)
@@ -153,124 +154,23 @@ class PostExportResponse(BaseModel):
 
 @router.post("/post-export-solve", response_model=PostExportResponse)
 def solve_post_export_problem(req: PostExportRequest, current_user: dict = Depends(get_current_user)):
-    """AI Rule Engine for post-export problem resolution."""
-    if req.problem_type == "customs_hold":
-        return PostExportResponse(
-            problem_title="Barang Tertahan di Pabean Tujuan",
-            resolution_steps=[
-                "Hubungi agen kepabeanan di pelabuhan tujuan untuk meminta alasan formal barang tertahan (Discrepancy Report).",
-                "Ajukan permohonan Re-labeling lokal di dalam Bonded Warehouse bea cukai setempat.",
-                "Kirimkan revisi label kemasan dalam format PDF berkualitas tinggi dalam 48 jam.",
-                "Minta perpanjangan Free Time di terminal agar tidak kena biaya demurrage.",
-            ],
-            financial_impact={
-                "relabeling_cost": "USD 500",
-                "return_cost": f"USD {req.shipment_value * 0.35:.0f}",
-                "demurrage_per_day": "USD 150",
-                "recommendation": "Re-labeling lokal (hemat 75% vs retur barang)"
-            },
-            email_draft=(
-                "Dear Customs Agent,\n\n"
-                "We have submitted the revised label layouts in accordance with your guidelines. "
-                "Our consignee is ready to apply the corrections inside the Bonded Warehouse.\n\n"
-                "Please approve the release at your earliest convenience.\n\n"
-                "Sincerely,\n[Your Company Name]"
-            ),
-            claim_form_template="FORM KLAIM RE-LABELING: ID SH-001 | BIAYA: USD 500 | STATUS: PENDING APPROVAL",
-            timeline="3-7 hari kerja untuk resolusi"
-        )
+    """Dynamic AI post-export problem solver."""
+    logger.info(f"Post Export Solver: type='{req.problem_type}' value={req.shipment_value} desc='{req.description}'")
 
-    elif req.problem_type == "transit_damage":
-        loss = req.shipment_value * 0.90
-        return PostExportResponse(
-            problem_title="Kerusakan Barang Saat Transit",
-            resolution_steps=[
-                "Ambil foto & rekaman video kondisi fisik barang rusak saat bongkar muat kontainer.",
-                "Minta Surveyor Independen menerbitkan Joint Inspection Report.",
-                "Ajukan klaim asuransi Marine Cargo sesuai polis Clause A (All Risks).",
-                "Siapkan dokumen pendukung: Invoice, Packing List, B/L, dan foto kerusakan.",
-            ],
-            financial_impact={
-                "estimated_loss": f"USD {loss:.0f}",
-                "insurance_coverage": "80-100% (tergantung polis)",
-                "deductible": "USD 250 (standar)",
-                "recommendation": "Ajukan klaim asuransi segera (batas waktu 60 hari)"
-            },
-            email_draft=(
-                f"Dear Insurer,\n\n"
-                f"We hereby notify a cargo damage claim for Shipment #[Ref_ID] valued at USD {req.shipment_value:.0f}.\n\n"
-                f"Please find attached the independent survey report and photographic evidence. "
-                f"We request full reimbursement under Policy Clause A.\n\n"
-                f"Sincerely,\n[Your Company Name]"
-            ),
-            claim_form_template=f"MARINE CARGO INSURANCE CLAIM - VALUE: USD {req.shipment_value:.0f} | POLICY: ALL RISKS (CLAUSE A)",
-            timeline="14-30 hari kerja untuk pencairan klaim"
-        )
+    solution = solve_post_export(
+        problem_type=req.problem_type,
+        shipment_value=req.shipment_value,
+        description=req.description,
+    )
 
-    elif req.problem_type == "buyer_dispute":
-        return PostExportResponse(
-            problem_title="Sengketa dengan Buyer",
-            resolution_steps=[
-                "Dokumentasikan semua komunikasi dan bukti pengiriman yang sesuai kontrak.",
-                "Tawarkan diskon parsial 10-15% sebagai goodwill gesture jika keterlambatan terbukti.",
-                "Gunakan L/C Discrepancy waiver untuk mencairkan dana di bank penjamin.",
-                "Jika tidak ada resolusi, eskalasi ke BANI (Badan Arbitrase Nasional Indonesia).",
-            ],
-            financial_impact={
-                "goodwill_discount": f"USD {req.shipment_value * 0.15:.0f}",
-                "legal_cost": "USD 2,000 - 5,000",
-                "arbitration_cost": "USD 3,000 - 10,000",
-                "recommendation": "Negosiasi langsung + goodwill discount (termurah)"
-            },
-            email_draft=(
-                "Dear [Buyer Name],\n\n"
-                "We sincerely apologize for the logistical delay. After reviewing the situation, "
-                "we would like to propose a 15% goodwill discount on this shipment as compensation.\n\n"
-                "We value our partnership and hope to resolve this amicably.\n\n"
-                "Warm regards,\n[Your Company Name]"
-            ),
-            claim_form_template="BANK GUARANTEE WAIVER FORM - DISPUTE RESOLUTION | GOODWILL: 15%",
-            timeline="7-21 hari kerja untuk resolusi"
-        )
-
-    else:  # logistics_delay
-        import os, requests as _req
-        _key = os.getenv("GEMINI_API_KEY", "").strip('"').strip("'")
-        email_ai = None
-        if _key:
-            try:
-                _url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={_key}"
-                _payload = {"contents": [{"parts": [{"text": f"Write a professional English email to a buyer apologizing for a logistics delay on their shipment (value: USD {req.shipment_value:.0f}). The new ETA is [New_ETA]. Mention we are working with the shipping line to expedite. Output ONLY the email body, starting with 'Dear [Buyer Name],'"}]}], "generationConfig": {"maxOutputTokens": 300}}
-                _r = _req.post(_url, json=_payload, timeout=15)
-                _r.raise_for_status()
-                email_ai = _r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-            except Exception:
-                pass
-        return PostExportResponse(
-            problem_title="Keterlambatan Logistik",
-            resolution_steps=[
-                "Hubungi shipping line untuk mendapatkan Revised ETA dan alasan keterlambatan.",
-                "Informasikan buyer tentang keterlambatan beserta revised schedule.",
-                "Periksa apakah keterlambatan mempengaruhi L/C expiry date — minta amendment jika perlu.",
-                "Ajukan klaim ke shipping line jika keterlambatan melebihi batas kontrak.",
-            ],
-            financial_impact={
-                "storage_cost": "USD 100/hari",
-                "lc_amendment": "USD 200-500",
-                "penalty_risk": f"USD {req.shipment_value * 0.05:.0f} (5% penalty)",
-                "recommendation": "Komunikasi proaktif dengan buyer + LC amendment"
-            },
-            email_draft=email_ai or (
-                "Dear [Buyer Name],\n\n"
-                "We regret to inform you that the shipment #[Ref_ID] has experienced a transit delay. "
-                f"The revised estimated arrival is [New_ETA].\n\n"
-                "We are working closely with the shipping line to expedite the delivery. "
-                "We apologize for any inconvenience.\n\n"
-                "Sincerely,\n[Your Company Name]"
-            ),
-            claim_form_template="SHIPPING LINE DELAY CLAIM - REVISED ETA: [DATE] | CONTRACTUAL DEADLINE: [DATE]",
-            timeline="Tergantung revisi jadwal pelayaran"
-        )
+    return PostExportResponse(
+        problem_title=solution["problem_title"],
+        resolution_steps=solution["resolution_steps"],
+        financial_impact=solution["financial_impact"],
+        email_draft=solution["email_draft"],
+        claim_form_template=solution["claim_form_template"],
+        timeline=solution["timeline"]
+    )
 
 
 # ──────────────────────────────────────────────────────
