@@ -6,16 +6,20 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 from app.middleware import get_current_user
-from app.services.mock_data import (
-    COUNTRY_NAMES, REQUIRED_DOCS_BY_COUNTRY,
-    DRY_RUN_CHECKPOINTS, CALENDAR_EVENTS
-)
-from app.services.cendol_service import CendolNLPService
+from app.services.mock_data import COUNTRY_NAMES
 from app.services.nego_service import (
     get_commodity_benchmark,
     get_fallback_benchmark,
     calculate_counter_offer,
     generate_email_draft,
+)
+from app.services.calendar_service import generate_export_calendar
+from app.services.readiness_service import (
+    get_required_documents,
+    get_cost_breakdown,
+    get_certification_items,
+    get_dry_run_checkpoints,
+    get_shipping_timeline,
 )
 import logging
 
@@ -49,13 +53,15 @@ class ReadinessResponse(BaseModel):
 
 @router.post("/readiness", response_model=ReadinessResponse)
 def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_current_user)):
-    """Rule engine for calculating UMKM export readiness score."""
+    """Real-time export readiness analysis using Gemini + commodity/destination-specific data."""
     commodity = req.commodity or "Produk Umum"
     dest_code = req.destination or "jp"
     dest_name = COUNTRY_NAMES.get(dest_code, dest_code)
-    required_docs = REQUIRED_DOCS_BY_COUNTRY.get(dest_code, REQUIRED_DOCS_BY_COUNTRY["default"])
 
-    # Calculate document score
+    logger.info(f"Readiness: commodity='{commodity}' dest='{dest_code}'")
+
+    # ── Document Score ──
+    required_docs = get_required_documents(commodity, dest_name, dest_code)
     doc_items = []
     doc_score = 0
     for doc in required_docs:
@@ -63,24 +69,14 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
             doc_items.append({"doc": doc, "status": "pass"})
             doc_score += 1
         else:
-            note = f"Perlu diajukan — wajib untuk ekspor ke {dest_name}"
-            doc_items.append({"doc": doc, "status": "fail", "note": note})
-
+            doc_items.append({"doc": doc, "status": "fail",
+                              "note": f"Perlu diajukan — wajib untuk ekspor ke {dest_name}"})
     doc_pct = int((doc_score / max(len(required_docs), 1)) * 100)
 
-    # Certification score
-    cert_items = [
-        {"doc": "BPOM / Food Safety", "status": "pass"},
-        {"doc": "Sertifikat Halal MUI", "status": "pass"},
-    ]
-    if dest_code == "jp":
-        cert_items.append({"doc": "Japan Food Sanitation Act", "status": "warning", "note": "Label Jepang perlu ditambahkan"})
-    elif dest_code == "us":
-        cert_items.append({"doc": "FDA Registration", "status": "warning", "note": "Registrasi FDA diperlukan"})
-    cert_items.append({"doc": "Uji Lab Residu Pestisida", "status": "pass"})
-    cert_score = 85
+    # ── Certification Score ──
+    cert_items, cert_score = get_certification_items(commodity, dest_name, dest_code)
 
-    # Packaging score
+    # ── Packaging Score ──
     pack_items = [
         {"doc": "Label Bahasa Inggris", "status": "pass"},
         {"doc": "Nutrition Facts", "status": "pass"},
@@ -90,19 +86,14 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
         pack_items.append({"doc": "Label Bahasa Jepang", "status": "warning", "note": "Diperlukan untuk pasar Jepang"})
     elif dest_code == "cn":
         pack_items.append({"doc": "Label Bahasa Mandarin", "status": "warning", "note": "Diperlukan untuk pasar Tiongkok"})
-
+    elif dest_code == "kr":
+        pack_items.append({"doc": "Label Bahasa Korea", "status": "warning", "note": "Wajib untuk pasar Korea Selatan"})
     pack_score = 80 if req.packaging_ready else 50
 
-    # Overall score
+    # ── Overall Score ──
     overall = int((doc_pct * 0.5) + (cert_score * 0.25) + (pack_score * 0.25))
     overall = min(max(overall, 0), 100)
-
-    if overall >= 80:
-        status = "Siap Ekspor"
-    elif overall >= 60:
-        status = "Hampir Siap"
-    else:
-        status = "Perlu Persiapan"
+    status = "Siap Ekspor" if overall >= 80 else "Hampir Siap" if overall >= 60 else "Perlu Persiapan"
 
     categories = [
         {"name": "Kelengkapan Dokumen", "score": doc_pct, "items": doc_items},
@@ -110,43 +101,23 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
         {"name": "Kepatuhan Kemasan", "score": pack_score, "items": pack_items},
     ]
 
-    # Cost breakdown
-    is_agri = commodity.lower() in ["kopi", "cokelat", "rempah", "singkong", "keripik", "teh", "kakao"]
-    cost_breakdown = {
-        "production": {"label": f"Biaya Produksi ({commodity})", "amount": "Rp 150.000.000" if is_agri else "Rp 75.000.000"},
-        "freight": {"label": f"Freight (FCL 20ft → {dest_name})", "amount": "Rp 32.000.000"},
-        "insurance": {"label": "Asuransi Kargo", "amount": "Rp 3.500.000"},
-        "docs": {"label": "Pengurusan Dokumen & Sertifikasi", "amount": "Rp 8.500.000"},
-        "customs": {"label": "Handling & Clearance", "amount": "Rp 6.000.000"},
-        "total": "Rp 200.000.000" if is_agri else "Rp 125.000.000",
-    }
+    # ── Cost Breakdown ──
+    cost_breakdown = get_cost_breakdown(commodity, dest_name)
 
-    # Timeline
-    timeline = [
-        {"phase": "Persiapan Dokumen", "duration": "7-10 hari kerja"},
-        {"phase": "Pengemasan & Stuffing", "duration": "3-5 hari kerja"},
-        {"phase": "Customs Clearance Asal", "duration": "2-3 hari kerja"},
-        {"phase": "Transit Laut", "duration": "14-18 hari" if dest_code in ["jp", "cn", "kr", "sg"] else "25-35 hari"},
-        {"phase": "Customs Clearance Tujuan", "duration": "3-5 hari kerja"},
-    ]
+    # ── Timeline ──
+    timeline, total_timeline = get_shipping_timeline(dest_name, dest_code)
 
-    # Risks
+    # ── Risks ──
     risks = []
-    missing_critical = [i for i in doc_items if i["status"] == "fail"]
-    if missing_critical:
-        risks.append({
-            "level": "high",
-            "desc": f"{missing_critical[0]['doc']} belum ada — pengiriman akan ditolak tanpa dokumen ini"
-        })
+    missing = [i for i in doc_items if i["status"] == "fail"]
+    if missing:
+        risks.append({"level": "high",
+                      "desc": f"{missing[0]['doc']} belum ada — pengiriman dapat ditolak tanpa dokumen ini"})
     if not req.packaging_ready:
-        risks.append({
-            "level": "medium",
-            "desc": f"Label bahasa lokal {dest_name} diperlukan — barang bisa ditahan di karantina"
-        })
-    risks.append({
-        "level": "low",
-        "desc": "Waktu transit bervariasi tergantung musim dan rute kapal"
-    })
+        risks.append({"level": "medium",
+                      "desc": f"Label bahasa lokal {dest_name} diperlukan — barang bisa ditahan karantina"})
+    risks.append({"level": "low",
+                  "desc": "Waktu transit bervariasi tergantung musim dan rute kapal aktual"})
 
     return ReadinessResponse(
         product=commodity,
@@ -156,7 +127,7 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
         categories=categories,
         cost_breakdown=cost_breakdown,
         timeline=timeline,
-        total_timeline="29-41 hari" if dest_code in ["jp", "cn", "kr", "sg"] else "40-58 hari",
+        total_timeline=total_timeline,
         risks=risks
     )
 
@@ -263,6 +234,18 @@ def solve_post_export_problem(req: PostExportRequest, current_user: dict = Depen
         )
 
     else:  # logistics_delay
+        import os, requests as _req
+        _key = os.getenv("GEMINI_API_KEY", "").strip('"').strip("'")
+        email_ai = None
+        if _key:
+            try:
+                _url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={_key}"
+                _payload = {"contents": [{"parts": [{"text": f"Write a professional English email to a buyer apologizing for a logistics delay on their shipment (value: USD {req.shipment_value:.0f}). The new ETA is [New_ETA]. Mention we are working with the shipping line to expedite. Output ONLY the email body, starting with 'Dear [Buyer Name],'"}]}], "generationConfig": {"maxOutputTokens": 300}}
+                _r = _req.post(_url, json=_payload, timeout=15)
+                _r.raise_for_status()
+                email_ai = _r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+            except Exception:
+                pass
         return PostExportResponse(
             problem_title="Keterlambatan Logistik",
             resolution_steps=[
@@ -277,13 +260,10 @@ def solve_post_export_problem(req: PostExportRequest, current_user: dict = Depen
                 "penalty_risk": f"USD {req.shipment_value * 0.05:.0f} (5% penalty)",
                 "recommendation": "Komunikasi proaktif dengan buyer + LC amendment"
             },
-            email_draft=CendolNLPService._call_backup_llm(
-                f"Write a professional English email to the buyer apologizing for a logistics delay. The new ETA is [New_ETA] for shipment #[Ref_ID]. Explain we are working with the shipping line to expedite. Output ONLY the email body.",
-                ""
-            ) or (
+            email_draft=email_ai or (
                 "Dear [Buyer Name],\n\n"
                 "We regret to inform you that the shipment #[Ref_ID] has experienced a transit delay. "
-                "The revised estimated arrival is [New_ETA].\n\n"
+                f"The revised estimated arrival is [New_ETA].\n\n"
                 "We are working closely with the shipping line to expedite the delivery. "
                 "We apologize for any inconvenience.\n\n"
                 "Sincerely,\n[Your Company Name]"
@@ -322,37 +302,35 @@ class DryRunResponse(BaseModel):
 
 @router.post("/dry-run", response_model=DryRunResponse)
 def simulate_dry_run(req: DryRunRequest, current_user: dict = Depends(get_current_user)):
-    """Simulate the full export journey with document verification at each checkpoint."""
+    """Real-time dry-run using Gemini to generate commodity + destination-specific checkpoints."""
+    logger.info(f"Dry Run: commodity='{req.commodity}' dest='{req.destination}'")
+
+    checkpoints_data = get_dry_run_checkpoints(req.commodity, req.destination)
+
     checkpoints = []
     risk_count = {"low": 0, "medium": 0, "high": 0, "very_high": 0}
 
-    for cp in DRY_RUN_CHECKPOINTS:
-        # Check if user has the required docs for this checkpoint
+    for cp in checkpoints_data:
         user_docs_lower = [d.lower() for d in req.documents]
-        cp_docs = cp["documents"]
+        cp_docs = cp.get("documents", [])
         matched = sum(1 for d in cp_docs if any(ud in d.lower() for ud in user_docs_lower))
 
-        if matched == len(cp_docs):
+        if matched == len(cp_docs) and len(cp_docs) > 0:
             doc_status = "complete"
         elif matched > 0:
             doc_status = "partial"
         else:
             doc_status = "missing"
 
-        risk_count[cp["risk_level"]] = risk_count.get(cp["risk_level"], 0) + 1
+        risk_count[cp.get("risk_level", "medium")] = risk_count.get(cp.get("risk_level", "medium"), 0) + 1
+        checkpoints.append({**cp, "doc_status": doc_status})
 
-        checkpoints.append({
-            **cp,
-            "doc_status": doc_status
-        })
-
-    # Overall risk assessment
     if risk_count.get("very_high", 0) > 0 or risk_count.get("high", 0) >= 2:
         overall_risk = "TINGGI"
         recommendation = "⚠️ Ada checkpoint berisiko tinggi. Lengkapi semua dokumen sebelum pengiriman!"
     elif risk_count.get("medium", 0) >= 2:
         overall_risk = "SEDANG"
-        recommendation = "📋 Persiapan cukup baik. Perhatikan checkpoint medium risk."
+        recommendation = "📋 Persiapan cukup baik. Perhatikan checkpoint medium risk dengan seksama."
     else:
         overall_risk = "RENDAH"
         recommendation = "✅ Persiapan ekspor Anda sudah sangat baik. Lanjutkan booking kontainer!"
@@ -480,32 +458,17 @@ class CalendarResponse(BaseModel):
 
 @router.post("/smart-calendar", response_model=CalendarResponse)
 def get_smart_calendar(req: CalendarRequest, current_user: dict = Depends(get_current_user)):
-    """Generate personalized export calendar based on commodity and destination."""
+    """Generate personalized export calendar based on commodity and destination in real-time."""
     dest = req.destination or "Jepang"
-
-    key_deadlines = [
-        {"deadline": "SKA (Certificate of Origin)", "rule": "Maks. 7 hari setelah kapal berangkat", "priority": "high"},
-        {"deadline": "Phytosanitary Certificate", "rule": "Berlaku 14 hari dari tanggal diterbitkan", "priority": "high"},
-        {"deadline": "Bea Keluar (jika ada)", "rule": "Harus lunas sebelum PEB disetujui", "priority": "medium"},
-        {"deadline": "PEB (Pemberitahuan Ekspor Barang)", "rule": "Diajukan maks. 7 hari sebelum kapal berangkat", "priority": "high"},
-        {"deadline": "Booking Kontainer", "rule": "Minimal 14 hari sebelum target sailing date", "priority": "medium"},
-    ]
-
-    # Best window based on commodity
-    commodity_lower = req.commodity.lower()
-    if "kopi" in commodity_lower:
-        best_window = "September-Oktober (Panen raya selesai → peak demand Eropa/AS)"
-    elif "rempah" in commodity_lower:
-        best_window = "Februari-Maret (Menjelang Ramadan) & Oktober-November (Pre-Christmas)"
-    elif "kayu" in commodity_lower:
-        best_window = "Agustus-September (Pre-Christmas production window)"
-    else:
-        best_window = "Oktober-November (Global peak demand season)"
-
+    logger.info(f"Smart Export Calendar: commodity='{req.commodity}' dest='{dest}'")
+    
+    calendar_data = generate_export_calendar(req.commodity, dest)
+    
     return CalendarResponse(
         commodity=req.commodity,
         destination=dest,
-        calendar=CALENDAR_EVENTS,
-        key_deadlines=key_deadlines,
-        best_shipping_window=best_window
+        calendar=calendar_data["calendar"],
+        key_deadlines=calendar_data["key_deadlines"],
+        best_shipping_window=calendar_data["best_shipping_window"]
     )
+
