@@ -36,3 +36,5 @@ ai-services/models/
 # Temporary
 tmp/
 temp/
+
+/nusantaraexport

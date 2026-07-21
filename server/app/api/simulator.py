@@ -11,6 +11,12 @@ from app.services.mock_data import (
     DRY_RUN_CHECKPOINTS, CALENDAR_EVENTS
 )
 from app.services.cendol_service import CendolNLPService
+from app.services.nego_service import (
+    get_commodity_benchmark,
+    get_fallback_benchmark,
+    calculate_counter_offer,
+    generate_email_draft,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -380,65 +386,78 @@ class NegoResponse(BaseModel):
     profitability_analysis: dict
     email_draft: str
     recommendation: str
+    negotiation_tips: list = []
+    source_note: Optional[str] = None
 
 
 @router.post("/nego-coach", response_model=NegoResponse)
 def analyze_negotiation(req: NegoRequest, current_user: dict = Depends(get_current_user)):
-    """Compare buyer offer against market data and generate counter-offer."""
-    # Market benchmarks (from COMTRADE-like data)
-    benchmarks = {
-        "kopi": {"min": 3.80, "max": 4.80, "avg": 4.25},
-        "singkong": {"min": 0.80, "max": 1.40, "avg": 1.10},
-        "kayu": {"min": 15.0, "max": 45.0, "avg": 28.0},
-        "rempah": {"min": 5.0, "max": 12.0, "avg": 8.5},
-    }
+    """
+    Real-time negotiation analysis using Gemini 3.1 Flash Lite.
+    Steps:
+      1. Fetch live commodity price benchmark via Gemini (or fallback table)
+      2. Calculate smart counter-offer & margin assessment via Gemini
+      3. Generate professional English counter-offer email via Gemini
+    """
+    logger.info(f"Nego Coach: commodity='{req.commodity}' buyer_offer={req.buyer_offer_usd} dest='{req.destination}'")
 
-    commodity_key = "kopi"
-    for k in benchmarks:
-        if k in req.commodity.lower():
-            commodity_key = k
-            break
-
-    bm = benchmarks.get(commodity_key, benchmarks["kopi"])
-    margin = ((req.buyer_offer_usd - bm["min"]) / bm["avg"]) * 100
-    counter = round(bm["avg"] * 0.97, 2)  # 3% below average as reasonable counter
-
-    total_value = req.buyer_offer_usd * req.quantity_kg
-    counter_total = counter * req.quantity_kg
-
-    if margin < 10:
-        rec = "⚠️ Tawaran buyer TERLALU RENDAH. Wajib counter-offer!"
-    elif margin < 25:
-        rec = "📊 Tawaran buyer masih di bawah rata-rata pasar. Negosiasi disarankan."
+    # ── Step 1: Price Benchmark ──
+    benchmark = get_commodity_benchmark(req.commodity, req.destination, req.incoterm)
+    if not benchmark or benchmark["price_avg"] <= 0:
+        benchmark = get_fallback_benchmark(req.commodity)
+        logger.info(f"Nego Coach: Using fallback benchmark for '{req.commodity}'.")
     else:
-        rec = "✅ Tawaran buyer cukup baik. Pertimbangkan untuk menerima."
+        logger.info(f"Nego Coach: Live benchmark fetched — avg USD {benchmark['price_avg']:.2f}/kg")
+
+    # ── Step 2: Counter-Offer Strategy ──
+    strategy = calculate_counter_offer(
+        commodity=req.commodity,
+        buyer_offer=req.buyer_offer_usd,
+        quantity_kg=req.quantity_kg,
+        destination=req.destination,
+        incoterm=req.incoterm,
+        benchmark=benchmark,
+    )
+    counter = strategy["counter_price"]
+
+    # ── Step 3: Email Draft ──
+    email = generate_email_draft(
+        commodity=req.commodity,
+        buyer_offer=req.buyer_offer_usd,
+        counter_price=counter,
+        quantity_kg=req.quantity_kg,
+        destination=req.destination,
+        incoterm=req.incoterm,
+        benchmark=benchmark,
+    )
+
+    total_buyer = req.buyer_offer_usd * req.quantity_kg
+    total_counter = counter * req.quantity_kg
 
     return NegoResponse(
         buyer_offer=f"USD {req.buyer_offer_usd:.2f}/kg ({req.incoterm} {req.destination})",
-        market_benchmark=f"USD {bm['min']:.2f} - {bm['max']:.2f}/kg (Avg: USD {bm['avg']:.2f})",
-        margin_pct=round(margin, 1),
+        market_benchmark=(
+            f"USD {benchmark['price_min']:.2f} – {benchmark['price_max']:.2f}/kg "
+            f"(Avg: USD {benchmark['price_avg']:.2f}/kg)"
+        ),
+        margin_pct=strategy["margin_pct"],
         counter_offer=f"USD {counter:.2f}/kg ({req.incoterm} {req.destination})",
         profitability_analysis={
-            "buyer_total": f"USD {total_value:,.0f}",
-            "counter_total": f"USD {counter_total:,.0f}",
-            "difference": f"USD {counter_total - total_value:,.0f}",
-            "market_position": "Di bawah rata-rata" if req.buyer_offer_usd < bm["avg"] else "Di atas rata-rata",
+            "buyer_total": f"USD {total_buyer:,.0f}",
+            "counter_total": f"USD {total_counter:,.0f}",
+            "selisih": f"USD {total_counter - total_buyer:,.0f}",
+            "walk_away_price": f"USD {strategy['walk_away_price']:.2f}/kg",
+            "market_position": (
+                "Di bawah rata-rata pasar"
+                if req.buyer_offer_usd < benchmark["price_avg"]
+                else "Di atas rata-rata pasar"
+            ),
+            "counter_rationale": strategy.get("counter_rationale", ""),
         },
-        email_draft=CendolNLPService._call_backup_llm(
-            f"Write a professional English negotiation email to a buyer. They offered USD {req.buyer_offer_usd:.2f}/kg for {req.commodity}. Reject it politely and counter with USD {counter:.2f}/kg ({req.incoterm} {req.destination}). Quantity: {req.quantity_kg} kg. Mention our high quality. Output ONLY the email body.",
-            ""
-        ) or (
-            f"Dear [Buyer Name],\n\n"
-            f"Thank you for your valuable offer of USD {req.buyer_offer_usd:.2f}/kg for our premium {req.commodity}.\n\n"
-            f"After carefully analyzing our production costs and current market benchmarks "
-            f"(UN COMTRADE average: USD {bm['avg']:.2f}/kg), we would like to propose a "
-            f"counter-offer of USD {counter:.2f}/kg ({req.incoterm} {req.destination}).\n\n"
-            f"We can commit to {req.quantity_kg:,.0f} kg with a shipping window within 30 days "
-            f"of receiving the advance payment (30% T/T, 70% Irrevocable L/C at Sight).\n\n"
-            f"We look forward to your favorable response.\n\n"
-            f"Warm regards,\n[Your Company Name]"
-        ),
-        recommendation=rec
+        email_draft=email,
+        recommendation=strategy["recommendation"],
+        negotiation_tips=strategy.get("negotiation_tips", []),
+        source_note=benchmark.get("source_note"),
     )
 
 

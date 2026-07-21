@@ -16,13 +16,6 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem('ne_user');
-    setUser(null);
-    navigate('/');
-  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);

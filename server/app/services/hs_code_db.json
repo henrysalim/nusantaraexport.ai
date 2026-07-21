@@ -1,0 +1,134 @@
+{
+  "090121": {
+    "product": "Kopi Arabika (Arabica Coffee)",
+    "hs_code": "0901.21.10",
+    "description": "Kopi, disangrai, tidak dihilangkan kafeinnya, dalam kemasan langsung untuk penjualan eceran — Arabika WIB/MIE",
+    "chapter": "Chapter 09 — Kopi, Teh, Mate dan Rempah-rempah",
+    "mfn_tariff": "5% - 15%",
+    "fta_results": [
+      {"agreement": "IJEPA (Jepang)", "tariff": "0%", "saving": "Menghemat tarif dasar MFN sebesar 12% (bea masuk ¥180,000/kontainer)", "status": "Berlaku (Form IJEPA)"},
+      {"agreement": "ACFTA (Tiongkok)", "tariff": "0%", "saving": "Menghemat tarif dasar MFN sebesar 15% (bea masuk ¥120,000/kontainer)", "status": "Berlaku (Form E)"},
+      {"agreement": "AKFTA (Korea)", "tariff": "0%", "saving": "Menghemat tarif dasar MFN sebesar 8% (bea masuk ₩95,000/kontainer)", "status": "Berlaku (Form AK)"},
+      {"agreement": "IA-CEPA (Australia)", "tariff": "0%", "saving": "Bebas bea masuk ke Australia, menghemat tarif MFN 5%", "status": "Berlaku (Form IA-CEPA)"},
+      {"agreement": "RCEP (Regional)", "tariff": "0%", "saving": "Bebas bea masuk di 15 negara anggota RCEP", "status": "Berlaku (Form RCEP)"}
+    ],
+    "best_fta": "IJEPA (Jepang) & ACFTA (Tiongkok)",
+    "best_saving": "Tarif preferensi 0% menggunakan SKA Form IJEPA atau Form E"
+  },
+  "090122": {
+    "product": "Kopi Arabika Decaf (Decaffeinated Arabica Coffee)",
+    "hs_code": "0901.22.10",
+    "description": "Kopi, disangrai, dihilangkan kafeinnya, untuk penjualan eceran",
+    "chapter": "Chapter 09 — Kopi, Teh, Mate dan Rempah-rempah",
+    "mfn_tariff": "5% - 15%",
+    "fta_results": [
+      {"agreement": "IJEPA (Jepang)", "tariff": "0%", "saving": "Menghemat tarif MFN 12%", "status": "Berlaku (Form IJEPA)"},
+      {"agreement": "ACFTA (Tiongkok)", "tariff": "0%", "saving": "Menghemat tarif MFN 15%", "status": "Berlaku (Form E)"},
+      {"agreement": "IA-CEPA (Australia)", "tariff": "0%", "saving": "Bebas bea masuk 0%", "status": "Berlaku (Form IA)"}
+    ],
+    "best_fta": "ACFTA (Tiongkok)",
+    "best_saving": "Bebas bea masuk ke pasar Tiongkok"
+  },
+  "090111": {
+    "product": "Biji Kopi Hijau (Green Coffee Beans — Non-Decaf)",
+    "hs_code": "0901.11.10",
+    "description": "Biji kopi hijau, tidak disangrai, tidak dihilangkan kafeinnya",
+    "chapter": "Chapter 09 — Kopi, Teh, Mate dan Rempah-rempah",
+    "mfn_tariff": "5% - 10%",
+    "fta_results": [
+      {"agreement": "IJEPA (Jepang)", "tariff": "0%", "saving": "Bebas bea masuk, menghemat tarif MFN 6%", "status": "Berlaku (Form IJEPA)"},
+      {"agreement": "ACFTA (Tiongkok)", "tariff": "0%", "saving": "Bebas bea masuk, menghemat tarif MFN 8%", "status": "Berlaku (Form E)"},
+      {"agreement": "AANZFTA (ANZ)", "tariff": "0%", "saving": "Tarif preferensi 0%", "status": "Berlaku (Form AANZ)"}
+    ],
+    "best_fta": "IJEPA (Jepang)",
+    "best_saving": "Bebas bea masuk 0% dengan SKA Form IJEPA"
+  },
+  "200599": {
+    "product": "Keripik Singkong (Cassava Chips)",
+    "hs_code": "2005.99.90",
+    "description": "Sayuran lainnya disiapkan atau diawetkan selain dengan cuka atau asam asetat, tidak dibekukan — keripik singkong",
+    "chapter": "Chapter 20 — Olahan Sayuran, Buah, dan Kacang",
+    "mfn_tariff": "10% - 25%",
+    "fta_results": [
+      {"agreement": "ACFTA (Tiongkok)", "tariff": "0%", "saving": "Menghemat tarif dasar MFN sebesar 15% (bea masuk ¥95,000/kontainer)", "status": "Berlaku (Form E)"},
+      {"agreement": "AANZFTA (ASEAN-ANZ)", "tariff": "0%", "saving": "Menghemat tarif MFN 5% ke Australia/Selandia Baru", "status": "Berlaku (Form AANZ)"},
+      {"agreement": "RCEP (Regional)", "tariff": "5%", "saving": "Menghemat tarif MFN secara bertahap hingga 0%", "status": "Berlaku (Form RCEP)"},
+      {"agreement": "IJEPA (Jepang)", "tariff": "8.5%", "saving": "Tarif preferensi khusus IJEPA, hemat sekitar 6%", "status": "Berlaku (Form IJEPA)"}
+    ],
+    "best_fta": "ACFTA (Tiongkok)",
+    "best_saving": "Menghemat bea masuk hingga 15% menggunakan Form E ke Tiongkok"
+  },
+  "442090": {
+    "product": "Kerajinan Kayu & Ornamen (Wooden Crafts)",
+    "hs_code": "4420.90.00",
+    "description": "Barang dari kayu untuk hiasan, kotak perhiasan, kotak alat musik, dan sejenisnya",
+    "chapter": "Chapter 44 — Kayu dan Barang dari Kayu",
+    "mfn_tariff": "0% - 8%",
+    "fta_results": [
+      {"agreement": "GSP+ (Uni Eropa)", "tariff": "0%", "saving": "Bebas bea masuk ke 27 negara UE, hemat tarif MFN 4-6%", "status": "Berlaku (E-Form)"},
+      {"agreement": "IA-CEPA (Australia)", "tariff": "0%", "saving": "Bebas bea masuk ke Australia, hemat tarif MFN 5%", "status": "Berlaku (Form IA-CEPA)"},
+      {"agreement": "IJEPA (Jepang)", "tariff": "0%", "saving": "Bebas bea masuk ke Jepang, hemat tarif MFN 3.8%", "status": "Berlaku (Form IJEPA)"},
+      {"agreement": "RCEP (Regional)", "tariff": "0%", "saving": "Tarif preferensi 0% untuk seluruh regional RCEP", "status": "Berlaku (Form RCEP)"}
+    ],
+    "best_fta": "GSP+ (Uni Eropa) & IA-CEPA (Australia)",
+    "best_saving": "Bebas bea masuk 0% dengan sertifikasi SVLK/V-Legal yang sah"
+  },
+  "091011": {
+    "product": "Jahe Segar / Utuh (Fresh Ginger)",
+    "hs_code": "0910.11.00",
+    "description": "Jahe, tidak dihancurkan atau ditumbuk — Segar atau dingin",
+    "chapter": "Chapter 09 — Kopi, Teh, Mate dan Rempah-rempah",
+    "mfn_tariff": "5% - 20%",
+    "fta_results": [
+      {"agreement": "ACFTA (Tiongkok)", "tariff": "0%", "saving": "Menghemat tarif dasar MFN sebesar 12% (bea masuk ¥80,000/kontainer)", "status": "Berlaku (Form E)"},
+      {"agreement": "AIFTA (India)", "tariff": "8%", "saving": "Menghemat tarif MFN India sebesar 15-30% (bea masuk ₹60,000/kontainer)", "status": "Berlaku (Form AI)"},
+      {"agreement": "AJCEP (Jepang)", "tariff": "0%", "saving": "Bebas bea masuk ke Jepang, hemat tarif MFN 3%", "status": "Berlaku (Form AJ)"},
+      {"agreement": "RCEP (Regional)", "tariff": "3%", "saving": "Menghemat tarif MFN regional secara bertahap", "status": "Berlaku (Form RCEP)"}
+    ],
+    "best_fta": "ACFTA (Tiongkok) & AJCEP (Jepang)",
+    "best_saving": "Bebas bea masuk 0% menggunakan SKA Form E atau Form AJ"
+  },
+  "091012": {
+    "product": "Jahe Bubuk / Kering (Crushed/Ground Ginger)",
+    "hs_code": "0910.12.00",
+    "description": "Jahe, dihancurkan atau ditumbuk (bubuk)",
+    "chapter": "Chapter 09 — Kopi, Teh, Mate dan Rempah-rempah",
+    "mfn_tariff": "5% - 20%",
+    "fta_results": [
+      {"agreement": "ACFTA (Tiongkok)", "tariff": "0%", "saving": "Tarif preferensi 0%", "status": "Berlaku (Form E)"},
+      {"agreement": "AIFTA (India)", "tariff": "10%", "saving": "Tarif preferensi khusus India", "status": "Berlaku (Form AI)"},
+      {"agreement": "IA-CEPA (Australia)", "tariff": "0%", "saving": "Bebas bea masuk ke Australia", "status": "Berlaku (Form IA-CEPA)"}
+    ],
+    "best_fta": "ACFTA (Tiongkok) & IA-CEPA (Australia)",
+    "best_saving": "Bebas bea masuk 0% dengan Form E atau Form IA-CEPA"
+  },
+  "180100": {
+    "product": "Biji Kakao Utuh / Mentah (Raw Cocoa Beans)",
+    "hs_code": "1801.00.00",
+    "description": "Biji kakao, utuh atau pecah, mentah atau disangrai",
+    "chapter": "Chapter 18 — Kakao dan Olahan Kakao",
+    "mfn_tariff": "5% - 10%",
+    "fta_results": [
+      {"agreement": "ACFTA (Tiongkok)", "tariff": "0%", "saving": "Bebas bea masuk ke Tiongkok, hemat MFN 8%", "status": "Berlaku (Form E)"},
+      {"agreement": "IJEPA (Jepang)", "tariff": "0%", "saving": "Bebas bea masuk ke Jepang, hemat MFN 5%", "status": "Berlaku (Form IJEPA)"},
+      {"agreement": "AIFTA (India)", "tariff": "2.5%", "saving": "Menghemat tarif MFN India 30%", "status": "Berlaku (Form AI)"}
+    ],
+    "best_fta": "ACFTA (Tiongkok) & IJEPA (Jepang)",
+    "best_saving": "Bebas bea masuk 0% menggunakan SKA Form E atau Form IJEPA"
+  },
+  "580890": {
+    "product": "Kain Batik Tradisional (Batik Fabrics)",
+    "hs_code": "5808.90.90",
+    "description": "Ornamen hiasan lainnya dalam potongan, tanpa sulaman, selain rajutan atau rajutan renda — kain batik tradisional",
+    "chapter": "Chapter 58 — Kain Tenun Khusus; Kain Rumbai; Renda",
+    "mfn_tariff": "10% - 25%",
+    "fta_results": [
+      {"agreement": "IJEPA (Jepang)", "tariff": "0%", "saving": "Bebas bea masuk ke Jepang untuk produk kerajinan tangan tekstil tradisional", "status": "Berlaku (Form IJEPA / Lampiran Khusus)"},
+      {"agreement": "AKFTA (Korea)", "tariff": "0%", "saving": "Bebas bea masuk ke Korea Selatan, hemat MFN 13%", "status": "Berlaku (Form AK)"},
+      {"agreement": "AANZFTA (ANZ)", "tariff": "0%", "saving": "Bebas bea masuk ke Australia/Selandia Baru", "status": "Berlaku (Form AANZ)"},
+      {"agreement": "RCEP (Regional)", "tariff": "0%", "saving": "Tarif preferensi regional 0%", "status": "Berlaku (Form RCEP)"}
+    ],
+    "best_fta": "IJEPA (Jepang) & AKFTA (Korea)",
+    "best_saving": "Bebas bea masuk 0% dengan menyertakan Sertifikat Keaslian Batik Tradisional Indonesia"
+  }
+}

@@ -1,0 +1,731 @@
+{
+  "_meta": {
+    "description": "NusantaraExport.AI — Packaging Compliance Regulations. Keyed by country_code → product_category. Add new countries or rules here — zero code changes needed.",
+    "last_updated": "2024-01",
+    "sources": [
+      "FDA 21 CFR Part 101 (USA Food Labeling)",
+      "EU Food Information Regulation No 1169/2011",
+      "Japan Food Sanitation Act (食品衛生法)",
+      "China GB 7718-2011 General Standard for Food Labeling",
+      "Korean Food Standards Codex (식품 등의 표시기준)",
+      "Australia New Zealand Food Standards Code (FSANZ)",
+      "Singapore Food Regulations (Cap 283, Rg 1)",
+      "UAE Food Control Law No. 2 of 2008",
+      "Kemendag RI — Regulasi Kemasan Ekspor"
+    ]
+  },
+  "_universal": {
+    "description": "Items that apply to ALL countries and ALL product types. Always included first.",
+    "items": [
+      {
+        "id": "english_label",
+        "label": "Label Bahasa Inggris",
+        "required": true,
+        "default_status": "warning",
+        "note": "Wajib untuk semua pasar internasional — pastikan semua teks utama dalam bahasa Inggris.",
+        "regulation_ref": "International Standard"
+      },
+      {
+        "id": "country_of_origin",
+        "label": "Negara Asal (Country of Origin)",
+        "required": true,
+        "default_status": "warning",
+        "note": "'Made in Indonesia' atau 'Product of Indonesia' harus tercantum jelas.",
+        "regulation_ref": "WTO Agreement on Rules of Origin"
+      },
+      {
+        "id": "net_weight",
+        "label": "Berat/Volume Bersih (Net Weight/Volume)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Harus dalam satuan metrik (gram/kg/ml/L) sesuai standar internasional.",
+        "regulation_ref": "OIML R 79"
+      },
+      {
+        "id": "manufacturer_info",
+        "label": "Identitas Produsen / Eksportir",
+        "required": true,
+        "default_status": "warning",
+        "note": "Nama dan alamat produsen atau eksportir wajib tercantum.",
+        "regulation_ref": "International Standard"
+      },
+      {
+        "id": "barcode",
+        "label": "Kode Barcode (EAN-13 / GS1)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Barcode EAN-13 atau GS1 standar internasional wajib untuk masuk ke retail modern.",
+        "regulation_ref": "GS1 Global Standards"
+      }
+    ]
+  },
+  "_category_food": {
+    "description": "Additional items for food & beverage products.",
+    "items": [
+      {
+        "id": "nutrition_facts",
+        "label": "Informasi Nilai Gizi (Nutrition Facts)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Panel nutrisi wajib untuk semua produk makanan dan minuman ekspor.",
+        "regulation_ref": "Codex Alimentarius CAC/GL 2-1985"
+      },
+      {
+        "id": "ingredients_list",
+        "label": "Daftar Bahan (Ingredients List)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Harus dalam bahasa Inggris, diurutkan dari komposisi terbesar ke terkecil.",
+        "regulation_ref": "Codex Alimentarius STAN 1-1985"
+      },
+      {
+        "id": "expiry_date",
+        "label": "Tanggal Kedaluwarsa (Expiry Date)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Format yang diterima: DD/MM/YYYY atau MM/YYYY — 'Best Before' atau 'Use By'.",
+        "regulation_ref": "Codex Alimentarius"
+      },
+      {
+        "id": "allergen_declaration",
+        "label": "Deklarasi Alergen (Allergen Declaration)",
+        "required": true,
+        "default_status": "warning",
+        "note": "14 alergen utama (kacang, gluten, susu, telur, kedelai, dll.) wajib dideklarasikan.",
+        "regulation_ref": "Codex Alimentarius CAC/GL 23-1997"
+      },
+      {
+        "id": "halal_cert",
+        "label": "Sertifikasi Halal (MUI)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Nilai tambah strategis untuk pasar Asia, Timur Tengah, dan Muslim global. Recommended.",
+        "regulation_ref": "MUI — Majelis Ulama Indonesia"
+      },
+      {
+        "id": "storage_instructions",
+        "label": "Petunjuk Penyimpanan (Storage Instructions)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Contoh: 'Store in a cool, dry place away from direct sunlight'.",
+        "regulation_ref": "Codex Alimentarius"
+      }
+    ]
+  },
+  "_category_cosmetic": {
+    "description": "Additional items for cosmetics, herbal, and personal care products.",
+    "items": [
+      {
+        "id": "ingredient_list_inci",
+        "label": "Daftar Bahan INCI (International Nomenclature)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Nama bahan harus menggunakan nomenklatur INCI internasional, bukan nama generik.",
+        "regulation_ref": "ISO 11612 / CTFA"
+      },
+      {
+        "id": "usage_instructions",
+        "label": "Petunjuk Penggunaan (Usage Instructions)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Cara penggunaan dalam bahasa Inggris dan bahasa negara tujuan.",
+        "regulation_ref": "EU Cosmetics Regulation No 1223/2009"
+      },
+      {
+        "id": "warnings_precautions",
+        "label": "Peringatan & Tindakan Pencegahan",
+        "required": true,
+        "default_status": "warning",
+        "note": "Contoh: 'For external use only', 'Keep out of reach of children', 'Avoid contact with eyes'.",
+        "regulation_ref": "ASEAN Cosmetic Directive"
+      },
+      {
+        "id": "batch_number",
+        "label": "Nomor Batch / Lot",
+        "required": true,
+        "default_status": "warning",
+        "note": "Nomor batch untuk keperluan recall dan traceability produk.",
+        "regulation_ref": "International Standard"
+      },
+      {
+        "id": "pao_symbol",
+        "label": "Simbol PAO (Period After Opening)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Ikon jam pasir + angka bulan (e.g., '12M') menunjukkan masa pakai setelah dibuka.",
+        "regulation_ref": "EU Cosmetics Regulation No 1223/2009"
+      }
+    ]
+  },
+  "_category_textile": {
+    "description": "Additional items for textiles, apparel, and fabrics (including batik).",
+    "items": [
+      {
+        "id": "fiber_content",
+        "label": "Komposisi Serat (Fiber Content)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Contoh: '100% Cotton', '70% Polyester, 30% Rayon' — persentase per jenis serat.",
+        "regulation_ref": "ISO 5087 / US Textile Fiber Products Identification Act"
+      },
+      {
+        "id": "care_instructions",
+        "label": "Petunjuk Perawatan (Care Label)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Simbol ISO 3758 (cuci, setrika, bleach, dry clean) wajib terpasang pada label kain.",
+        "regulation_ref": "ISO 3758:2012"
+      },
+      {
+        "id": "size_label",
+        "label": "Label Ukuran (Size Label)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Standar ukuran berbeda per negara (US, EU, JP, KR). Pertimbangkan label multi-standar.",
+        "regulation_ref": "ISO 8559-1:2017"
+      }
+    ]
+  },
+  "_category_wood": {
+    "description": "Additional items for wood products, furniture, and crafts.",
+    "items": [
+      {
+        "id": "svlk_vlegal",
+        "label": "Sertifikasi V-Legal / SVLK",
+        "required": true,
+        "default_status": "warning",
+        "note": "Sistem Verifikasi Legalitas Kayu (SVLK) wajib untuk ekspor produk kayu dari Indonesia.",
+        "regulation_ref": "Permenhut P.43/2014 — Kementerian LHK RI"
+      },
+      {
+        "id": "fumigation_cert",
+        "label": "Sertifikat Fumigasi (ISPM-15)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Kayu kemasan harus difumigasi sesuai standar ISPM-15 untuk mencegah hama invasif.",
+        "regulation_ref": "FAO ISPM-15"
+      },
+      {
+        "id": "wood_species_label",
+        "label": "Jenis Kayu (Wood Species)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Mencantumkan jenis kayu (e.g., Teak, Mahogany) meningkatkan nilai jual dan kepercayaan buyer.",
+        "regulation_ref": "CITES Appendix check"
+      }
+    ]
+  },
+  "_category_general": {
+    "description": "Items for general/non-food non-cosmetic products.",
+    "items": [
+      {
+        "id": "usage_instructions_general",
+        "label": "Petunjuk Penggunaan (Usage Instructions)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Instruksi pemakaian dalam bahasa Inggris dan bahasa negara tujuan sangat disarankan.",
+        "regulation_ref": "International Standard"
+      },
+      {
+        "id": "safety_warnings",
+        "label": "Peringatan Keamanan (Safety Warnings)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Peringatan relevan seperti 'Keep dry', 'Fragile', atau simbol bahaya sesuai kebutuhan.",
+        "regulation_ref": "ISO 7010"
+      }
+    ]
+  },
+  "us": {
+    "name": "Amerika Serikat",
+    "flag": "🇺🇸",
+    "food": [
+      {
+        "id": "fda_nutrition_panel",
+        "label": "FDA Nutrition Facts Panel",
+        "required": true,
+        "default_status": "warning",
+        "note": "Format vertikal standar FDA wajib — berbeda dari format Codex Alimentarius umum. Lihat 21 CFR § 101.9.",
+        "regulation_ref": "FDA 21 CFR § 101.9"
+      },
+      {
+        "id": "fda_serving_size",
+        "label": "Serving Size & Servings Per Container",
+        "required": true,
+        "default_status": "warning",
+        "note": "Harus menggunakan Reference Amount Customarily Consumed (RACC) sesuai FDA.",
+        "regulation_ref": "FDA 21 CFR § 101.12"
+      },
+      {
+        "id": "imperial_weight",
+        "label": "Berat dalam Satuan oz/fl oz",
+        "required": true,
+        "default_status": "warning",
+        "note": "Selain gram/ml, wajib mencantumkan satuan ounce (oz) atau fluid ounce (fl oz) di samping satuan metrik.",
+        "regulation_ref": "FDA 21 CFR § 101.105"
+      },
+      {
+        "id": "fda_allergen_us",
+        "label": "FDA Major Food Allergens (FALCPA)",
+        "required": true,
+        "default_status": "warning",
+        "note": "9 alergen utama FDA: Milk, Eggs, Fish, Shellfish, Tree nuts, Peanuts, Wheat, Soybeans, Sesame — wajib bold atau dalam 'Contains: ...'",
+        "regulation_ref": "FALCPA (Food Allergen Labeling and Consumer Protection Act 2004)"
+      },
+      {
+        "id": "bioengineered_disclosure",
+        "label": "Bioengineered Food Disclosure (NBFDS)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Jika mengandung bahan GMO, wajib mencantumkan tanda 'BE' (Bioengineered) sesuai NOP USDA.",
+        "regulation_ref": "USDA National Bioengineered Food Disclosure Standard 2018"
+      }
+    ],
+    "cosmetic": [
+      {
+        "id": "fda_cosmetic_registration",
+        "label": "FDA Cosmetic Facility Registration",
+        "required": true,
+        "default_status": "warning",
+        "note": "Sejak MoCRA 2022, fasilitas produksi kosmetik yang mengekspor ke AS wajib terdaftar di FDA.",
+        "regulation_ref": "Modernization of Cosmetics Regulation Act (MoCRA) 2022"
+      },
+      {
+        "id": "fda_color_additive",
+        "label": "FDA Approved Color Additives",
+        "required": true,
+        "default_status": "warning",
+        "note": "Hanya color additives yang disetujui FDA yang boleh digunakan. Beberapa pewarna EU tidak diizinkan di AS.",
+        "regulation_ref": "FDA 21 CFR Parts 73, 74, 82"
+      }
+    ],
+    "textile": [
+      {
+        "id": "tfpia_label",
+        "label": "TFPIA Fiber Content Label",
+        "required": true,
+        "default_status": "warning",
+        "note": "Textile Fiber Products Identification Act mewajibkan label komposisi serat dan negara asal.",
+        "regulation_ref": "Textile Fiber Products Identification Act (TFPIA)"
+      },
+      {
+        "id": "flammability_standard",
+        "label": "Flammability Standard (CPSC)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Produk tekstil harus memenuhi standar flamabilitas CPSC 16 CFR Part 1610.",
+        "regulation_ref": "CPSC 16 CFR Part 1610"
+      }
+    ],
+    "general": [],
+    "wood": []
+  },
+  "jp": {
+    "name": "Jepang",
+    "flag": "🇯🇵",
+    "food": [
+      {
+        "id": "japanese_label",
+        "label": "Label Bahasa Jepang",
+        "required": true,
+        "default_status": "warning",
+        "note": "Japan Food Sanitation Act mewajibkan semua informasi label dalam bahasa Jepang. Boleh bilingual.",
+        "regulation_ref": "Japan Food Sanitation Act (食品衛生法) Art. 19"
+      },
+      {
+        "id": "japan_nutrition",
+        "label": "Format Gizi Jepang (栄養成分表示)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Format panel nutrisi Jepang berbeda dari Codex — urutan: energy, protein, fat, carbohydrate, salt equivalent.",
+        "regulation_ref": "Food Labeling Act (食品表示法) 2015"
+      },
+      {
+        "id": "japan_allergen",
+        "label": "Alergen Wajib Jepang (7 + 21 Bahan)",
+        "required": true,
+        "default_status": "warning",
+        "note": "7 alergen wajib: wheat, buckwheat, eggs, milk, peanuts, shrimp, crab. 21 alergen direkomendasikan. Jauh lebih ketat dari Codex.",
+        "regulation_ref": "Consumer Affairs Agency Japan — Allergen Labeling"
+      },
+      {
+        "id": "japan_expiry_format",
+        "label": "Format Tanggal Jepang (年/月/日)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Tanggal harus dalam format Jepang: YYYY年MM月DD日 atau setidaknya 西暦 (Gregorian calendar).",
+        "regulation_ref": "Food Labeling Act 2015"
+      },
+      {
+        "id": "phytosanitary_jp",
+        "label": "Sertifikat Fitosanitasi (Karantina Pertanian)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Produk pertanian segar/olahan wajib sertifikat Phytosanitary dari Kementan RI untuk masuk Jepang.",
+        "regulation_ref": "Plant Protection Law Japan / Kementan RI"
+      }
+    ],
+    "cosmetic": [
+      {
+        "id": "japan_cosmetic_label",
+        "label": "Label Kosmetik Bahasa Jepang",
+        "required": true,
+        "default_status": "warning",
+        "note": "Pharmaceutical and Medical Device Act (薬機法) mewajibkan label bahasa Jepang untuk semua kosmetik.",
+        "regulation_ref": "Pharmaceutical and Medical Device Act (薬機法)"
+      }
+    ],
+    "textile": [
+      {
+        "id": "japan_care_label",
+        "label": "Care Label Standar JIS L 0001",
+        "required": true,
+        "default_status": "warning",
+        "note": "Jepang menggunakan simbol perawatan standar JIS (bukan ISO 3758). Perlu konversi simbol.",
+        "regulation_ref": "JIS L 0001:2014"
+      },
+      {
+        "id": "japan_fiber_label",
+        "label": "Label Komposisi Serat (家庭用品品質表示法)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Household Goods Quality Labeling Law mewajibkan komposisi serat dalam bahasa Jepang.",
+        "regulation_ref": "Household Goods Quality Labeling Law (家庭用品品質表示法)"
+      }
+    ],
+    "general": [],
+    "wood": []
+  },
+  "cn": {
+    "name": "Tiongkok",
+    "flag": "🇨🇳",
+    "food": [
+      {
+        "id": "chinese_label",
+        "label": "Label Bahasa Mandarin",
+        "required": true,
+        "default_status": "warning",
+        "note": "GB 7718-2011 mewajibkan SEMUA informasi label dalam bahasa Mandarin (Simplified Chinese). Tanpa terjemahan, barang PASTI ditolak.",
+        "regulation_ref": "GB 7718-2011 General Standard for Food Labeling"
+      },
+      {
+        "id": "cn_nutrition_label",
+        "label": "Panel Nutrisi Format China (GB 28050)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Format panel nutrisi China unik: per 100g/100ml dengan NRV% (Nutrient Reference Values China). Berbeda dari FDA dan EU.",
+        "regulation_ref": "GB 28050-2011"
+      },
+      {
+        "id": "cn_qr_code",
+        "label": "QR Code Traceability (追溯码)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Semakin diwajibkan oleh importir besar di Tiongkok untuk keperluan traceability produk impor.",
+        "regulation_ref": "GACC China — Cross-border e-commerce regulations"
+      },
+      {
+        "id": "cn_gacc_registration",
+        "label": "Registrasi GACC Produsen",
+        "required": true,
+        "default_status": "warning",
+        "note": "Sejak 2022, produsen pangan ekspor ke China wajib terdaftar di GACC (General Administration of Customs China).",
+        "regulation_ref": "GACC Decree No. 249 (2021)"
+      }
+    ],
+    "cosmetic": [
+      {
+        "id": "cn_cosmetic_registration",
+        "label": "Registrasi NMPA Tiongkok",
+        "required": true,
+        "default_status": "warning",
+        "note": "Kosmetik impor ke China wajib registrasi di NMPA (National Medical Products Administration). Proses 6-12 bulan.",
+        "regulation_ref": "Cosmetics Supervision and Administration Regulation (CSAR) 2021"
+      },
+      {
+        "id": "cn_no_animal_testing",
+        "label": "Animal Testing Compliance",
+        "required": false,
+        "default_status": "warning",
+        "note": "China mulai mengizinkan non-animal testing untuk kosmetik impor tertentu sejak 2021. Verifikasi kategori produk Anda.",
+        "regulation_ref": "NMPA China 2021 Policy Update"
+      }
+    ],
+    "textile": [],
+    "general": [],
+    "wood": []
+  },
+  "eu": {
+    "name": "Uni Eropa",
+    "flag": "🇪🇺",
+    "food": [
+      {
+        "id": "eu_fic",
+        "label": "EU Food Information Regulation (FIR)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Reg. 1169/2011 mewajibkan: nama produk, ingredient list, alergen, berat bersih, expiry, storage, negara asal, nutrisi per 100g.",
+        "regulation_ref": "EU Regulation No 1169/2011 (FIR)"
+      },
+      {
+        "id": "eu_allergen_bold",
+        "label": "Alergen EU di-Bold/Italic/Underline",
+        "required": true,
+        "default_status": "warning",
+        "note": "14 alergen EU harus di-highlight berbeda (bold, italic, atau underline) di dalam ingredient list.",
+        "regulation_ref": "EU Regulation 1169/2011 Annex II"
+      },
+      {
+        "id": "eu_language",
+        "label": "Label dalam Bahasa Negara Tujuan EU",
+        "required": true,
+        "default_status": "warning",
+        "note": "Label harus dalam bahasa resmi negara tujuan anggota EU (e.g., Jerman=Deutsch, Prancis=Français). Boleh multi-language.",
+        "regulation_ref": "EU Regulation 1169/2011 Art. 15"
+      },
+      {
+        "id": "eu_organic",
+        "label": "Sertifikasi Organik EU (jika diklaim)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Jika mengklaim 'Organic', wajib sertifikasi dari lembaga organik terakreditasi EU. Logo organik EU harus dicantumkan.",
+        "regulation_ref": "EU Regulation No 2018/848"
+      },
+      {
+        "id": "eu_palm_oil",
+        "label": "Pencantuman 'Minyak Sawit' Eksplisit",
+        "required": true,
+        "default_status": "warning",
+        "note": "EU mewajibkan 'Palm Oil' dicantumkan secara eksplisit di ingredient list (tidak boleh hanya 'vegetable oil').",
+        "regulation_ref": "EU Regulation 1169/2011 Annex VII Part B"
+      }
+    ],
+    "cosmetic": [
+      {
+        "id": "eu_cosmetic_reg",
+        "label": "EU Cosmetics Regulation (EC) No 1223/2009",
+        "required": true,
+        "default_status": "warning",
+        "note": "Wajib ada Responsible Person (RP) di EU, Product Information File (PIF), dan Safety Assessment dari qualified assessor.",
+        "regulation_ref": "EC No 1223/2009"
+      },
+      {
+        "id": "eu_no_animal_test",
+        "label": "No Animal Testing Declaration",
+        "required": true,
+        "default_status": "warning",
+        "note": "EU melarang uji coba hewan untuk kosmetik sejak 2013. Produk harus bebas animal testing.",
+        "regulation_ref": "EC No 1223/2009 Art. 18"
+      },
+      {
+        "id": "eu_cpnp",
+        "label": "Notifikasi CPNP (Cosmetic Products Notification Portal)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Setiap produk kosmetik yang masuk EU wajib dinotifikasikan ke CPNP oleh Responsible Person sebelum dipasarkan.",
+        "regulation_ref": "EC No 1223/2009 Art. 13"
+      }
+    ],
+    "textile": [
+      {
+        "id": "eu_reach",
+        "label": "REACH Compliance (Zat Kimia Berbahaya)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Produk tekstil tidak boleh mengandung zat kimia berbahaya di atas batas REACH (SVHC List). Wajib ada declaration of conformity.",
+        "regulation_ref": "EU REACH Regulation No 1907/2006"
+      },
+      {
+        "id": "eu_textile_reg",
+        "label": "EU Textile Labelling Regulation",
+        "required": true,
+        "default_status": "warning",
+        "note": "Reg. No 1007/2011 mewajibkan nama serat, persentase komposisi, negara asal dalam bahasa negara tujuan EU.",
+        "regulation_ref": "EU Regulation No 1007/2011"
+      }
+    ],
+    "general": [
+      {
+        "id": "eu_ce_marking",
+        "label": "CE Marking (jika berlaku)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Produk tertentu (elektronik, mainan, keselamatan) wajib CE marking sebelum masuk pasar EU.",
+        "regulation_ref": "EU New Approach Directives"
+      }
+    ],
+    "wood": [
+      {
+        "id": "eu_timber_regulation",
+        "label": "EU Timber Regulation (EUTR)",
+        "required": true,
+        "default_status": "warning",
+        "note": "EUTR melarang kayu ilegal masuk EU. V-Legal/SVLK Indonesia diakui sebagai Voluntary Partnership Agreement (VPA).",
+        "regulation_ref": "EU Timber Regulation No 995/2010 (EUTR)"
+      }
+    ]
+  },
+  "kr": {
+    "name": "Korea Selatan",
+    "flag": "🇰🇷",
+    "food": [
+      {
+        "id": "korean_label",
+        "label": "Label Bahasa Korea (한국어)",
+        "required": true,
+        "default_status": "warning",
+        "note": "KFDA (Ministry of Food and Drug Safety) mewajibkan label bahasa Korea untuk semua produk pangan impor.",
+        "regulation_ref": "Food Labeling Standards (식품 등의 표시기준) — MFDS Korea"
+      },
+      {
+        "id": "korea_nutrition",
+        "label": "Format Nutrisi Korea",
+        "required": true,
+        "default_status": "warning",
+        "note": "Per serving dan per 100g/100ml. Urutan: calories, sodium, fat (total, saturated, trans), cholesterol, carbohydrates, sugars, protein.",
+        "regulation_ref": "MFDS Korea Nutritional Labeling Guidelines"
+      },
+      {
+        "id": "korea_country_origin",
+        "label": "Negara Asal dalam Bahasa Korea",
+        "required": true,
+        "default_status": "warning",
+        "note": "'원산지: 인도네시아' (Negara Asal: Indonesia) harus tercantum dalam bahasa Korea.",
+        "regulation_ref": "Act on Origin Labeling of Agricultural and Fishery Products"
+      }
+    ],
+    "cosmetic": [
+      {
+        "id": "korea_cosmetic_import",
+        "label": "Responsible Person Korea + Import Notification",
+        "required": true,
+        "default_status": "warning",
+        "note": "Wajib ada importir terdaftar di Korea yang bertindak sebagai Responsible Person untuk setiap produk kosmetik.",
+        "regulation_ref": "Cosmetics Act (화장품법) Korea"
+      }
+    ],
+    "textile": [],
+    "general": [],
+    "wood": []
+  },
+  "au": {
+    "name": "Australia",
+    "flag": "🇦🇺",
+    "food": [
+      {
+        "id": "fsanz_compliance",
+        "label": "Australia New Zealand Food Standards (FSANZ)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Semua label pangan impor harus comply dengan Australia New Zealand Food Standards Code.",
+        "regulation_ref": "FSANZ Food Standards Code Standard 1.2.1"
+      },
+      {
+        "id": "au_allergen",
+        "label": "Alergen Australia (10 Prioritas)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Australia memiliki 10 alergen prioritas yang berbeda dari EU/US: milk, eggs, peanuts, tree nuts, sesame seeds, wheat, rye, barley, oats, soy, fish, shellfish.",
+        "regulation_ref": "FSANZ Food Standards Code Standard 1.2.3"
+      },
+      {
+        "id": "au_percentage_labeling",
+        "label": "Percentage Labeling (QUID)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Bahan utama yang disebutkan dalam nama produk atau gambar harus mencantumkan persentasenya.",
+        "regulation_ref": "FSANZ Standard 1.2.10"
+      },
+      {
+        "id": "au_country_of_origin",
+        "label": "Australian Country of Origin Labeling",
+        "required": true,
+        "default_status": "warning",
+        "note": "COOL laws Australia sangat ketat — harus jelas apakah produk 'Imported' atau 'Made in [Country]'.",
+        "regulation_ref": "Australian Consumer Law — Country of Origin Information Standard 2020"
+      }
+    ],
+    "cosmetic": [],
+    "textile": [],
+    "general": [],
+    "wood": []
+  },
+  "sg": {
+    "name": "Singapura",
+    "flag": "🇸🇬",
+    "food": [
+      {
+        "id": "sg_sfa_compliance",
+        "label": "Singapore Food Agency (SFA) Compliance",
+        "required": true,
+        "default_status": "warning",
+        "note": "Semua produk pangan impor harus memenuhi Singapore Food Regulations (Cap 283, Rg 1) dan Sale of Food Act.",
+        "regulation_ref": "Singapore Food Regulations (Cap 283, Rg 1)"
+      },
+      {
+        "id": "sg_halal_optional",
+        "label": "Sertifikasi Halal MUIS (Recommended)",
+        "required": false,
+        "default_status": "warning",
+        "note": "Singapura memiliki 15% populasi Muslim. Sertifikasi Halal MUIS (Majelis Ugama Islam Singapura) sangat meningkatkan peluang.",
+        "regulation_ref": "MUIS — Majlis Ugama Islam Singapura"
+      }
+    ],
+    "cosmetic": [],
+    "textile": [],
+    "general": [],
+    "wood": []
+  },
+  "ae": {
+    "name": "Uni Emirat Arab",
+    "flag": "🇦🇪",
+    "food": [
+      {
+        "id": "uae_arabic_label",
+        "label": "Label Bahasa Arab",
+        "required": true,
+        "default_status": "warning",
+        "note": "UAE Food Control Law mewajibkan label bahasa Arab untuk semua produk pangan yang dijual di UAE.",
+        "regulation_ref": "UAE Food Control Law No. 2 of 2008"
+      },
+      {
+        "id": "uae_halal_cert",
+        "label": "Sertifikasi Halal (Wajib)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Produk pangan impor ke UAE wajib memiliki sertifikat Halal yang diakui oleh UAE. Tanpa halal cert, produk pangan PASTI ditolak.",
+        "regulation_ref": "UAE Federal Law No. 5 of 1985 (Shari'ah Law)"
+      },
+      {
+        "id": "uae_shelf_life",
+        "label": "Sisa Masa Kadaluarsa Min. 1/3 Shelf Life",
+        "required": true,
+        "default_status": "warning",
+        "note": "UAE mensyaratkan produk impor memiliki sisa masa kadaluarsa minimal 1/3 dari total shelf life saat tiba di pelabuhan.",
+        "regulation_ref": "UAE Ministry of Economy Import Regulations"
+      }
+    ],
+    "cosmetic": [],
+    "textile": [],
+    "general": [],
+    "wood": []
+  },
+  "default": {
+    "name": "Pasar Internasional (Umum)",
+    "flag": "🌍",
+    "food": [
+      {
+        "id": "codex_compliance",
+        "label": "Codex Alimentarius Compliance (Standar Internasional)",
+        "required": true,
+        "default_status": "warning",
+        "note": "Standar Codex Alimentarius FAO/WHO sebagai baseline internasional — labeling, higiene, dan nilai gizi.",
+        "regulation_ref": "Codex Alimentarius — www.fao.org/fao-who-codexalimentarius"
+      }
+    ],
+    "cosmetic": [],
+    "textile": [],
+    "general": [],
+    "wood": []
+  }
+}

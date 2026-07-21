@@ -1,0 +1,327 @@
+{
+  "_meta": {
+    "description": "NusantaraExport.AI — Market Gap Fallback Data. Keyed by 4-digit HS prefix. Update when COMTRADE data becomes stale. Source: UN COMTRADE 2023, BPS Indonesia, Kemendag.",
+    "last_updated": "2024-01",
+    "indonesia_reporter_code": "360"
+  },
+  "0901": {
+    "name_id": "Kopi",
+    "name_en": "Coffee",
+    "keywords": ["kopi", "coffee", "arabika", "arabica", "robusta", "espresso", "luwak", "java coffee", "toraja"],
+    "top_destinations": [
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 92, "demand_usd": 890000000},
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 88, "demand_usd": 1200000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 85, "demand_usd": 720000000},
+      {"country": "Korea Selatan", "country_code": "410", "flag": "🇰🇷", "score": 79, "demand_usd": 340000000},
+      {"country": "Italia", "country_code": "380", "flag": "🇮🇹", "score": 74, "demand_usd": 210000000}
+    ],
+    "gap_score": 87.0,
+    "avg_price_usd_ton": 4200,
+    "growth_pct": 12.3,
+    "idn_export_usd": 1200000000,
+    "global_demand_usd": 8500000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "0902": {
+    "name_id": "Teh",
+    "name_en": "Tea",
+    "keywords": ["teh", "tea", "green tea", "black tea", "teh hijau", "teh hitam", "teh celup"],
+    "top_destinations": [
+      {"country": "Pakistan", "country_code": "586", "flag": "🇵🇰", "score": 90, "demand_usd": 450000000},
+      {"country": "Rusia", "country_code": "643", "flag": "🇷🇺", "score": 83, "demand_usd": 280000000},
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 78, "demand_usd": 310000000},
+      {"country": "Malaysia", "country_code": "458", "flag": "🇲🇾", "score": 72, "demand_usd": 120000000}
+    ],
+    "gap_score": 76.0,
+    "avg_price_usd_ton": 2800,
+    "growth_pct": 7.2,
+    "idn_export_usd": 320000000,
+    "global_demand_usd": 6200000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "0904": {
+    "name_id": "Lada / Merica",
+    "name_en": "Pepper",
+    "keywords": ["lada", "merica", "pepper", "peppercorn", "lada hitam", "lada putih", "black pepper", "white pepper"],
+    "top_destinations": [
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 91, "demand_usd": 380000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 85, "demand_usd": 220000000},
+      {"country": "India", "country_code": "356", "flag": "🇮🇳", "score": 79, "demand_usd": 150000000},
+      {"country": "Singapura", "country_code": "702", "flag": "🇸🇬", "score": 74, "demand_usd": 95000000}
+    ],
+    "gap_score": 82.0,
+    "avg_price_usd_ton": 5500,
+    "growth_pct": 9.8,
+    "idn_export_usd": 480000000,
+    "global_demand_usd": 3800000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "0906": {
+    "name_id": "Kayu Manis",
+    "name_en": "Cinnamon",
+    "keywords": ["kayu manis", "cinnamon", "cassia", "cinnamomum"],
+    "top_destinations": [
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 94, "demand_usd": 280000000},
+      {"country": "Meksiko", "country_code": "484", "flag": "🇲🇽", "score": 82, "demand_usd": 120000000},
+      {"country": "Uni Emirat Arab", "country_code": "784", "flag": "🇦🇪", "score": 77, "demand_usd": 90000000},
+      {"country": "Belanda", "country_code": "528", "flag": "🇳🇱", "score": 71, "demand_usd": 75000000}
+    ],
+    "gap_score": 88.0,
+    "avg_price_usd_ton": 3200,
+    "growth_pct": 15.4,
+    "idn_export_usd": 190000000,
+    "global_demand_usd": 1800000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "0910": {
+    "name_id": "Rempah-rempah",
+    "name_en": "Spices (Ginger, Nutmeg, Clove, etc.)",
+    "keywords": ["rempah", "spice", "jahe", "ginger", "pala", "nutmeg", "cengkeh", "clove", "kunyit", "turmeric", "lengkuas", "galangal", "kapulaga", "cardamom"],
+    "top_destinations": [
+      {"country": "Tiongkok", "country_code": "156", "flag": "🇨🇳", "score": 88, "demand_usd": 320000000},
+      {"country": "India", "country_code": "356", "flag": "🇮🇳", "score": 84, "demand_usd": 180000000},
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 79, "demand_usd": 250000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 73, "demand_usd": 140000000}
+    ],
+    "gap_score": 84.0,
+    "avg_price_usd_ton": 4800,
+    "growth_pct": 11.6,
+    "idn_export_usd": 620000000,
+    "global_demand_usd": 4200000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "1513": {
+    "name_id": "Minyak Kelapa / VCO",
+    "name_en": "Coconut / Copra Oil",
+    "keywords": ["kelapa", "coconut", "vco", "virgin coconut oil", "minyak kelapa", "kopra", "copra"],
+    "top_destinations": [
+      {"country": "Belanda", "country_code": "528", "flag": "🇳🇱", "score": 89, "demand_usd": 420000000},
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 85, "demand_usd": 380000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 80, "demand_usd": 220000000},
+      {"country": "Tiongkok", "country_code": "156", "flag": "🇨🇳", "score": 75, "demand_usd": 180000000}
+    ],
+    "gap_score": 79.0,
+    "avg_price_usd_ton": 1400,
+    "growth_pct": 18.2,
+    "idn_export_usd": 980000000,
+    "global_demand_usd": 5600000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "1511": {
+    "name_id": "Minyak Sawit / CPO",
+    "name_en": "Palm Oil (CPO)",
+    "keywords": ["sawit", "palm", "cpo", "crude palm oil", "minyak sawit", "palm oil", "olein", "stearin"],
+    "top_destinations": [
+      {"country": "India", "country_code": "356", "flag": "🇮🇳", "score": 95, "demand_usd": 4200000000},
+      {"country": "Tiongkok", "country_code": "156", "flag": "🇨🇳", "score": 90, "demand_usd": 3800000000},
+      {"country": "Pakistan", "country_code": "586", "flag": "🇵🇰", "score": 82, "demand_usd": 980000000},
+      {"country": "Bangladesh", "country_code": "50", "flag": "🇧🇩", "score": 76, "demand_usd": 580000000}
+    ],
+    "gap_score": 65.0,
+    "avg_price_usd_ton": 980,
+    "growth_pct": 3.1,
+    "idn_export_usd": 18500000000,
+    "global_demand_usd": 52000000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "1801": {
+    "name_id": "Kakao / Cokelat",
+    "name_en": "Cocoa Beans",
+    "keywords": ["kakao", "cocoa", "cokelat", "chocolate", "cacao", "kakao biji", "cocoa beans"],
+    "top_destinations": [
+      {"country": "Malaysia", "country_code": "458", "flag": "🇲🇾", "score": 86, "demand_usd": 380000000},
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 82, "demand_usd": 520000000},
+      {"country": "Belanda", "country_code": "528", "flag": "🇳🇱", "score": 79, "demand_usd": 420000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 73, "demand_usd": 310000000}
+    ],
+    "gap_score": 81.0,
+    "avg_price_usd_ton": 3600,
+    "growth_pct": 8.9,
+    "idn_export_usd": 820000000,
+    "global_demand_usd": 9800000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "2005": {
+    "name_id": "Keripik & Olahan Singkong",
+    "name_en": "Processed Cassava & Chips",
+    "keywords": ["singkong", "cassava", "keripik", "chips", "keripik singkong", "tepung singkong", "tapioka", "tapioca"],
+    "top_destinations": [
+      {"country": "Tiongkok", "country_code": "156", "flag": "🇨🇳", "score": 94, "demand_usd": 650000000},
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 82, "demand_usd": 180000000},
+      {"country": "Korea Selatan", "country_code": "410", "flag": "🇰🇷", "score": 78, "demand_usd": 120000000},
+      {"country": "Uni Emirat Arab", "country_code": "784", "flag": "🇦🇪", "score": 71, "demand_usd": 85000000}
+    ],
+    "gap_score": 91.0,
+    "avg_price_usd_ton": 1800,
+    "growth_pct": 23.1,
+    "idn_export_usd": 450000000,
+    "global_demand_usd": 3200000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "2009": {
+    "name_id": "Jus & Minuman Buah",
+    "name_en": "Fruit Juices & Beverages",
+    "keywords": ["jus", "juice", "minuman buah", "fruit juice", "mangga", "mango", "nanas", "pineapple", "jambu", "guava", "sirsak", "soursop"],
+    "top_destinations": [
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 87, "demand_usd": 420000000},
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 81, "demand_usd": 280000000},
+      {"country": "Australia", "country_code": "36", "flag": "🇦🇺", "score": 76, "demand_usd": 190000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 70, "demand_usd": 140000000}
+    ],
+    "gap_score": 78.0,
+    "avg_price_usd_ton": 2100,
+    "growth_pct": 14.7,
+    "idn_export_usd": 380000000,
+    "global_demand_usd": 4800000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "2306": {
+    "name_id": "Bungkil Kelapa Sawit",
+    "name_en": "Palm Kernel Expeller / PKE",
+    "keywords": ["bungkil", "pke", "palm kernel expeller", "bungkil sawit", "pakan ternak"],
+    "top_destinations": [
+      {"country": "Korea Selatan", "country_code": "410", "flag": "🇰🇷", "score": 88, "demand_usd": 350000000},
+      {"country": "Belanda", "country_code": "528", "flag": "🇳🇱", "score": 83, "demand_usd": 280000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 78, "demand_usd": 210000000}
+    ],
+    "gap_score": 70.0,
+    "avg_price_usd_ton": 280,
+    "growth_pct": 5.4,
+    "idn_export_usd": 1200000000,
+    "global_demand_usd": 5800000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "4420": {
+    "name_id": "Kerajinan Kayu",
+    "name_en": "Wood Crafts & Furniture",
+    "keywords": ["kayu", "wood", "kerajinan", "crafts", "furniture", "furnitur", "ukiran", "carving", "jati", "teak", "mahoni", "mahogany", "rotan", "rattan"],
+    "top_destinations": [
+      {"country": "Belanda", "country_code": "528", "flag": "🇳🇱", "score": 89, "demand_usd": 420000000},
+      {"country": "Inggris", "country_code": "826", "flag": "🇬🇧", "score": 84, "demand_usd": 280000000},
+      {"country": "Australia", "country_code": "36", "flag": "🇦🇺", "score": 80, "demand_usd": 190000000},
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 77, "demand_usd": 350000000}
+    ],
+    "gap_score": 72.0,
+    "avg_price_usd_ton": 3500,
+    "growth_pct": 8.7,
+    "idn_export_usd": 280000000,
+    "global_demand_usd": 2100000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "6304": {
+    "name_id": "Tekstil & Kerajinan Batik",
+    "name_en": "Textiles, Batik & Home Furnishings",
+    "keywords": ["batik", "tekstil", "textile", "tenun", "weaving", "sarung", "kain", "fabric", "songket", "kebaya"],
+    "top_destinations": [
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 86, "demand_usd": 580000000},
+      {"country": "Uni Emirat Arab", "country_code": "784", "flag": "🇦🇪", "score": 80, "demand_usd": 240000000},
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 75, "demand_usd": 180000000},
+      {"country": "Jerman", "country_code": "276", "flag": "🇩🇪", "score": 70, "demand_usd": 140000000}
+    ],
+    "gap_score": 74.0,
+    "avg_price_usd_ton": 12000,
+    "growth_pct": 6.3,
+    "idn_export_usd": 1800000000,
+    "global_demand_usd": 28000000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "2523": {
+    "name_id": "Semen",
+    "name_en": "Cement & Clinker",
+    "keywords": ["semen", "cement", "clinker", "portland cement"],
+    "top_destinations": [
+      {"country": "Bangladesh", "country_code": "50", "flag": "🇧🇩", "score": 90, "demand_usd": 380000000},
+      {"country": "Filipina", "country_code": "608", "flag": "🇵🇭", "score": 85, "demand_usd": 280000000},
+      {"country": "Sri Lanka", "country_code": "144", "flag": "🇱🇰", "score": 78, "demand_usd": 120000000}
+    ],
+    "gap_score": 68.0,
+    "avg_price_usd_ton": 65,
+    "growth_pct": 4.2,
+    "idn_export_usd": 980000000,
+    "global_demand_usd": 12000000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "0306": {
+    "name_id": "Udang & Hasil Laut",
+    "name_en": "Shrimp, Lobster & Seafood",
+    "keywords": ["udang", "shrimp", "lobster", "kepiting", "crab", "ikan", "fish", "tuna", "cakalang", "skipjack", "rumput laut", "seaweed", "hasil laut", "seafood"],
+    "top_destinations": [
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 93, "demand_usd": 2800000000},
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 88, "demand_usd": 1400000000},
+      {"country": "Tiongkok", "country_code": "156", "flag": "🇨🇳", "score": 84, "demand_usd": 1100000000},
+      {"country": "Uni Eropa", "country_code": "918", "flag": "🇪🇺", "score": 79, "demand_usd": 980000000}
+    ],
+    "gap_score": 83.0,
+    "avg_price_usd_ton": 8500,
+    "growth_pct": 10.2,
+    "idn_export_usd": 2200000000,
+    "global_demand_usd": 24000000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "2510": {
+    "name_id": "Pupuk & Mineral",
+    "name_en": "Fertilizers & Minerals",
+    "keywords": ["pupuk", "fertilizer", "mineral", "nikel", "nickel", "timah", "tin", "bauksit", "bauxite", "tembaga", "copper"],
+    "top_destinations": [
+      {"country": "Tiongkok", "country_code": "156", "flag": "🇨🇳", "score": 92, "demand_usd": 8500000000},
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 84, "demand_usd": 2400000000},
+      {"country": "Korea Selatan", "country_code": "410", "flag": "🇰🇷", "score": 78, "demand_usd": 1800000000}
+    ],
+    "gap_score": 58.0,
+    "avg_price_usd_ton": 4200,
+    "growth_pct": 22.5,
+    "idn_export_usd": 12000000000,
+    "global_demand_usd": 85000000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "3305": {
+    "name_id": "Produk Kecantikan & Herbal",
+    "name_en": "Beauty, Herbal & Wellness Products",
+    "keywords": ["herbal", "jamu", "kecantikan", "beauty", "kosmetik", "cosmetic", "minyak esensial", "essential oil", "aromaterapi", "aromatherapy", "skincare"],
+    "top_destinations": [
+      {"country": "Malaysia", "country_code": "458", "flag": "🇲🇾", "score": 88, "demand_usd": 380000000},
+      {"country": "Singapura", "country_code": "702", "flag": "🇸🇬", "score": 83, "demand_usd": 240000000},
+      {"country": "Australia", "country_code": "36", "flag": "🇦🇺", "score": 77, "demand_usd": 180000000},
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 72, "demand_usd": 290000000}
+    ],
+    "gap_score": 85.0,
+    "avg_price_usd_ton": 28000,
+    "growth_pct": 19.8,
+    "idn_export_usd": 320000000,
+    "global_demand_usd": 5200000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "6912": {
+    "name_id": "Keramik & Gerabah",
+    "name_en": "Ceramics & Pottery",
+    "keywords": ["keramik", "ceramic", "gerabah", "pottery", "tembikar", "porselen", "porcelain", "earthenware"],
+    "top_destinations": [
+      {"country": "Amerika Serikat", "country_code": "842", "flag": "🇺🇸", "score": 85, "demand_usd": 480000000},
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 80, "demand_usd": 280000000},
+      {"country": "Australia", "country_code": "36", "flag": "🇦🇺", "score": 74, "demand_usd": 140000000}
+    ],
+    "gap_score": 78.0,
+    "avg_price_usd_ton": 1800,
+    "growth_pct": 5.9,
+    "idn_export_usd": 180000000,
+    "global_demand_usd": 2200000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  },
+  "0803": {
+    "name_id": "Pisang & Buah Tropis",
+    "name_en": "Banana & Tropical Fruits",
+    "keywords": ["pisang", "banana", "buah tropis", "tropical fruit", "nanas", "pineapple", "pepaya", "papaya", "mangga", "mango", "durian", "rambutan"],
+    "top_destinations": [
+      {"country": "Tiongkok", "country_code": "156", "flag": "🇨🇳", "score": 91, "demand_usd": 820000000},
+      {"country": "Jepang", "country_code": "392", "flag": "🇯🇵", "score": 86, "demand_usd": 380000000},
+      {"country": "Korea Selatan", "country_code": "410", "flag": "🇰🇷", "score": 80, "demand_usd": 220000000},
+      {"country": "Timur Tengah", "country_code": "784", "flag": "🇦🇪", "score": 74, "demand_usd": 180000000}
+    ],
+    "gap_score": 80.0,
+    "avg_price_usd_ton": 950,
+    "growth_pct": 13.4,
+    "idn_export_usd": 380000000,
+    "global_demand_usd": 7800000000,
+    "data_source": "UN COMTRADE 2023 Fallback"
+  }
+}

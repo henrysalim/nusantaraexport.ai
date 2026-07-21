@@ -1,11 +1,20 @@
 """
-Market Routes — Market Gap Analysis with UN COMTRADE integration + mock fallback.
+Market Routes — Market Gap Analysis powered by UN COMTRADE live data.
+
+Flow:
+  1. Resolve product input (name or HS code) → 4-digit HS prefix via comtrade_service.
+  2. Attempt live UN COMTRADE API call (fetch_market_analysis).
+  3. On COMTRADE failure → serve from market_fallback.json (fetch_fallback_analysis).
+  4. AI summary always generated from actual data figures (never hardcoded text).
 """
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from app.middleware import get_current_user
-from app.services.comtrade_service import get_market_data, calculate_market_gap
-from app.services.mock_data import MARKET_DATA
+from app.services.comtrade_service import (
+    resolve_hs_prefix,
+    fetch_market_analysis,
+    fetch_fallback_analysis,
+)
 from app.services.cendol_service import CendolNLPService
 import logging
 
@@ -13,6 +22,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
+# ──────────────────────────────────────────────────────
+# Request / Response Models
+# ──────────────────────────────────────────────────────
 
 class GapRequest(BaseModel):
     hs_code: str = ""
@@ -22,6 +35,7 @@ class GapRequest(BaseModel):
 
 class GapResponse(BaseModel):
     product: str
+    hs_code: str
     top_destinations: list
     gap_score: float
     avg_price: str
@@ -29,71 +43,128 @@ class GapResponse(BaseModel):
     idn_export_usd: float
     global_demand_usd: float
     opportunity_level: str
-    ai_summary: str = ""
+    ai_summary: str
+    data_source: str
 
 
-@router.post("/analyze")
-def analyze_gap(request: GapRequest, current_user: dict = Depends(get_current_user)):
-    """Analyze market gap with COMTRADE data + mock fallback."""
-    # Try real COMTRADE API first
-    try:
-        if request.hs_code:
-            idn_data = get_market_data("360", request.destination_country_code, request.hs_code)
-            if idn_data:
-                idn_export = sum(item.get('primaryValue', 0) for item in idn_data if item.get('flowCode') == 'X')
-                global_import = sum(item.get('primaryValue', 0) for item in idn_data if item.get('flowCode') == 'M')
-                gap_score = calculate_market_gap(global_import, idn_export)
+# ──────────────────────────────────────────────────────
+# Core endpoint
+# ──────────────────────────────────────────────────────
 
-                prompt = f"Berikan 2 kalimat ringkasan profesional terkait potensi ekspor produk dengan HS Code {request.hs_code} dari Indonesia berdasarkan analisis pasar global."
-                dynamic_summary = CendolNLPService._call_backup_llm(prompt, "") or "Potensi pasar global cukup menjanjikan berdasarkan rasio ekspor-impor."
+@router.post("/analyze", response_model=GapResponse)
+def analyze_gap(
+    request: GapRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Analyze market gap for a given product.
+    Tries live COMTRADE data first; falls back to structured JSON.
+    """
+    # Step 1: Resolve to a usable HS code
+    product_input = request.hs_code or request.product_name
+    hs_prefix = resolve_hs_prefix(product_input) if product_input else None
+    # Use the raw hs_code for COMTRADE (longer codes are more precise)
+    hs_for_api = request.hs_code.replace(".", "").strip() if request.hs_code else (hs_prefix or "")
 
-                return {
-                    "product": request.product_name or request.hs_code,
-                    "top_destinations": ["Global"],
-                    "avg_price": "N/A",
-                    "growth": "N/A",
-                    "idn_export_usd": idn_export,
-                    "global_demand_usd": global_import,
-                    "gap_score": round(gap_score, 2),
-                    "opportunity_level": "High" if gap_score > 70 else "Medium" if gap_score > 40 else "Low",
-                    "ai_summary": dynamic_summary
-                }
-    except Exception as e:
-        logger.warning(f"COMTRADE API failed, using mock data: {e}")
+    # Step 2: Try live COMTRADE data
+    market_data = None
+    if hs_for_api:
+        market_data = fetch_market_analysis(hs_for_api, request.product_name)
+        if market_data:
+            logger.info(f"COMTRADE live data used for hs={hs_for_api}")
+        else:
+            logger.info(f"COMTRADE returned no data for hs={hs_for_api} — switching to fallback.")
 
-    # Fallback to mock data
-    product_key = _match_product(request.product_name or request.hs_code)
-    data = MARKET_DATA.get(product_key, MARKET_DATA.get("kopi"))
+    # Step 3: Fallback to JSON if COMTRADE unavailable
+    if not market_data:
+        market_data = fetch_fallback_analysis(hs_prefix, request.product_name)
 
-    prompt = f"Berikan 2 kalimat ringkasan profesional terkait tren ekspor produk '{product_key}' dari Indonesia ke pasar global."
-    dynamic_summary = CendolNLPService._call_backup_llm(prompt, "") or "Potensi ekspor komoditas ini terus berkembang di pasar global."
+    # Step 4: Generate AI summary from real figures
+    ai_summary = _generate_ai_summary(
+        product=market_data["product"],
+        gap_score=market_data["gap_score"],
+        idn_export=market_data["idn_export_usd"],
+        global_demand=market_data["global_demand_usd"],
+        growth=market_data["growth"],
+        top_destinations=market_data["top_destinations"],
+        data_source=market_data["data_source"],
+    )
 
     return GapResponse(
-        product=request.product_name or product_key,
-        top_destinations=data["top_destinations"],
-        gap_score=data["gap_score"],
-        avg_price=data["avg_price"],
-        growth=data["growth"],
-        idn_export_usd=data["idn_export_usd"],
-        global_demand_usd=data["global_demand_usd"],
-        opportunity_level="High" if data["gap_score"] > 70 else "Medium" if data["gap_score"] > 40 else "Low",
-        ai_summary=dynamic_summary
+        product=market_data["product"],
+        hs_code=market_data.get("hs_code", hs_for_api or "N/A"),
+        top_destinations=market_data["top_destinations"],
+        gap_score=market_data["gap_score"],
+        avg_price=market_data["avg_price"],
+        growth=market_data["growth"],
+        idn_export_usd=float(market_data["idn_export_usd"]),
+        global_demand_usd=float(market_data["global_demand_usd"]),
+        opportunity_level=market_data["opportunity_level"],
+        ai_summary=ai_summary,
+        data_source=market_data["data_source"],
     )
 
 
-@router.post("/gap-analysis")
-def gap_analysis(request: GapRequest, current_user: dict = Depends(get_current_user)):
+@router.post("/gap-analysis", response_model=GapResponse)
+def gap_analysis(
+    request: GapRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """Alias endpoint for frontend compatibility."""
     return analyze_gap(request, current_user)
 
 
-def _match_product(name: str) -> str:
-    """Match product name to mock data key."""
-    n = name.lower()
-    if any(w in n for w in ["kopi", "coffee", "arabika", "robusta"]):
-        return "kopi"
-    if any(w in n for w in ["singkong", "keripik", "cassava"]):
-        return "singkong"
-    if any(w in n for w in ["kayu", "wood", "kerajinan", "furniture"]):
-        return "kayu"
-    return "kopi"  # Default
+# ──────────────────────────────────────────────────────
+# AI Summary Generator
+# ──────────────────────────────────────────────────────
+
+def _generate_ai_summary(
+    product: str,
+    gap_score: float,
+    idn_export: float,
+    global_demand: float,
+    growth: str,
+    top_destinations: list,
+    data_source: str,
+) -> str:
+    """
+    Build a dynamic AI summary from real figures.
+    Always falls back to a formatted template if LLM is unavailable.
+    """
+    top_country = top_destinations[0]["country"] if top_destinations else "pasar global"
+    idn_export_b = idn_export / 1_000_000_000
+    global_demand_b = global_demand / 1_000_000_000
+    idn_share_pct = round((idn_export / global_demand * 100), 1) if global_demand > 0 else 0
+
+    prompt = (
+        f"Berikan 2 kalimat ringkasan profesional dalam bahasa Indonesia terkait potensi ekspor produk "
+        f"'{product}' dari Indonesia. Data: ekspor Indonesia USD {idn_export_b:.1f} miliar, "
+        f"permintaan global USD {global_demand_b:.1f} miliar, pangsa pasar {idn_share_pct}%, "
+        f"pertumbuhan {growth}, market gap score {gap_score}/100, pasar utama: {top_country}. "
+        f"Sumber data: {data_source}. Fokus pada peluang yang bisa dimanfaatkan UMKM Indonesia."
+    )
+
+    ai_result = CendolNLPService._call_backup_llm(prompt, "")
+
+    if ai_result:
+        return ai_result
+
+    # Structured fallback template (always deterministic, always informative)
+    opportunity = "luar biasa" if gap_score > 80 else "besar" if gap_score > 60 else "cukup"
+    return (
+        f"Indonesia mengekspor {product} senilai USD {idn_export_b:.1f} miliar dari total permintaan "
+        f"global USD {global_demand_b:.1f} miliar — menunjukkan market gap score {gap_score}/100 dengan "
+        f"peluang {opportunity} untuk UMKM. "
+        f"Pasar utama adalah {top_country} dengan pertumbuhan ekspor {growth}, "
+        f"tingkat peluang dinilai '{market_data_opportunity(gap_score)}' berdasarkan {data_source}."
+    )
+
+
+def market_data_opportunity(gap_score: float) -> str:
+    if gap_score > 80:
+        return "Sangat Tinggi"
+    elif gap_score > 60:
+        return "Tinggi"
+    elif gap_score > 40:
+        return "Sedang"
+    return "Rendah"

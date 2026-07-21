@@ -61,12 +61,22 @@ export default function HSCodeOptimizer() {
           {/* HS Code Result */}
           <div className="bg-slate-soft p-5 rounded-2xl border border-slate-200">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Klasifikasi HS Code</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Klasifikasi HS Code</span>
+                {result.data_source && (
+                  <span className="text-[9px] font-bold text-accent/80">{result.data_source}</span>
+                )}
+              </div>
               <span className="px-3 py-1 bg-secondary text-white rounded-lg text-xs font-black">{result.hs_code}</span>
             </div>
             <p className="text-sm font-bold text-secondary mb-1">{result.product}</p>
-            <p className="text-xs text-secondary/50">{result.description}</p>
-            <p className="text-xs text-secondary/40 mt-1">{result.chapter}</p>
+            <p className="text-xs text-secondary/50 leading-relaxed mb-2">{result.description}</p>
+            {result.reason && (
+              <p className="text-xs text-secondary/40 italic bg-white/50 p-2 rounded-lg border border-slate-100 mb-2">
+                💡 {result.reason}
+              </p>
+            )}
+            <p className="text-[10px] font-semibold text-secondary/40">{result.chapter}</p>
             <div className="mt-3 flex items-center gap-2">
               <span className="text-[10px] text-secondary/40 font-bold">Tarif MFN (tanpa FTA):</span>
               <span className="text-sm font-black text-red-500">{result.mfn_tariff}</span>
