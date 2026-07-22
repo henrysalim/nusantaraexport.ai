@@ -167,7 +167,7 @@ class CendolNLPService:
         if gemini_key:
             try:
                 # Menggunakan REST API langsung untuk menghindari bug SDK "google.generativeai" yang usang/hang
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={gemini_key}"
                 # Payload structure
                 parts = [{"text": f"{system_prompt}\n\nPertanyaan: {prompt}"}]
                 if image_base64:

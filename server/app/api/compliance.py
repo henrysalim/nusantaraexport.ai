@@ -153,7 +153,7 @@ class HSCodeResponse(BaseModel):
 def classify_hs_code(req: HSCodeRequest, current_user: dict = Depends(get_current_user)):
     """
     Classify product HS Code and calculate FTA tariff benefits in real-time.
-    Uses hscode_service which integrates local databases and gemini-3.0-flash-lite.
+    Uses hscode_service which integrates local databases and gemini-3.1-flash-lite.
     """
     logger.info(f"HS Code optimization requested for product: '{req.product_name}'")
     result = classify_product_hs_code(req.product_name)

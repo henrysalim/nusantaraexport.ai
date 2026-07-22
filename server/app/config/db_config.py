@@ -9,8 +9,14 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-AUTH_DATABASE_URL = os.getenv("AUTH_DATABASE_URL", "")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+AUTH_DATABASE_URL = os.getenv("AUTH_DATABASE_URL", "").strip()
+
+# Self-healing fallback: If DATABASE_URL is a remote cloud database but AUTH_DATABASE_URL points to localhost,
+# override AUTH_DATABASE_URL to use the cloud database.
+is_cloud_db = DATABASE_URL and "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL
+if DATABASE_URL and (not AUTH_DATABASE_URL or (is_cloud_db and ("localhost" in AUTH_DATABASE_URL or "127.0.0.1" in AUTH_DATABASE_URL))):
+    AUTH_DATABASE_URL = DATABASE_URL
 
 _use_db = False
 _use_auth_db = False
