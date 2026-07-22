@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { User, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/#cara-kerja", label: "Cara Kerja" },
   { href: "/#fitur", label: "Fitur" },
   { href: "/komunitas", label: "Komunitas" },
+  { href: "/marketplace", label: "Marketplace" },
   { href: "/kontak", label: "Hubungi Kami" },
 ];
 

@@ -12,6 +12,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ContactPage from "./pages/ContactPage";
 import CommunityPage from "./pages/CommunityPage";
 import PostDetailPage from "./pages/PostDetailPage";
+import MarketplacePage from "./pages/MarketplacePage";
 
 function AppContent() {
   const location = useLocation();
@@ -47,6 +48,7 @@ function AppContent() {
           <Route path="/kontak" element={<ContactPage />} />
           <Route path="/komunitas" element={<CommunityPage />} />
           <Route path="/komunitas/diskusi/:postId" element={<PostDetailPage />} />
+          <Route path="/marketplace" element={<MarketplacePage />} />
         </Routes>
       </main>
       <Footer />

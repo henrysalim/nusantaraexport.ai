@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { User, Save, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
+const Field = ({ id, label, type = 'text', ...props }) => (
+  <div>
+    <label htmlFor={id} className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">{label}</label>
+    {type === 'textarea' ? (
+      <textarea id={id} className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none" rows={3} {...props} />
+    ) : (
+      <input id={id} type={type} className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" {...props} />
+    )}
+  </div>
+)
+
+
 export default function ProfilePage() {
   const navigate = useNavigate()
   const [saved, setSaved] = useState(false)
@@ -38,17 +50,6 @@ export default function ProfilePage() {
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
-
-  const Field = ({ id, label, type = 'text', ...props }) => (
-    <div>
-      <label htmlFor={id} className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">{label}</label>
-      {type === 'textarea' ? (
-        <textarea id={id} className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none" rows={3} {...props} />
-      ) : (
-        <input id={id} type={type} className="w-full px-5 py-4 bg-slate-soft border border-slate-200 rounded-2xl font-bold text-secondary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" {...props} />
-      )}
-    </div>
-  )
 
   return (
     <div className="min-h-screen bg-slate-soft pt-28 pb-20 px-6">
