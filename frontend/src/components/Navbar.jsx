@@ -6,15 +6,21 @@ import { useAuth } from "../context/AuthContext";
 const navLinks = [
   { href: "/#tentang", label: "Tentang" },
   { href: "/#cara-kerja", label: "Cara Kerja" },
-  { href: "/#fitur", label: "Fitur" },
-  { href: "/komunitas", label: "Komunitas" },
-  { href: "/marketplace", label: "Marketplace" },
+  {
+    href: "/#fitur",
+    label: "Fitur",
+    dropdownItems: [
+      { href: "/komunitas", label: "Komunitas" },
+      { href: "/marketplace", label: "Marketplace" },
+    ],
+  },
   { href: "/kontak", label: "Hubungi Kami" },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
 
@@ -32,13 +38,26 @@ export default function Navbar() {
   }, [location]);
 
   useEffect(() => {
-    const handleEsc = (e) => { if (e.key === "Escape" && menuOpen) setMenuOpen(false); };
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        setDropdownOpen(false);
+      }
+    };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [menuOpen]);
+  }, []);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const closeDropdown = () => setDropdownOpen(false);
+    window.addEventListener("click", closeDropdown);
+    return () => window.removeEventListener("click", closeDropdown);
+  }, [dropdownOpen]);
 
   const handleLogout = async () => {
     setMenuOpen(false);
+    setDropdownOpen(false);
     await logout();
   };
 
@@ -48,7 +67,7 @@ export default function Navbar() {
       aria-label="Navigasi utama"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-3" : "bg-white py-5"}`}
     >
-      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3" aria-label="NusantaraExport.AI - Halaman Utama">
           <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-white shadow-lg" aria-hidden="true">
             <span className="text-xl font-bold">N</span>
@@ -60,35 +79,94 @@ export default function Navbar() {
 
         <div className="hidden lg:flex items-center gap-6">
           <ul className="flex items-center gap-1" role="list">
-            {navLinks.map((l) => (
-              <li key={l.href}>
-                <Link
-                  to={l.href}
-                  className="px-4 py-2 text-[15px] font-bold text-secondary/70 hover:text-accent transition-colors rounded-lg hover:bg-slate-50 whitespace-nowrap"
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
+            {navLinks.map((l) => {
+              if (l.dropdownItems) {
+                return (
+                  <li key={l.href} className="relative group py-1">
+                    <div className="flex items-center gap-0.5 rounded-lg hover:bg-slate-50 transition-colors">
+                      <Link
+                        to={l.href}
+                        className="pl-4 pr-1 py-2 text-[15px] font-bold text-secondary/70 group-hover:text-accent transition-colors whitespace-nowrap"
+                      >
+                        {l.label}
+                      </Link>
+                      <span className="pr-3 py-2 text-secondary/40 group-hover:text-accent transition-colors cursor-pointer flex items-center">
+                        <svg className="w-3.5 h-3.5 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </span>
+                    </div>
+                    <div className="absolute left-0 top-full hidden group-hover:block w-48 bg-white border border-slate-100 rounded-xl shadow-xl py-1.5 z-50">
+                      {l.dropdownItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          to={item.href}
+                          className="block px-4 py-2.5 text-sm font-bold text-secondary/80 hover:text-accent hover:bg-slate-50 transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </li>
+                );
+              }
+              return (
+                <li key={l.href}>
+                  <Link
+                    to={l.href}
+                    className="px-4 py-2 text-[15px] font-bold text-secondary/70 hover:text-accent transition-colors rounded-lg hover:bg-slate-50 whitespace-nowrap"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
 
           <div className="flex items-center gap-2 whitespace-nowrap">
             {isAuthenticated ? (
-              <>
-                <Link to="/profil" className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors shrink-0" aria-label="Edit profil saya">
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDropdownOpen(!dropdownOpen);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors shrink-0"
+                  aria-label="Menu pengguna"
+                  aria-haspopup="true"
+                  aria-expanded={dropdownOpen}
+                >
                   <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black shrink-0">
                     {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <span className="text-sm font-bold text-secondary shrink-0">{user?.full_name?.split(' ')[0] || 'Profil'}</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-secondary/60 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all shrink-0"
-                  aria-label="Keluar"
-                >
-                  <LogOut size={16} /> Keluar
+                  <svg
+                    className={`w-4 h-4 text-secondary/60 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
-              </>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl py-1.5 z-50">
+                    <Link
+                      to="/profil"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-secondary/80 hover:text-accent hover:bg-slate-50 transition-colors"
+                    >
+                      <User size={16} className="text-secondary/60" /> Profil Saya
+                    </Link>
+                    <hr className="border-slate-100 my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors text-left"
+                    >
+                      <LogOut size={16} /> Keluar
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link to="/login" className="flex items-center gap-2 px-5 py-2.5 text-sm font-black text-secondary border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shrink-0">
                 <LogIn size={16} className="text-accent" /> Masuk
@@ -121,8 +199,30 @@ export default function Navbar() {
         <div id="mobile-menu" className="lg:hidden bg-white border-t border-slate-100 shadow-xl py-6 px-6" role="menu">
           <ul className="flex flex-col gap-4">
             {navLinks.map((l) => (
-              <li key={l.href} role="none">
-                <Link to={l.href} onClick={() => setMenuOpen(false)} className="block text-lg font-bold text-secondary" role="menuitem">{l.label}</Link>
+              <li key={l.href} role="none" className="flex flex-col gap-2">
+                <Link
+                  to={l.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="block text-lg font-bold text-secondary"
+                  role="menuitem"
+                >
+                  {l.label}
+                </Link>
+                {l.dropdownItems && (
+                  <div className="flex flex-col gap-2 pl-4 border-l border-slate-100 mt-1">
+                    {l.dropdownItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setMenuOpen(false)}
+                        className="block text-base font-semibold text-secondary/70 hover:text-accent"
+                        role="menuitem"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
             <li role="none">
