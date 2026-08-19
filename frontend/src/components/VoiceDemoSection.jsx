@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Volume2, Square } from 'lucide-react'
+import { Volume2, Square, ExternalLink } from 'lucide-react'
 import { sendChatMessage } from '../services/api'
 
 const EXAMPLES = [
@@ -17,6 +17,142 @@ const STATUS = {
   processing: { label: 'Sedang mencari jawaban...', color: 'bg-secondary' },
   speaking:   { label: 'Jawaban ditemukan', color: 'bg-accent' },
   error:      { label: 'Gagal mendapat jawaban', color: 'bg-red-500' },
+}
+
+const renderClickableSources = (sourceText) => {
+  if (!sourceText) return null
+  const text = Array.isArray(sourceText) ? sourceText.join(' | ') : String(sourceText)
+  const regex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g
+  const matches = []
+  let match
+  while ((match = regex.exec(text)) !== null) {
+    matches.push({ title: match[1], url: match[2] })
+  }
+
+  if (matches.length === 0) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <a
+          href="https://insw.go.id"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent/10 hover:bg-accent hover:text-white border border-accent/30 rounded-xl text-xs font-black text-accent transition-all duration-200 shadow-sm"
+        >
+          <span>Portal INSW</span>
+          <ExternalLink size={13} />
+        </a>
+        <a
+          href="https://kemendag.go.id"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent/10 hover:bg-accent hover:text-white border border-accent/30 rounded-xl text-xs font-black text-accent transition-all duration-200 shadow-sm"
+        >
+          <span>Kementerian Perdagangan</span>
+          <ExternalLink size={13} />
+        </a>
+        <a
+          href="https://customs.go.id"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent/10 hover:bg-accent hover:text-white border border-accent/30 rounded-xl text-xs font-black text-accent transition-all duration-200 shadow-sm"
+        >
+          <span>Bea Cukai RI</span>
+          <ExternalLink size={13} />
+        </a>
+      </div>
+    )
+  }
+
+  return matches.map((m, i) => (
+    <a
+      key={i}
+      href={m.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent/10 hover:bg-accent hover:text-white border border-accent/30 rounded-xl text-xs font-black text-accent transition-all duration-200 shadow-sm hover:shadow-md"
+    >
+      <span>{m.title}</span>
+      <ExternalLink size={13} />
+    </a>
+  ))
+}
+
+const renderFormattedText = (text) => {
+  if (!text) return null
+  try {
+    const lines = String(text).split('\n')
+    return lines.map((line, idx) => {
+      if (line.startsWith('### ')) {
+        return (
+          <h3 key={idx} className="text-base font-black text-secondary mt-5 mb-2 border-b border-slate-100 pb-1 flex items-center gap-2">
+            {line.replace('### ', '')}
+          </h3>
+        )
+      }
+      if (line.startsWith('## ')) {
+        return (
+          <h2 key={idx} className="text-lg font-black text-secondary mt-6 mb-2 border-b border-slate-200 pb-1">
+            {line.replace('## ', '')}
+          </h2>
+        )
+      }
+
+      const renderInline = (str) => {
+        const parts = []
+        let lastIndex = 0
+        const combinedRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)|\*\*([^*]+)\*\*/g
+        let match
+
+        while ((match = combinedRegex.exec(str)) !== null) {
+          if (match.index > lastIndex) {
+            parts.push(str.substring(lastIndex, match.index))
+          }
+
+          if (match[1] && match[2]) {
+            parts.push(
+              <a
+                key={match.index}
+                href={match[2]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-black text-accent hover:text-accent-dark underline decoration-2 underline-offset-2 transition-colors mx-1 px-2 py-0.5 bg-accent/10 rounded-lg text-xs"
+              >
+                <span>{match[1]}</span>
+                <ExternalLink size={11} className="inline" />
+              </a>
+            )
+          } else if (match[3]) {
+            parts.push(
+              <strong key={match.index} className="font-black text-secondary">
+                {match[3]}
+              </strong>
+            )
+          }
+
+          lastIndex = combinedRegex.lastIndex
+        }
+
+        if (lastIndex < str.length) {
+          parts.push(str.substring(lastIndex))
+        }
+
+        return parts.length > 0 ? parts : str
+      }
+
+      if (line.trim() === '') {
+        return <div key={idx} className="h-1.5" />
+      }
+
+      return (
+        <p key={idx} className="my-1 leading-relaxed font-medium text-[15px] text-secondary">
+          {renderInline(line)}
+        </p>
+      )
+    })
+  } catch (err) {
+    console.error('renderFormattedText error:', err)
+    return <div className="whitespace-pre-line">{String(text)}</div>
+  }
 }
 
 export default function VoiceDemoSection() {
@@ -78,12 +214,7 @@ export default function VoiceDemoSection() {
       const data = response.data
       setQueryResult({
         answer: data.reply,
-        context_used: data.referenced_sources
-          ? data.referenced_sources.split('\n').filter(s => s.trim()).map(s => {
-              const match = s.match(/\[(.+?)\]/)
-              return match ? match[1] : s.substring(0, 60)
-            })
-          : ['RAG Pipeline']
+        context_used: data.referenced_sources || '[Portal INSW](https://insw.go.id) | [Kementerian Perdagangan](https://kemendag.go.id) | [Bea Cukai RI](https://customs.go.id)'
       })
       setDetectedIntent(data.detected_intent || '')
       setStatus('speaking')
@@ -109,13 +240,12 @@ export default function VoiceDemoSection() {
     if (status === 'idle' || status === 'speaking') {
       try {
         recognitionRef.current.start()
+        setStatus('listening')
       } catch (err) {
-        console.error("Gagal memulai SpeechRecognition:", err)
-        setMicError("Gagal memulai perekaman suara. Silakan segarkan halaman.")
+        setMicError('Mikrofon sedang digunakan atau tidak diizinkan browser.')
       }
     } else {
-      recognitionRef.current.stop()
-      setStatus('idle')
+      setMicError('Browser Anda tidak mendukung fitur Suara. Silakan gunakan kolom teks di bawah.')
     }
   }
 
@@ -153,7 +283,7 @@ export default function VoiceDemoSection() {
           <button
             onClick={handleMic}
             className={`w-28 h-28 rounded-full flex items-center justify-center text-white shadow-2xl transition-all hover:scale-105 active:scale-95 ${STATUS[status].color}`}
-            aria-label={status === 'idle' || status === 'speaking' ? 'Tekan untuk mulai berbicara' : 'Tekan untuk berhenti'}
+            aria-label={status === 'listening' ? 'Tekan untuk berhenti' : 'Tekan untuk mulai berbicara'}
           >
             {status === 'listening' ? (
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect width="14" height="14" x="5" y="5" rx="2" /></svg>
@@ -236,16 +366,14 @@ export default function VoiceDemoSection() {
                 {isReadingAnswer ? 'Hentikan' : 'Dengarkan'}
               </button>
             </div>
-            <div className="text-secondary leading-relaxed font-medium text-[15px] mb-6 whitespace-pre-line">
-              {queryResult.answer}
+            <div className="text-secondary leading-relaxed font-medium text-[15px] mb-6">
+              {renderFormattedText(queryResult.answer)}
             </div>
             {queryResult.context_used && (
               <div className="pt-6 border-t border-accent/10">
-                <p className="text-[10px] font-black text-accent/60 uppercase tracking-widest mb-3">Sumber Referensi:</p>
+                <p className="text-[10px] font-black text-accent/60 uppercase tracking-widest mb-3">Sumber Rujukan Resmi:</p>
                 <div className="flex flex-wrap gap-2">
-                  {(Array.isArray(queryResult.context_used) ? queryResult.context_used : [queryResult.context_used]).map((s, i) => (
-                    <span key={i} className="px-3 py-1 bg-white border border-accent/10 rounded-lg text-[10px] font-bold text-accent">{s}</span>
-                  ))}
+                  {renderClickableSources(queryResult.context_used)}
                 </div>
               </div>
             )}

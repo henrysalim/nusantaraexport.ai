@@ -8,6 +8,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.api import rag, market, umkm, docs, chat, simulator, compliance, auth, community
+from app.api import marketplace, webhook_fonnte
 from app.services.vector_store import bootstrap_regulations
 import os
 import logging
@@ -28,7 +29,7 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="NusantaraExport.AI API",
     description="Compliance Autopilot berbasis Cendol NLP & ChromaDB untuk UMKM Indonesia",
-    version="2.2.0"
+    version="2.3.0"
 )
 
 # Attach limiter to app state
@@ -69,7 +70,7 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️ Auth database not available: {e}")
 
-    logger.info("✅ NusantaraExport.AI Backend is ready!")
+    logger.info("✅ NusantaraExport.AI Backend v2.3 is ready!")
 
 
 @app.get("/")
@@ -77,7 +78,7 @@ async def root():
     return {
         "message": "Welcome to NusantaraExport.AI API (FastAPI)",
         "status": "Online",
-        "version": "2.2.0",
+        "version": "2.3.0",
         "rag_vector_db": "ChromaDB Ready",
         "nlp_engine": "Cendol NLP + Fallback Active",
         "auth": "JWT Authentication Active"
@@ -88,7 +89,7 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "version": "2.2.0",
+        "version": "2.3.0",
         "features": [
             "JWT Authentication",
             "RAG (ChromaDB)",
@@ -102,7 +103,9 @@ async def health_check():
             "Packaging Compliance Checker",
             "HS Code & FTA Optimizer",
             "PDF Document Generator",
-            "B2B Community Forum"
+            "B2B Community Forum",
+            "Marketplace UMKM (Real DB)",
+            "WhatsApp Bot (Fonnte)"
         ]
     }
 
@@ -117,9 +120,11 @@ app.include_router(rag.router, prefix="/api/rag", tags=["RAG"])
 app.include_router(umkm.router, prefix="/api/umkm", tags=["UMKM"])
 app.include_router(docs.router, prefix="/api/docs", tags=["Documents"])
 app.include_router(community.router, prefix="/api/community", tags=["Community Forum"])
+app.include_router(marketplace.router, prefix="/api/marketplace", tags=["Marketplace"])
+app.include_router(webhook_fonnte.router, prefix="/api/webhook", tags=["WhatsApp Webhook"])
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8081, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8081, reload=True, log_level="info")
 

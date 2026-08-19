@@ -4,6 +4,7 @@ All auth endpoints are under /api/auth prefix.
 """
 import logging
 import re
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Response, Request, Depends, status
 from pydantic import BaseModel
 from app.services.auth_service import (
@@ -327,3 +328,129 @@ async def logout(response: Response):
     """
     _clear_auth_cookies(response)
     return {"message": "Logged out successfully"}
+
+
+# --- Update Profile ---
+
+class UpdateProfileRequest(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    business_name: Optional[str] = None
+    province: Optional[str] = None
+    products: Optional[str] = None
+    export_destinations: Optional[str] = None
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    req: UpdateProfileRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Update profil pengguna yang sedang login.
+    Kolom yang tidak diset tidak akan berubah.
+    """
+    user_id = current_user["id"]
+    updates = {}
+
+    if req.full_name is not None and req.full_name.strip():
+        updates["full_name"] = req.full_name.strip()
+    if req.phone is not None:
+        updates["phone"] = req.phone.strip()
+    if req.business_name is not None:
+        updates["business_name"] = req.business_name.strip()
+    if req.province is not None:
+        updates["province"] = req.province.strip()
+    if req.products is not None:
+        updates["products"] = req.products.strip()
+    if req.export_destinations is not None:
+        updates["export_destinations"] = req.export_destinations.strip()
+
+    if not updates:
+        # Tidak ada yang diubah, kembalikan data existing
+        user = execute_auth_query(
+            "SELECT id, full_name, email, created_at, updated_at FROM users WHERE id = %s",
+            (str(user_id),),
+            fetch_one=True,
+        )
+        return UserResponse(
+            id=str(user["id"]),
+            full_name=user["full_name"],
+            email=user["email"],
+            created_at=str(user["created_at"]),
+            updated_at=str(user["updated_at"]),
+        )
+
+    # Build dynamic SET clause
+    set_clauses = ", ".join(f"{k} = %s" for k in updates)
+    values = list(updates.values()) + [str(user_id)]
+
+    try:
+        # Coba update dulu — kalau kolom belum ada, ALTER TABLE otomatis
+        # (Supabase schema harus sudah punya kolom ini, atau akan error 500 dengan pesan jelas)
+        updated = execute_auth_query(
+            f"""
+            UPDATE users
+            SET {set_clauses}, updated_at = NOW()
+            WHERE id = %s
+            RETURNING id, full_name, email, created_at, updated_at
+            """,
+            tuple(values),
+            fetch_one=True,
+        )
+        if not updated:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan")
+
+        return UserResponse(
+            id=str(updated["id"]),
+            full_name=updated["full_name"],
+            email=updated["email"],
+            created_at=str(updated["created_at"]),
+            updated_at=str(updated["updated_at"]),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error update profile user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal memperbarui profil: {str(e)}"
+        )
+
+
+@router.get("/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    """Dapatkan data profil lengkap user yang sedang login."""
+    try:
+        user = execute_auth_query(
+            """
+            SELECT id, full_name, email,
+                   COALESCE(phone, '') as phone,
+                   COALESCE(business_name, '') as business_name,
+                   COALESCE(province, '') as province,
+                   COALESCE(products, '') as products,
+                   COALESCE(export_destinations, '') as export_destinations,
+                   created_at, updated_at
+            FROM users WHERE id = %s
+            """,
+            (str(current_user["id"]),),
+            fetch_one=True,
+        )
+        if not user:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan")
+        return dict(user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Fallback: kolom tambahan mungkin belum ada, kembalikan data minimal
+        logger.warning(f"get_me fallback for user {current_user.get('id')}: {e}")
+        return {
+            "id": str(current_user.get("id", "")),
+            "full_name": current_user.get("full_name", ""),
+            "email": current_user.get("email", ""),
+            "phone": "",
+            "business_name": "",
+            "province": "",
+            "products": "",
+            "export_destinations": "",
+        }

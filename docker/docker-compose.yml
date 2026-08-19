@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: Nusantar43xport!
       POSTGRES_DB: nusantaraexport_ai
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
       # Automated schema initialization

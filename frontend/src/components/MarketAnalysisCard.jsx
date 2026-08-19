@@ -105,7 +105,9 @@ export default function MarketAnalysisCard() {
                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-widest">AI Market Insights</span>
               </div>
-              <p className="text-sm font-medium text-secondary/80 leading-relaxed">{data.ai_summary}</p>
+              <div className="text-sm font-medium text-secondary/80 leading-relaxed whitespace-pre-line">
+                {data.ai_summary}
+              </div>
             </div>
           )}
         </div>

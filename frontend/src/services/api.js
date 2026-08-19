@@ -156,5 +156,27 @@ export const transcribeAudio = (audioBlob) => {
 export const synthesizeSpeech = (text) =>
   api.post('/tts/synthesize', { text }, { responseType: 'blob' });
 
-export default api;
+// --- Marketplace Products ---
+export const getMarketplaceProducts = (params = {}) =>
+  api.get('/api/marketplace/products', { params });
 
+export const createMarketplaceProduct = (data) =>
+  api.post('/api/marketplace/products', data);
+
+export const getMarketplaceProductDetail = (id) =>
+  api.get(`/api/marketplace/products/${id}`);
+
+export const getMarketplaceBuyers = (params = {}) =>
+  api.get('/api/marketplace/buyers', { params });
+
+export const cooperativeMatch = (data) =>
+  api.post('/api/marketplace/cooperative-match', data);
+
+// --- User Profile ---
+export const getMyProfile = () =>
+  api.get('/api/auth/me');
+
+export const updateMyProfile = (data) =>
+  api.put('/api/auth/profile', data);
+
+export default api;

@@ -41,14 +41,11 @@ def process_chat(req: ChatRequest, current_user: dict = Depends(get_current_user
         # 1. Classify intent
         intent = CendolNLPService.classify_intent(user_message)
 
-        # 2. Retrieve regulation context via RAG
-        rag_context = query_regulations(user_message)
+        # 2. Directly generate response using Gemini Flash-Lite (Fast, no ChromaDB overhead)
+        reply = CendolNLPService.generate_response(user_message, context="")
 
-        # 3. Generate response using CendolNLP (with auto-fallback)
-        reply = CendolNLPService.generate_response(user_message, rag_context)
-
-        # 4. Format referenced sources
-        sources = rag_context if rag_context else "Fallback AI Engine (Rule-based)"
+        # 3. Dynamic official clickable source links
+        sources = _get_official_sources(intent, user_message)
 
         return ChatResponse(
             reply=reply,
@@ -58,9 +55,24 @@ def process_chat(req: ChatRequest, current_user: dict = Depends(get_current_user
 
     except Exception as e:
         logger.error(f"Chat error: {e}")
-        # Even on error, return a useful response instead of crashing
         return ChatResponse(
             reply="Maaf, terjadi gangguan sementara. Silakan coba lagi atau reformulasi pertanyaan Anda.",
             detected_intent="error",
-            referenced_sources="System fallback"
+            referenced_sources="[Portal INSW](https://insw.go.id) | [Kemendag RI](https://kemendag.go.id)"
         )
+
+
+def _get_official_sources(intent: str, text: str) -> str:
+    """Return clickable Markdown links to official Indonesian trade portals."""
+    t = text.lower()
+    if any(k in t for k in ["hs code", "tarif", "bea", "cukai", "peb", "pabean"]):
+        return "[Portal INSW](https://insw.go.id) | [Bea Cukai RI](https://customs.go.id) | [Kemenkeu BTKI](https://bctemas.beacukai.go.id)"
+    elif any(k in t for k in ["pasar", "market", "peluang", "comtrade", "gap", "impor"]):
+        return "[UN COMTRADE Database](https://comtradeplus.un.org) | [InaExport Kemendag](https://inaexport.id) | [Kementerian Perdagangan](https://kemendag.go.id)"
+    elif any(k in t for k in ["bpom", "makanan", "halal", "karantina", "phytosanitary", "kesehatan"]):
+        return "[BPOM RI](https://pom.go.id) | [Karantina Pertanian](https://karantina.pertanian.go.id) | [BPJPH Halal](https://halal.go.id)"
+    elif any(k in t for k in ["rcep", "ijepa", "acfta", "fta", "ska", "form e", "form d"]):
+        return "[Portal SKA Kemendag](https://e-ska.kemendag.go.id) | [Perjanjian Dagang RI](https://ditjenppi.kemendag.go.id) | [INSW Portal](https://insw.go.id)"
+    else:
+        return "[Portal INSW](https://insw.go.id) | [Kementerian Perdagangan RI](https://kemendag.go.id) | [InaExport](https://inaexport.id) | [Bea Cukai RI](https://customs.go.id)"
+

@@ -13,6 +13,7 @@ import ContactPage from "./pages/ContactPage";
 import CommunityPage from "./pages/CommunityPage";
 import PostDetailPage from "./pages/PostDetailPage";
 import MarketplacePage from "./pages/MarketplacePage";
+import FloatingChatButtons from "./components/FloatingChatButtons";
 
 function AppContent() {
   const location = useLocation();
@@ -52,6 +53,7 @@ function AppContent() {
         </Routes>
       </main>
       <Footer />
+      <FloatingChatButtons />
     </div>
   );
 }
