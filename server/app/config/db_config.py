@@ -116,9 +116,15 @@ def execute_query(query, params=None, fetch=False):
 
 
 def execute_auth_query(query, params=None, fetch=False, fetch_one=False):
-    """Execute a query on auth database with fallback."""
+    """Execute a query on auth database with fallback.
+    
+    If the auth DB is offline (no connection), returns mock data so the app
+    can run in degraded mode. If connected but the query fails, raises the
+    exception so the caller can handle it properly.
+    """
     conn = get_auth_db_connection()
     if not conn:
+        # DB is truly offline — return mock data so app can still run
         logger.info("Fallback Auth DB: returning mock response (PostgreSQL offline)")
         if fetch_one:
             email = params[0] if params and len(params) > 0 else "demo@nusantaraexport.ai"
@@ -156,19 +162,12 @@ def execute_auth_query(query, params=None, fetch=False, fetch_one=False):
         if conn:
             conn.rollback()
         logger.error(f"Auth DB query error: {e}")
-        if fetch_one:
-            email = params[0] if params and len(params) > 0 else "demo@nusantaraexport.ai"
-            return {
-                "id": "00000000-0000-0000-0000-000000000001",
-                "full_name": "Demo User (Offline Mode)",
-                "email": str(email),
-                "password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW",
-                "created_at": "2026-08-19 12:00:00",
-                "updated_at": "2026-08-19 12:00:00",
-            }
-        return [] if fetch else None
+        # Re-raise so callers (e.g. update_profile) get a proper error
+        # instead of silently returning stale/mock data
+        raise
     finally:
         if cur:
             cur.close()
         if conn:
             conn.close()
+

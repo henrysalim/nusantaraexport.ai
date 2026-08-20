@@ -14,7 +14,7 @@ import PostExportSolver from '../components/PostExportSolver'
 const TABS = [
   { key: 'assistant', label: 'Konsultasi AI', icon: <Mic size={18} />, desc: 'Tanya regulasi & biaya' },
   { key: 'market', label: 'Peluang Pasar', icon: <TrendingUp size={18} />, desc: 'Analisis data COMTRADE' },
-  { key: 'docs', label: 'Buat Dokumen', icon: <FileText size={18} />, desc: '7 jenis dokumen ekspor' },
+  { key: 'docs', label: 'Buat Dokumen', icon: <FileText size={18} />, desc: '9 dokumen ekspor' },
   { key: 'packaging', label: 'Audit Kemasan', icon: <Camera size={18} />, desc: 'Cek kepatuhan label' },
   { key: 'hscode', label: 'HS Code & FTA', icon: <Tag size={18} />, desc: 'Klasifikasi & tarif' },
   { key: 'simulator', label: 'Simulasi Ekspor', icon: <ClipboardCheck size={18} />, desc: 'Kesiapan & rute ekspor' },

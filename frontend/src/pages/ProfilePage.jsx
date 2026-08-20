@@ -25,8 +25,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    full_name: '',
-    email: '',
+    full_name: user?.full_name || '',
+    email: user?.email || '',
     phone: '',
     business_name: '',
     province: '',
@@ -39,26 +39,26 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const res = await api.get('/api/auth/me')
+        // /api/auth/me bisa mengembalikan data langsung ATAU { user: {...} }
+        const data = res.data?.user ?? res.data
         setForm({
-          full_name: res.data.full_name || '',
-          email: res.data.email || '',
-          phone: res.data.phone || '',
-          business_name: res.data.business_name || '',
-          province: res.data.province || '',
-          products: res.data.products || '',
-          export_destinations: res.data.export_destinations || '',
+          full_name: data.full_name || user?.full_name || '',
+          email: data.email || user?.email || '',
+          phone: data.phone || '',
+          business_name: data.business_name || '',
+          province: data.province || '',
+          products: data.products || '',
+          export_destinations: data.export_destinations || '',
         })
       } catch (err) {
         console.error('Fetch profile error:', err)
         // Fallback ke data dari AuthContext
-        if (user) {
-          setForm(prev => ({
-            ...prev,
-            full_name: user.full_name || '',
-            email: user.email || '',
-          }))
-        }
-        setError('Tidak dapat memuat data profil terbaru. Menggunakan data lokal.')
+        setForm(prev => ({
+          ...prev,
+          full_name: prev.full_name || user?.full_name || '',
+          email: prev.email || user?.email || '',
+        }))
+        setError('Tidak dapat memuat data profil terbaru.')
       } finally {
         setLoading(false)
       }
