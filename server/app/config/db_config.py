@@ -37,30 +37,18 @@ _use_auth_db = _is_valid_db_url(AUTH_DATABASE_URL)
 
 
 def _connect_pg(url: str):
-    """Connect to PostgreSQL with robust URL parsing."""
+    """Connect to PostgreSQL using direct URI or parsed parameters."""
     import psycopg2
-    parsed = urlparse(url) if url else None
-    dbname = (parsed.path.lstrip('/') if parsed and parsed.path else None) or _db_name
-    host = (parsed.hostname if parsed and parsed.hostname else None) or _db_host
-    port = (parsed.port if parsed and parsed.port else None) or int(_db_port)
-    user = _db_user
-    password = _db_pass
-
-    if parsed and '@' in parsed.netloc:
-        user_pass = parsed.netloc.split('@')[0]
-        if ':' in user_pass:
-            user = unquote(user_pass.split(':')[0])
-            password = unquote(user_pass.split(':')[1])
-        elif user_pass:
-            user = unquote(user_pass)
-
+    if url and ("postgresql://" in url or "postgres://" in url):
+        return psycopg2.connect(url, connect_timeout=10)
+    
     return psycopg2.connect(
-        dbname=dbname,
-        user=user,
-        password=password,
-        host=host,
-        port=port,
-        connect_timeout=5
+        dbname=_db_name,
+        user=_db_user,
+        password=_db_pass,
+        host=_db_host,
+        port=int(_db_port),
+        connect_timeout=10
     )
 
 

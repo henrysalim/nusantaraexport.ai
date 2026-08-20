@@ -103,6 +103,13 @@ async def get_current_user_optional(
 
 # --- Endpoints ---
 
+DEFAULT_CATEGORIES = [
+    {"id": 1, "name": "Logistik & Kontainer", "description": "Diskusi mengenai pengiriman barang, pemilihan kargo, LCL/FCL, dokumen kepabeanan, dan tips pengapalan.", "icon": "Truck", "slug": "logistik-dan-kontainer"},
+    {"id": 2, "name": "Sertifikasi & Regulasi", "description": "Tanya jawab seputar sertifikasi Halal, HACCP, standar FDA, phytosanitary, dan bea cukai negara tujuan ekspor.", "icon": "FileCheck", "slug": "sertifikasi-dan-regulasi"},
+    {"id": 3, "name": "Pembayaran & Keuangan", "description": "Membahas Letter of Credit (L/C), metode pembayaran ekspor yang aman, asuransi ekspor, dan pendanaan ekspor.", "icon": "DollarSign", "slug": "pembayaran-dan-keuangan"},
+    {"id": 4, "name": "Pojok Curhat UMKM", "description": "Ruang santai sesama pelaku UMKM untuk berbagi perjuangan, hambatan, kegagalan, dan motivasi dalam perjalanan ekspor.", "icon": "HeartHandshake", "slug": "pojok-curhat-umkm"}
+]
+
 @router.get("/categories", response_model=List[CategoryResponse])
 async def get_categories():
     """Get all discussion categories."""
@@ -111,6 +118,9 @@ async def get_categories():
             "SELECT id, name, description, icon, slug FROM community_categories ORDER BY id ASC",
             fetch=True
         )
+        if not categories:
+            categories = DEFAULT_CATEGORIES
+            
         return [
             CategoryResponse(
                 id=c["id"],
@@ -122,11 +132,8 @@ async def get_categories():
             for c in categories
         ]
     except Exception as e:
-        logger.error(f"Error fetching categories: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Gagal memuat kategori komunitas"
-        )
+        logger.error(f"Error fetching categories: {e}. Using fallback defaults.")
+        return [CategoryResponse(**c) for c in DEFAULT_CATEGORIES]
 
 
 @router.get("/posts", response_model=List[PostListResponse])

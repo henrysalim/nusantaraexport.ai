@@ -22,7 +22,7 @@ load_dotenv(override=True)
 logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip().strip('"').strip("'")
-GEMINI_MODEL   = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+GEMINI_MODEL   = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 CENDOL_API_KEY = os.getenv("CENDOL_API_KEY", "")
 BACKUP_LLM_PROVIDER = os.getenv("BACKUP_LLM_PROVIDER", "huggingface")
 BACKUP_LLM_API_KEY  = os.getenv("BACKUP_LLM_API_KEY", "")
@@ -329,18 +329,16 @@ class CendolNLPService:
         return (
             "Terima kasih atas pertanyaan Anda! Berikut panduan dasar ekspor UMKM Indonesia:\n\n"
             "**Dokumen Wajib:**\n"
-            "1. NIB (Nomor Induk Berusaha) — via OSS oss.go.id\n"
-            "2. PEB (Pemberitahuan Ekspor Barang) — via INSW insw.go.id\n"
-            "3. SKA (Surat Keterangan Asal) — via Kemendag atau Dinas Perdagangan\n"
+            "1. NIB (Nomor Induk Berusaha) — via [OSS](https://oss.go.id)\n"
+            "2. PEB (Pemberitahuan Ekspor Barang) — via [INSW](https://insw.go.id)\n"
+            "3. SKA (Surat Keterangan Asal) — via [e-SKA Kemendag](https://e-ska.kemendag.go.id)\n"
             "4. Commercial Invoice & Packing List\n"
             "5. Bill of Lading dari freight forwarder\n\n"
             "**Sertifikat Tambahan (sesuai produk):**\n"
-            "- Makanan/minuman: BPOM + Halal MUI\n"
-            "- Pertanian: Phytosanitary Certificate\n"
-            "- Kayu: SVLK + Fumigation Certificate (ISPM-15)\n\n"
-            "💡 Gunakan fitur **Simulasi Kesiapan Ekspor** untuk cek kelengkapan Anda!\n\n"
-            "> ⚠️ **Mode Offline** — Untuk jawaban AI yang lebih detail dan personal, "
-            "set `GEMINI_API_KEY` di file `.env` server Anda."
+            "• Makanan/minuman: [BPOM](https://pom.go.id) + Halal [BPJPH](https://halal.go.id)\n"
+            "• Pertanian: Phytosanitary Certificate dari [Karantina Indonesia](https://karantina.pertanian.go.id)\n"
+            "• Kayu: SVLK + Fumigation Certificate (ISPM-15)\n\n"
+            "Silakan ajukan pertanyaan lebih spesifik tentang produk atau negara tujuan ekspor Anda!"
         )
 
 
