@@ -233,18 +233,42 @@ async def login(req: LoginRequest, response: Response):
 @router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
     """
-    Get the currently authenticated user's profile.
-    Requires a valid JWT token.
+    Get the currently authenticated user's full profile.
+    Queries all columns including phone, business_name, etc.
     """
-    return {
-        "user": {
-            "id": str(current_user["id"]),
-            "full_name": current_user["full_name"],
-            "email": current_user["email"],
-            "created_at": str(current_user["created_at"]),
-            "updated_at": str(current_user["updated_at"]),
+    try:
+        user = execute_auth_query(
+            """
+            SELECT id, full_name, email,
+                   COALESCE(phone, '') as phone,
+                   COALESCE(business_name, '') as business_name,
+                   COALESCE(province, '') as province,
+                   COALESCE(products, '') as products,
+                   COALESCE(export_destinations, '') as export_destinations,
+                   created_at, updated_at
+            FROM users WHERE id = %s
+            """,
+            (str(current_user["id"]),),
+            fetch_one=True,
+        )
+        if not user:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan")
+        return dict(user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Fallback to basic data from middleware if extra columns query fails
+        logger.warning(f"get_me fallback for user {current_user.get('id')}: {e}")
+        return {
+            "id": str(current_user.get("id", "")),
+            "full_name": current_user.get("full_name", ""),
+            "email": current_user.get("email", ""),
+            "phone": "",
+            "business_name": "",
+            "province": "",
+            "products": "",
+            "export_destinations": "",
         }
-    }
 
 
 @router.post("/refresh")
@@ -393,7 +417,13 @@ async def update_profile(
             UPDATE users
             SET {set_clauses}, updated_at = NOW()
             WHERE id = %s
-            RETURNING id, full_name, email, created_at, updated_at
+            RETURNING id, full_name, email,
+                      COALESCE(phone, '') as phone,
+                      COALESCE(business_name, '') as business_name,
+                      COALESCE(province, '') as province,
+                      COALESCE(products, '') as products,
+                      COALESCE(export_destinations, '') as export_destinations,
+                      created_at, updated_at
             """,
             tuple(values),
             fetch_one=True,
@@ -417,40 +447,3 @@ async def update_profile(
             detail=f"Gagal memperbarui profil: {str(e)}"
         )
 
-
-@router.get("/me")
-async def get_me(current_user: dict = Depends(get_current_user)):
-    """Dapatkan data profil lengkap user yang sedang login."""
-    try:
-        user = execute_auth_query(
-            """
-            SELECT id, full_name, email,
-                   COALESCE(phone, '') as phone,
-                   COALESCE(business_name, '') as business_name,
-                   COALESCE(province, '') as province,
-                   COALESCE(products, '') as products,
-                   COALESCE(export_destinations, '') as export_destinations,
-                   created_at, updated_at
-            FROM users WHERE id = %s
-            """,
-            (str(current_user["id"]),),
-            fetch_one=True,
-        )
-        if not user:
-            raise HTTPException(status_code=404, detail="User tidak ditemukan")
-        return dict(user)
-    except HTTPException:
-        raise
-    except Exception as e:
-        # Fallback: kolom tambahan mungkin belum ada, kembalikan data minimal
-        logger.warning(f"get_me fallback for user {current_user.get('id')}: {e}")
-        return {
-            "id": str(current_user.get("id", "")),
-            "full_name": current_user.get("full_name", ""),
-            "email": current_user.get("email", ""),
-            "phone": "",
-            "business_name": "",
-            "province": "",
-            "products": "",
-            "export_destinations": "",
-        }

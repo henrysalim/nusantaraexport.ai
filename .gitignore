@@ -32,9 +32,11 @@ ai-services/models/
 *.pt
 *.bin
 *.onnx
+*.sqlite3
 
 # Temporary
 tmp/
 temp/
 
 /nusantaraexport
+/templates
