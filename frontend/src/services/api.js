@@ -10,12 +10,99 @@ const api = axios.create({
   },
 });
 
-// --- Request Interceptor: Attach JWT Bearer token ---
+// ─── Session Helpers ──────────────────────────────────────────────
+
+/**
+ * Decode JWT payload WITHOUT verifying signature (client-side only).
+ * Used to proactively check token expiry before making a request.
+ */
+function _decodeJWTPayload(token) {
+  try {
+    const base64 = token.split('.')[1];
+    if (!base64) return null;
+    const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns true if the token is missing, malformed, or expires within
+ * `bufferSeconds` seconds (default 60 s — refresh before actual expiry).
+ */
+function _isTokenExpiredOrSoon(token, bufferSeconds = 60) {
+  if (!token) return true;
+  const payload = _decodeJWTPayload(token);
+  if (!payload?.exp) return true;
+  const nowSec = Math.floor(Date.now() / 1000);
+  return payload.exp - nowSec < bufferSeconds;
+}
+
+/** Emit a custom event so AuthContext / UI can react to session expiry. */
+function _dispatchSessionExpired() {
+  window.dispatchEvent(new CustomEvent('ne:session-expired'));
+}
+
+// ─── Token refresh state ──────────────────────────────────────────
+let _proactiveRefreshPromise = null;
+
+async function _proactiveRefresh() {
+  if (_proactiveRefreshPromise) return _proactiveRefreshPromise;
+  _proactiveRefreshPromise = (async () => {
+    try {
+      const refreshToken = localStorage.getItem('ne_refresh_token');
+      if (!refreshToken) throw new Error('No refresh token');
+      const res = await axios.post(
+        `${API_BASE_URL}/api/auth/refresh`,
+        { refresh_token: refreshToken },
+        { withCredentials: true }
+      );
+      const { access_token, refresh_token } = res.data;
+      localStorage.setItem('ne_access_token', access_token);
+      if (refresh_token) localStorage.setItem('ne_refresh_token', refresh_token);
+      return access_token;
+    } catch {
+      // Refresh token also expired — clear session
+      localStorage.removeItem('ne_access_token');
+      localStorage.removeItem('ne_refresh_token');
+      localStorage.removeItem('ne_user');
+      _dispatchSessionExpired();
+      throw new Error('Session expired');
+    } finally {
+      _proactiveRefreshPromise = null;
+    }
+  })();
+  return _proactiveRefreshPromise;
+}
+
+// --- Request Interceptor: Proactive token expiry check ---
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('ne_access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    // Skip auth endpoints to avoid loops
+    const isAuthEndpoint = [
+      '/api/auth/login', '/api/auth/register',
+      '/api/auth/refresh', '/api/auth/logout',
+    ].some(path => config.url?.includes(path));
+
+    if (!isAuthEndpoint) {
+      const token = localStorage.getItem('ne_access_token');
+
+      // Proactively refresh if token expires within 60 seconds
+      if (token && _isTokenExpiredOrSoon(token, 60)) {
+        try {
+          const newToken = await _proactiveRefresh();
+          config.headers.Authorization = `Bearer ${newToken}`;
+          return config;
+        } catch {
+          // _proactiveRefresh already cleared tokens & dispatched event
+          return config;
+        }
+      }
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -88,8 +175,8 @@ api.interceptors.response.use(
         localStorage.removeItem('ne_access_token');
         localStorage.removeItem('ne_refresh_token');
         localStorage.removeItem('ne_user');
-        // Redirect to login
-        window.location.href = '/login';
+        // Notify app via event (AuthContext listens) instead of hard redirect
+        _dispatchSessionExpired();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -156,5 +243,45 @@ export const transcribeAudio = (audioBlob) => {
 export const synthesizeSpeech = (text) =>
   api.post('/tts/synthesize', { text }, { responseType: 'blob' });
 
-export default api;
+// --- Marketplace Products ---
+export const getMarketplaceProducts = (params = {}) =>
+  api.get('/api/marketplace/products', { params });
 
+export const createMarketplaceProduct = (data) =>
+  api.post('/api/marketplace/products', data);
+
+export const getMarketplaceProductDetail = (id) =>
+  api.get(`/api/marketplace/products/${id}`);
+
+export const getMarketplaceBuyers = (params = {}) =>
+  api.get('/api/marketplace/buyers', { params });
+
+export const cooperativeMatch = (data) =>
+  api.post('/api/marketplace/cooperative-match', data);
+
+// --- User Profile ---
+export const getMyProfile = () =>
+  api.get('/api/auth/me');
+
+export const updateMyProfile = (data) =>
+  api.put('/api/auth/profile', data);
+
+// --- Document Generator (Draft + PDF) ---
+export const saveDocDraft = (body, docId = null) => {
+  const params = docId ? `?doc_id=${docId}` : '';
+  return api.post(`/api/docs/draft/save${params}`, body);
+};
+
+export const getDocDrafts = () =>
+  api.get('/api/docs/draft/list');
+
+export const getDocDraft = (docId) =>
+  api.get(`/api/docs/draft/${docId}`);
+
+export const deleteDocDraft = (docId) =>
+  api.delete(`/api/docs/draft/${docId}`);
+
+export const generateDocPDF = (docType, docId) =>
+  api.post(`/api/docs/generate/${docType}?doc_id=${docId}`, {}, { responseType: 'blob' });
+
+export default api;

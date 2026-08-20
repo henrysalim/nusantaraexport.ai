@@ -128,8 +128,7 @@ def _generate_ai_summary(
     data_source: str,
 ) -> str:
     """
-    Build a dynamic AI summary from real figures.
-    Always falls back to a formatted template if LLM is unavailable.
+    Build a dynamic AI summary from real figures using Gemini 3.1 Flash-Lite.
     """
     top_country = top_destinations[0]["country"] if top_destinations else "pasar global"
     idn_export_b = idn_export / 1_000_000_000
@@ -137,14 +136,21 @@ def _generate_ai_summary(
     idn_share_pct = round((idn_export / global_demand * 100), 1) if global_demand > 0 else 0
 
     prompt = (
-        f"Berikan 2 kalimat ringkasan profesional dalam bahasa Indonesia terkait potensi ekspor produk "
-        f"'{product}' dari Indonesia. Data: ekspor Indonesia USD {idn_export_b:.1f} miliar, "
-        f"permintaan global USD {global_demand_b:.1f} miliar, pangsa pasar {idn_share_pct}%, "
-        f"pertumbuhan {growth}, market gap score {gap_score}/100, pasar utama: {top_country}. "
-        f"Sumber data: {data_source}. Fokus pada peluang yang bisa dimanfaatkan UMKM Indonesia."
+        f"Anda adalah Analis Perdagangan Internasional NusantaraExport.AI.\n"
+        f"Analisis peluang pasar & potensi ekspor produk '{product}' dari Indonesia dengan data akurat berikut:\n"
+        f"- Nilai Ekspor Indonesia: USD {idn_export_b:.2f} Miliar\n"
+        f"- Permintaan Impor Global: USD {global_demand_b:.2f} Miliar (Pangsa RI: {idn_share_pct}%)\n"
+        f"- Pertumbuhan Impor Global: {growth}\n"
+        f"- Market Gap Score: {gap_score}/100\n"
+        f"- Pasar Utama Tujuan: {top_country}\n"
+        f"- Sumber Data: {data_source}\n\n"
+        f"Tuliskan analisis 3 paragraf rapi dan profesional dalam bahasa Indonesia yang berfokus pada:\n"
+        f"1. **Peluang Pasar Utama**: Kenapa pasar {top_country} dan global sangat potensial untuk komoditas {product}.\n"
+        f"2. **Pemanfaatan Perjanjian Dagang (FTA)**: Strategi memanfaatkan insentif bea tarif nol/rendah (misal RCEP, Form E, Form IJEPA).\n"
+        f"3. **Langkah Konkret UMKM**: Rekomendasi 2 tindakan praktis untuk pengusaha UMKM."
     )
 
-    ai_result = CendolNLPService._call_backup_llm(prompt, "")
+    ai_result = CendolNLPService.generate_response(prompt, context="")
 
     if ai_result:
         return ai_result
