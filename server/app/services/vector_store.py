@@ -1,51 +1,15 @@
 """
-ChromaDB Vector Store with bootstrap regulation data.
-Uses ChromaDB's built-in default embedding function (no external deps required).
+Vector Store — Supabase PostgreSQL Full-Text Search.
+Gunakan pg tsvector untuk cari regulasi ekspor.
+Tidak butuh model embedding, cocok untuk Vercel serverless.
 """
-import chromadb
 import os
 import logging
+from typing import List
 
 logger = logging.getLogger(__name__)
 
-CHROMA_DB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "chroma_db")
-
-# Initialize ChromaDB Persistent Client
-chroma_client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
-
-
-def get_chroma_client():
-    return chroma_client
-
-
-def get_or_create_collection(name: str = "regulations"):
-    return chroma_client.get_or_create_collection(
-        name=name,
-        metadata={"hnsw:space": "cosine"}
-    )
-
-
-def add_documents(collection, documents: list, metadatas: list, ids: list):
-    """Add documents to a ChromaDB collection."""
-    collection.add(
-        documents=documents,
-        metadatas=metadatas,
-        ids=ids
-    )
-
-
-def query_documents(collection, query_texts: list, n_results: int = 3):
-    """Query ChromaDB for relevant context."""
-    return collection.query(
-        query_texts=query_texts,
-        n_results=n_results
-    )
-
-
-# ──────────────────────────────────────────────────────
-# Bootstrap Regulations Data
-# ──────────────────────────────────────────────────────
-
+# ── Regulation data (sama persis dengan sebelumnya) ──────────────────────────
 BOOTSTRAP_REGULATIONS = [
     {
         "id": "reg_001",
@@ -61,7 +25,7 @@ BOOTSTRAP_REGULATIONS = [
     },
     {
         "id": "reg_003",
-        "text": "FDA (Food and Drug Administration) Amerika Serikat menetapkan regulasi ketat terhadap impor makanan olahan dari Indonesia. Kemasan harus mencantumkan Nutrition Facts dengan format vertikal standar, daftar bahan alergen wajib dicetak tebal, dan mencantumkan kalimat 'Product of Indonesia'.",
+        "text": "FDA Amerika Serikat menetapkan regulasi ketat terhadap impor makanan olahan dari Indonesia. Kemasan harus mencantumkan Nutrition Facts dengan format vertikal standar, daftar bahan alergen wajib dicetak tebal, dan mencantumkan kalimat 'Product of Indonesia'.",
         "source": "FDA Food Labeling Guide",
         "category": "Packaging"
     },
@@ -79,7 +43,7 @@ BOOTSTRAP_REGULATIONS = [
     },
     {
         "id": "reg_006",
-        "text": "Regulasi BPOM untuk produk makanan olahan: Setiap produk yang diekspor harus memiliki Sertifikat Kesehatan (Health Certificate) jika dipersyaratkan oleh negara tujuan. Label harus mencantumkan nama produk, berat bersih, nama dan alamat produsen, serta negara asal (Made in Indonesia).",
+        "text": "Regulasi BPOM untuk produk makanan olahan: Setiap produk yang diekspor harus memiliki Sertifikat Kesehatan (Health Certificate) jika dipersyaratkan oleh negara tujuan. Label harus mencantumkan nama produk, berat bersih, nama dan alamat produsen, serta negara asal.",
         "source": "BPOM Regulation",
         "category": "Health"
     },
@@ -91,13 +55,13 @@ BOOTSTRAP_REGULATIONS = [
     },
     {
         "id": "reg_008",
-        "text": "Perjanjian IJEPA (Indonesia-Japan Economic Partnership Agreement) memberikan tarif preferensial 0% untuk kopi arabika (HS Code 0901.21.10) yang diekspor dari Indonesia ke Jepang, dengan syarat menggunakan SKA Form IJEPA yang diterbitkan Dinas Perindag.",
+        "text": "Perjanjian IJEPA memberikan tarif preferensial 0% untuk kopi arabika (HS Code 0901.21.10) yang diekspor dari Indonesia ke Jepang, dengan syarat menggunakan SKA Form IJEPA yang diterbitkan Dinas Perindag.",
         "source": "IJEPA Rules of Origin",
         "category": "FTA"
     },
     {
         "id": "reg_009",
-        "text": "ACFTA (ASEAN-China Free Trade Agreement) memberikan tarif 0% untuk keripik singkong (HS Code 2005.99.90) dari Indonesia ke Tiongkok. Eksportir wajib menggunakan SKA Form E yang diterbitkan oleh Kemendag.",
+        "text": "ACFTA memberikan tarif 0% untuk keripik singkong (HS Code 2005.99.90) dari Indonesia ke Tiongkok. Eksportir wajib menggunakan SKA Form E yang diterbitkan oleh Kemendag.",
         "source": "ACFTA Tariff Schedule",
         "category": "FTA"
     },
@@ -109,19 +73,19 @@ BOOTSTRAP_REGULATIONS = [
     },
     {
         "id": "reg_011",
-        "text": "Ketentuan Ekspor Kerajinan Kayu ke Uni Eropa: Wajib memiliki dokumen V-Legal/SVLK (Sistem Verifikasi Legalitas Kayu), Fumigation Certificate sesuai ISPM-15, dan memenuhi EU Timber Regulation (EUTR). Tarif melalui GSP+ Indonesia adalah 0%.",
+        "text": "Ketentuan Ekspor Kerajinan Kayu ke Uni Eropa: Wajib memiliki dokumen V-Legal/SVLK, Fumigation Certificate sesuai ISPM-15, dan memenuhi EU Timber Regulation (EUTR). Tarif melalui GSP+ Indonesia adalah 0%.",
         "source": "EU Timber Regulation (EUTR)",
         "category": "Region"
     },
     {
         "id": "reg_012",
-        "text": "Korea Selatan menurunkan batas maksimum residu pestisida Chlorpyrifos pada produk pertanian impor dari 0.05 ppm menjadi 0.01 ppm. Ini mempengaruhi ekspor kopi, teh, rempah-rempah, dan sayuran dari Indonesia. Eksportir wajib melakukan uji lab terbaru.",
+        "text": "Korea Selatan menurunkan batas maksimum residu pestisida pada produk pertanian impor dari Indonesia. Eksportir kopi, teh, rempah-rempah, dan sayuran wajib melakukan uji lab terbaru.",
         "source": "Korea Food Safety Act 2025",
         "category": "Health"
     },
     {
         "id": "reg_013",
-        "text": "Letter of Credit (L/C) adalah cara pembayaran paling aman untuk ekspor. Bank pembeli menjamin pencairan dana jika dokumen pengiriman sesuai syarat. Dokumen yang biasanya disyaratkan: Bill of Lading, Commercial Invoice, Packing List, Certificate of Origin, dan Insurance Certificate.",
+        "text": "Letter of Credit (L/C) adalah cara pembayaran paling aman untuk ekspor. Bank pembeli menjamin pencairan dana jika dokumen pengiriman sesuai syarat. Dokumen: Bill of Lading, Commercial Invoice, Packing List, Certificate of Origin, dan Insurance Certificate.",
         "source": "UCP 600 - ICC Rules",
         "category": "Finance"
     },
@@ -139,23 +103,144 @@ BOOTSTRAP_REGULATIONS = [
     },
 ]
 
-
 def bootstrap_regulations():
     """
-    Ingest bootstrap regulation documents into ChromaDB.
-    Only runs if the collection is empty.
+    Ingest dokumen regulasi ke Supabase dengan full-text search index.
+    Hanya jalan jika tabel masih kosong.
     """
-    collection = get_or_create_collection("regulations")
-
-    if collection.count() > 0:
-        logger.info(f"ChromaDB already has {collection.count()} documents. Skipping bootstrap.")
+    from app.config.db_config import get_db_connection
+    conn = get_db_connection()
+    if not conn:
+        logger.warning("⚠️ DB tidak tersedia, skip bootstrap regulations.")
         return
 
-    logger.info("Bootstrapping ChromaDB with regulation data...")
+    cur = None
+    try:
+        from psycopg2.extras import RealDictCursor
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    docs = [r["text"] for r in BOOTSTRAP_REGULATIONS]
-    metadatas = [{"source": r["source"], "category": r["category"]} for r in BOOTSTRAP_REGULATIONS]
-    ids = [r["id"] for r in BOOTSTRAP_REGULATIONS]
+        # Buat tabel dengan full-text search (tidak perlu pgvector)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS regulations (
+                id VARCHAR(50) PRIMARY KEY,
+                text TEXT NOT NULL,
+                source VARCHAR(255),
+                category VARCHAR(100),
+                search_vector tsvector GENERATED ALWAYS AS
+                    (to_tsvector('indonesian', coalesce(text,'') || ' ' || coalesce(source,''))) STORED,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        """)
 
-    add_documents(collection, docs, metadatas, ids)
-    logger.info(f"✅ ChromaDB bootstrapped with {len(docs)} regulation documents.")
+        # Index untuk full-text search
+        cur.execute("""
+            CREATE INDEX IF NOT EXISTS regulations_search_idx
+            ON regulations USING GIN(search_vector)
+        """)
+        conn.commit()
+
+        cur.execute("SELECT COUNT(*) as count FROM regulations")
+        count = cur.fetchone()["count"]
+
+        if count > 0:
+            logger.info(f"Supabase sudah ada {count} dokumen regulasi. Skip bootstrap.")
+            return
+
+        logger.info("Bootstrapping regulations ke Supabase...")
+        for reg in BOOTSTRAP_REGULATIONS:
+            cur.execute(
+                """
+                INSERT INTO regulations (id, text, source, category)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """,
+                (reg["id"], reg["text"], reg["source"], reg["category"])
+            )
+
+        conn.commit()
+        logger.info(f"✅ Bootstrap selesai: {len(BOOTSTRAP_REGULATIONS)} dokumen regulasi.")
+
+    except Exception as e:
+        logger.error(f"Bootstrap error: {e}")
+        if conn:
+            conn.rollback()
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+def query_regulations(query_text: str, n_results: int = 3) -> str:
+    """
+    Cari regulasi relevan via PostgreSQL full-text search.
+    Return: string konteks untuk system prompt Gemini.
+    """
+    from app.config.db_config import get_db_connection
+    conn = get_db_connection()
+    if not conn:
+        return ""
+
+    cur = None
+    try:
+        from psycopg2.extras import RealDictCursor
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Ekstrak kata kunci dari query untuk full-text search
+        # Bersihkan dan buat tsquery
+        keywords = " | ".join(
+            w for w in query_text.replace(",", " ").replace("?", " ").split()
+            if len(w) > 2
+        )
+
+        if not keywords:
+            return ""
+
+        # Coba indonesian config dulu, fallback ke simple
+        for lang_config in ["indonesian", "simple"]:
+            try:
+                cur.execute(
+                    """
+                    SELECT text, source, category,
+                           ts_rank(search_vector, to_tsquery(%s, %s)) AS rank
+                    FROM regulations
+                    WHERE search_vector @@ to_tsquery(%s, %s)
+                    ORDER BY rank DESC
+                    LIMIT %s
+                    """,
+                    (lang_config, keywords, lang_config, keywords, n_results)
+                )
+                results = cur.fetchall()
+                if results:
+                    break
+            except Exception:
+                continue
+
+        # Fallback: ILIKE jika full-text tidak ada hasil
+        if not results:
+            search_term = f"%{query_text[:50]}%"
+            cur.execute(
+                """
+                SELECT text, source, category, 0.5 as rank
+                FROM regulations
+                WHERE text ILIKE %s OR source ILIKE %s
+                LIMIT %s
+                """,
+                (search_term, search_term, n_results)
+            )
+            results = cur.fetchall()
+
+        if not results:
+            return ""
+
+        context_parts = [f"[{r['source']}] {r['text']}" for r in results]
+        return "\n\n".join(context_parts)
+
+    except Exception as e:
+        logger.error(f"query_regulations error: {e}")
+        return ""
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()

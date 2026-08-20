@@ -30,7 +30,7 @@ export default function ContactPage() {
           <div className="space-y-4">
             {[
               { icon: <Mail size={20} />, title: 'Email', detail: 'support@nusantaraexport.ai', sub: 'Respons dalam 1x24 jam' },
-              { icon: <Phone size={20} />, title: 'Telepon', detail: '+62 21-3456-7890', sub: 'Senin-Jumat, 08:00 - 17:00 WIB' },
+              { icon: <Phone size={20} />, title: 'Telepon', detail: '+62 813-1875-6412', sub: 'Senin-Jumat, 08:00 - 17:00 WIB' },
               { icon: <MapPin size={20} />, title: 'Kantor', detail: 'Jakarta, Indonesia', sub: 'Program DIGDAYA X Hackathon 2025' },
             ].map((c, i) => (
               <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
