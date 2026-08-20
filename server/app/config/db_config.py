@@ -37,10 +37,21 @@ _use_auth_db = _is_valid_db_url(AUTH_DATABASE_URL)
 
 
 def _connect_pg(url: str):
-    """Connect to PostgreSQL using direct URI or parsed parameters."""
+    """Connect to PostgreSQL using direct URI or parsed parameters with auto fallback."""
     import psycopg2
     if url and ("postgresql://" in url or "postgres://" in url):
-        return psycopg2.connect(url, connect_timeout=10)
+        try:
+            return psycopg2.connect(url, connect_timeout=8)
+        except Exception as err:
+            # If IPv6 failed locally ("Cannot assign requested address" or DNS timeout), try pooler fallback
+            if "Cannot assign requested address" in str(err) or "timeout" in str(err):
+                logger.info("Retrying connection via fallback pooler mode...")
+                fallback_url = url.replace("db.jkykqcgclvxxsfryhryh.supabase.co:5432", "aws-0-ap-southeast-1.pooler.supabase.com:6543").replace("user=postgres", "user=postgres.jkykqcgclvxxsfryhryh")
+                try:
+                    return psycopg2.connect(fallback_url, connect_timeout=8)
+                except Exception:
+                    pass
+            raise err
     
     return psycopg2.connect(
         dbname=_db_name,
@@ -48,7 +59,7 @@ def _connect_pg(url: str):
         password=_db_pass,
         host=_db_host,
         port=int(_db_port),
-        connect_timeout=10
+        connect_timeout=8
     )
 
 
