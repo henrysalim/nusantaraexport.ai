@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { X, Clock, LogIn } from 'lucide-react'
 import api from '../services/api'
 
 const AuthContext = createContext(null)
@@ -50,6 +51,20 @@ export function AuthProvider({ children }) {
       window.removeEventListener('ne:session-expired', handleSessionExpired)
     }
   }, [checkAuth])
+
+  // ── Listen for Escape key to close modal if open
+  useEffect(() => {
+    if (!sessionExpired) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSessionExpired(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [sessionExpired])
 
   // ── Periodic session health check: every 5 minutes re-validates token
   useEffect(() => {
@@ -144,10 +159,17 @@ export function AuthProvider({ children }) {
     navigate('/login')
   }
 
+  // ── Dismiss expired modal without login
+  const handleDismissSessionExpired = () => {
+    setSessionExpired(false)
+  }
+
   const value = {
     user,
     loading,
     sessionExpired,
+    setSessionExpired,
+    dismissSessionExpired: handleDismissSessionExpired,
     isAuthenticated: !!user,
     login,
     register,
@@ -163,38 +185,62 @@ export function AuthProvider({ children }) {
       {/* ── Session Expired Modal ─────────────────────────────── */}
       {sessionExpired && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Sesi berakhir"
+          onClick={handleDismissSessionExpired}
         >
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden">
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header accent bar */}
             <div className="h-1.5 bg-gradient-to-r from-accent to-accent/60" />
 
-            <div className="p-8 text-center">
+            {/* Close 'X' button at top-right */}
+            <button
+              type="button"
+              onClick={handleDismissSessionExpired}
+              className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-secondary/60 hover:text-secondary flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20"
+              aria-label="Tutup peringatan sesi"
+              id="btn-session-expired-close"
+            >
+              <X size={16} strokeWidth={2.5} />
+            </button>
+
+            <div className="p-7 text-center">
               {/* Icon */}
               <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
+                <Clock className="w-7 h-7 text-amber-600" strokeWidth={2.2} />
               </div>
 
               <h2 className="text-lg font-black text-secondary mb-2">Sesi Berakhir</h2>
               <p className="text-sm text-secondary/60 leading-relaxed mb-6">
                 Sesi login Anda telah berakhir karena tidak aktif.
-                Silakan login kembali untuk melanjutkan.
+                Anda dapat login kembali atau tetap melanjutkan penjelajahan.
               </p>
 
-              <button
-                onClick={handleSessionExpiredLogin}
-                className="w-full py-3 bg-accent text-white text-sm font-black rounded-xl
-                  hover:bg-accent/90 transition-all shadow-md shadow-accent/20"
-                id="btn-session-expired-login"
-              >
-                Login Kembali
-              </button>
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleDismissSessionExpired}
+                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-secondary/70 hover:text-secondary text-sm font-bold rounded-xl transition-all"
+                  id="btn-session-expired-dismiss"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSessionExpiredLogin}
+                  className="w-full py-2.5 px-4 bg-accent text-white text-sm font-black rounded-xl
+                    hover:bg-accent/90 transition-all shadow-md shadow-accent/20 flex items-center justify-center gap-2"
+                  id="btn-session-expired-login"
+                >
+                  <LogIn size={16} />
+                  <span>Login Kembali</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

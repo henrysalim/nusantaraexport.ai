@@ -65,12 +65,12 @@ export default function Navbar() {
     <nav
       role="navigation"
       aria-label="Navigasi utama"
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md py-3" : "bg-white py-5"}`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white shadow-md py-3`}
     >
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3" aria-label="NusantaraExport.AI - Halaman Utama">
-          <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-white shadow-lg" aria-hidden="true">
-            <span className="text-xl font-bold">N</span>
+          <div className="w-20 h-20 flex items-center justify-center text-white" aria-hidden="true">
+            <img src="logo.png" alt="NusantaraExport.AI Logo" />
           </div>
           <span className="font-display font-black text-xl text-secondary tracking-tight">
             Nusantara<span className="text-accent">Export</span>.AI
