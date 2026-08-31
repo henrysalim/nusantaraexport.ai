@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  Search, ShoppingCart, Star, 
+  Search, ShoppingCart,
   MapPin, ShieldCheck, Leaf, Globe, 
-  X, Mail, ArrowRight, Package, Truck,
-  Plus, Loader, AlertCircle, RefreshCw
+  X, ArrowRight, Package, Truck,
+  Plus, Loader, AlertCircle, RefreshCw, Phone, MessageCircle,
+  ImagePlus, Trash2, Upload
 } from 'lucide-react';
 import gsap from 'gsap';
 import api from '../services/api';
@@ -15,11 +17,27 @@ const EMPTY_FORM = {
   name: '', category: 'Makanan & Minuman', description: '',
   price_usd: '', price_idr: '', min_order_qty: '',
   hs_code: '', location: '', lead_time: '',
-  packaging: '', seller_name: '', badges: '',
+  packaging: '', seller_name: '', badges: '', whatsapp_number: '',
+};
+
+// Buat URL WhatsApp dengan draft pesan (Bahasa Inggris untuk buyer internasional)
+const buildWhatsAppUrl = (product) => {
+  const number = product.whatsapp_number?.replace(/[^0-9]/g, '');
+  if (!number) return null;
+  const msg = encodeURIComponent(
+    `Hello, I found your product *${product.name}* on NusantaraExport.AI and I am interested in placing an order.\n\n` +
+    `🛒 Product  : ${product.name}\n` +
+    `💰 Price    : USD ${product.price_usd}${product.price_idr ? ` / IDR ${Number(product.price_idr).toLocaleString('id-ID')}` : ''}\n` +
+    `📍 Origin   : ${product.location || '-'}\n` +
+    `📋 MOQ      : ${product.min_order_qty || '-'}\n\n` +
+    `Could you please provide more details on availability, shipping terms, and how to proceed with an order? Thank you!`
+  );
+  return `https://wa.me/${number}?text=${msg}`;
 };
 
 export default function MarketplacePage() {
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
@@ -29,6 +47,7 @@ export default function MarketplacePage() {
   const [cartCount, setCartCount] = useState(0);
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [formImages, setFormImages] = useState([]); // [{preview: dataUrl, file: File}]
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
@@ -94,6 +113,25 @@ export default function MarketplacePage() {
   };
 
   // Tambah Produk Baru
+  const handleImageFiles = (files) => {
+    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const remaining = 3 - formImages.length;
+    validFiles.slice(0, remaining).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFormImages(prev => [...prev, { preview: e.target.result, name: file.name }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (idx) => setFormImages(prev => prev.filter((_, i) => i !== idx));
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    handleImageFiles(e.dataTransfer.files);
+  };
+
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!isAuthenticated) return;
@@ -121,13 +159,15 @@ export default function MarketplacePage() {
         packaging: form.packaging.trim() || null,
         seller_name: form.seller_name.trim() || user?.full_name || '',
         badges: form.badges ? form.badges.split(',').map(b => b.trim()).filter(Boolean) : [],
-        images: [],
+        images: formImages.map(img => img.preview),
+        whatsapp_number: form.whatsapp_number.replace(/[^0-9]/g, '') || null,
       };
 
       const res = await api.post('/api/marketplace/products', payload);
       setProducts(prev => [res.data, ...prev]);
       setFormSuccess('✅ Produk berhasil ditambahkan ke marketplace!');
       setForm(EMPTY_FORM);
+      setFormImages([]);
       setTimeout(() => { setShowAddForm(false); setFormSuccess(''); }, 2000);
     } catch (err) {
       console.error('Add product error:', err);
@@ -153,14 +193,12 @@ export default function MarketplacePage() {
           </div>
           
           <div className="flex items-center gap-4">
-            {isAuthenticated && (
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="flex items-center gap-2 bg-accent hover:bg-accent/90 transition-colors px-6 py-3 rounded-xl font-bold"
-              >
-                <Plus size={18} /> Tambah Produk
-              </button>
-            )}
+            <button
+              onClick={() => isAuthenticated ? setShowAddForm(true) : navigate('/login')}
+              className="flex items-center gap-2 bg-accent hover:bg-accent/90 transition-colors px-6 py-3 rounded-xl font-bold"
+            >
+              <Plus size={18} /> Tambah Produk
+            </button>
             <div className="relative">
               <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-6 py-3 rounded-xl font-bold">
                 <ShoppingCart size={20} />
@@ -231,14 +269,12 @@ export default function MarketplacePage() {
             <Search size={48} className="mx-auto text-slate-300 mb-4" />
             <h3 className="text-xl font-black text-secondary">Produk tidak ditemukan</h3>
             <p className="text-secondary/50 mt-2">Coba gunakan kata kunci atau kategori lain.</p>
-            {isAuthenticated && (
-              <button
-                onClick={() => setShowAddForm(true)}
+            <button
+                onClick={() => isAuthenticated ? setShowAddForm(true) : navigate('/login')}
                 className="mt-6 inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-xl font-bold hover:bg-accent/90 transition-colors"
               >
                 <Plus size={16} /> Jadilah yang pertama menambah produk
               </button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -433,6 +469,21 @@ export default function MarketplacePage() {
                   </div>
                 )}
 
+                {/* Kontak Penjual */}
+                {selectedProduct.whatsapp_number && (
+                  <div className="bg-green-50 border border-green-100 rounded-2xl p-4 mb-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center shrink-0">
+                      <Phone size={18} className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-0.5">Kontak Penjual (WhatsApp)</p>
+                      <p className="font-black text-green-800 text-sm truncate">
+                        +{selectedProduct.whatsapp_number}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 mt-auto">
                   <button 
@@ -441,10 +492,22 @@ export default function MarketplacePage() {
                   >
                     Tambah ke Inquiry List
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-secondary font-bold py-4 rounded-xl transition-colors">
-                    <Mail size={18} />
-                    Kirim Pesan
-                  </button>
+                  {buildWhatsAppUrl(selectedProduct) ? (
+                    <a
+                      href={buildWhatsAppUrl(selectedProduct)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-colors shadow-md"
+                    >
+                      <MessageCircle size={18} />
+                      Hubungi via WhatsApp
+                    </a>
+                  ) : (
+                    <button className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-secondary font-bold py-4 rounded-xl transition-colors">
+                      <MessageCircle size={18} />
+                      Hubungi Penjual
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -477,6 +540,64 @@ export default function MarketplacePage() {
               )}
 
               <form onSubmit={handleAddProduct} className="space-y-4">
+
+                {/* ── Image Upload ── */}
+                <div>
+                  <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">
+                    Foto Produk <span className="text-secondary/30 font-normal normal-case">(maks. 3 gambar)</span>
+                  </label>
+
+                  {/* Preview strip */}
+                  {formImages.length > 0 && (
+                    <div className="flex gap-3 mb-3 flex-wrap">
+                      {formImages.map((img, i) => (
+                        <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-slate-200 group shrink-0">
+                          <img src={img.preview} alt={img.name} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                          >
+                            <Trash2 size={16} className="text-white" />
+                          </button>
+                          <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-black px-1.5 py-0.5 rounded">{i + 1}</span>
+                        </div>
+                      ))}
+                      {formImages.length < 3 && (
+                        <label
+                          htmlFor="img-upload-extra"
+                          className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors shrink-0"
+                        >
+                          <Plus size={20} className="text-slate-400" />
+                          <span className="text-[10px] text-slate-400 mt-1">Tambah</span>
+                          <input id="img-upload-extra" type="file" accept="image/*" multiple className="hidden"
+                            onChange={e => handleImageFiles(e.target.files)} />
+                        </label>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Drop zone — only show when no images yet */}
+                  {formImages.length === 0 && (
+                    <label
+                      htmlFor="img-upload"
+                      onDrop={handleDrop}
+                      onDragOver={e => e.preventDefault()}
+                      className="flex flex-col items-center justify-center gap-3 w-full py-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 cursor-pointer hover:border-accent hover:bg-accent/5 transition-all group"
+                    >
+                      <div className="w-12 h-12 bg-slate-100 group-hover:bg-accent/10 rounded-2xl flex items-center justify-center transition-colors">
+                        <Upload size={22} className="text-slate-400 group-hover:text-accent transition-colors" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-secondary/70 text-sm">Klik atau seret gambar ke sini</p>
+                        <p className="text-xs text-secondary/40 mt-1">JPG, PNG, WebP — maks. 3 gambar</p>
+                      </div>
+                      <input id="img-upload" type="file" accept="image/*" multiple className="hidden"
+                        onChange={e => handleImageFiles(e.target.files)} />
+                    </label>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Nama Produk *</label>
@@ -540,6 +661,25 @@ export default function MarketplacePage() {
                     <input type="text" value={form.packaging} onChange={e => setForm({...form, packaging: e.target.value})}
                       placeholder="Jute Bag (60kg) dengan GrainPro"
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-secondary outline-none focus:border-accent" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Phone size={12} className="text-green-600" />
+                        Nomor WhatsApp Penjual <span className="text-green-600">(Buyer akan menghubungi via WA ini)</span>
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary/50 font-bold text-sm">+62</span>
+                      <input
+                        type="tel"
+                        value={form.whatsapp_number}
+                        onChange={e => setForm({...form, whatsapp_number: e.target.value})}
+                        placeholder="81318756412"
+                        className="w-full pl-14 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-secondary outline-none focus:border-green-500"
+                      />
+                    </div>
+                    <p className="text-xs text-secondary/40 mt-1.5">Format: tanpa 0 di awal. Contoh: 81318756412</p>
                   </div>
                   <div className="col-span-2">
                     <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Sertifikasi / Badges (pisah koma)</label>

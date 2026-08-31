@@ -65,97 +65,9 @@ CREATE INDEX IF NOT EXISTS idx_mp_buyers_country ON marketplace_buyers(country);
 CREATE INDEX IF NOT EXISTS idx_mp_buyers_verified ON marketplace_buyers(is_verified);
 
 -- ============================================================
--- SEED DATA: Produk UMKM awal (referensi untuk onboarding)
+-- SEED DATA: Lihat migration 004_marketplace_whatsapp.sql
+-- Produk aktif marketplace dikelola via migration 004.
 -- ============================================================
-INSERT INTO marketplace_products
-    (name, hs_code, category, description, price_usd, price_idr,
-     min_order_qty, images, badges, location, lead_time, packaging,
-     status, seller_name)
-VALUES
-    ('Kopi Arabika Gayo Premium',
-     '0901.11',
-     'Makanan & Minuman',
-     'Kopi Arabika Gayo dengan cita rasa kompleks, tingkat keasaman rendah, dan aroma rempah yang khas. Diproses secara fully washed dan ditanam di ketinggian 1200-1500 mdpl.',
-     12.50, 195000,
-     '100 kg',
-     '["https://upload.wikimedia.org/wikipedia/commons/c/c5/Roasted_coffee_beans.jpg"]',
-     '["Sertifikasi Organik","Fair Trade"]',
-     'Aceh Tengah, Aceh',
-     '14 Hari Kerja',
-     'Jute Bag (60kg) dengan GrainPro',
-     'active',
-     'Koperasi Kopi Gayo'),
-
-    ('Kerajinan Tas Anyaman Rotan',
-     '4602.19',
-     'Kerajinan',
-     'Tas anyaman rotan asli Bali buatan tangan pengrajin lokal. Kuat, tahan lama, dan menggunakan pewarna alami yang ramah lingkungan.',
-     24.00, 375000,
-     '50 pcs',
-     '["https://upload.wikimedia.org/wikipedia/commons/0/08/Fashionable_stylish_rattan_bag_on_a_tropical_wood_background._Tropical_island_of_Bali%2C_Indonesia._Rattan_handbag._%2842448810905%29.jpg"]',
-     '["Eco-friendly","Handmade"]',
-     'Gianyar, Bali',
-     '21 Hari Kerja',
-     'Karton Box Ekspor',
-     'active',
-     'Rotan Lestari Bali'),
-
-    ('Kain Batik Tulis Sutera',
-     '5209.41',
-     'Tekstil & Pakaian',
-     'Batik tulis asli berbahan sutera 100% dengan motif klasik Solo. Dikerjakan dengan teknik tradisional selama 3 bulan per lembarnya.',
-     85.00, 1325000,
-     '20 pcs',
-     '["https://upload.wikimedia.org/wikipedia/commons/5/5f/Batik_Trusmi_Cirebon_%2823%29.jpg"]',
-     '["Cultural Heritage","Premium Silk"]',
-     'Surakarta, Jawa Tengah',
-     '30 Hari Kerja',
-     'Premium Gift Box & Outer Carton',
-     'active',
-     'Batik Pusaka Solo'),
-
-    ('Biji Kakao Fermentasi Grade A',
-     '1801.00',
-     'Makanan & Minuman',
-     'Biji kakao fermentasi standar ekspor dengan kadar air maksimal 7.5%. Memiliki profil rasa fruity dan floral khas kakao Bali.',
-     8.50, 132000,
-     '500 kg',
-     '["https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?auto=format&fit=crop&q=80&w=800"]',
-     '["Export Ready","High Cocoa Butter"]',
-     'Jembrana, Bali',
-     '10 Hari Kerja',
-     'Karung Goni 50kg',
-     'active',
-     'Cokelat Nusantara'),
-
-    ('Minyak Nilam (Patchouli Oil)',
-     '3301.19',
-     'Minyak Atsiri',
-     'Minyak nilam murni hasil destilasi uap. Kandungan Patchouli Alcohol (PA) minimum 30%, sangat cocok untuk industri parfum global.',
-     45.00, 700000,
-     '10 kg',
-     '["https://upload.wikimedia.org/wikipedia/commons/b/b8/Rosemary_Oil_in_a_bottle_and_rosemary_herb.jpg"]',
-     '["100% Pure","Sertifikasi ISO"]',
-     'Garut, Jawa Barat',
-     '14 Hari Kerja',
-     'Drum Aluminium (5kg / 10kg)',
-     'active',
-     'Atsiri Alam Indonesia'),
-
-    ('Mebel Kayu Jati Minimalis',
-     '9401.61',
-     'Furniture',
-     'Set kursi dan meja berbahan kayu jati perhutani TPK. Finishing natural teak oil standar ekspor dengan ketahanan cuaca tinggi.',
-     250.00, 3900000,
-     '1 Kontainer 20ft',
-     '["https://upload.wikimedia.org/wikipedia/commons/0/0a/Teak_Garden_Furniture_Patio_Set.jpg"]',
-     '["Sertifikasi SVLK","Kiln Dried"]',
-     'Jepara, Jawa Tengah',
-     '45 Hari Kerja',
-     'Corrugated Paper & Pallet Kayu',
-     'active',
-     'Jepara Woodcraft')
-ON CONFLICT DO NOTHING;
 
 -- ============================================================
 -- SEED DATA: Buyer Internasional
@@ -189,28 +101,10 @@ VALUES
      '["3301","3302"]',
      900000,
      TRUE,
-     'Hub distribusi minyak atsiri ke seluruh Asia. Payment L/C 90 hari.'),
-
-    ('Green Futures Australia Pty Ltd',
-     'Australia',
-     'trade@greenfutures.com.au',
-     '["Makanan & Minuman","Kerajinan"]',
-     '["0901","1801","4602"]',
-     600000,
-     FALSE,
-     'Startup importir fokus produk berkelanjutan dan fair trade. Sedang proses verifikasi.'),
-
-    ('Korea Home Living Corp',
-     'Korea Selatan',
-     'global@koreahomeliving.kr',
-     '["Furniture","Kerajinan","Tekstil & Pakaian"]',
-     '["9401","4602","5209"]',
-     3200000,
-     TRUE,
-     'Importir furnitur dan dekorasi rumah terbesar di Korea. MOQ kontainer 40ft.')
+     'Hub distribusi minyak atsiri ke seluruh Asia. Payment L/C 90 hari.')
 ON CONFLICT DO NOTHING;
 
 -- Konfirmasi
-SELECT 'marketplace_products created with ' || COUNT(*) || ' records' as status FROM marketplace_products
+SELECT 'marketplace_products table ready' as status
 UNION ALL
 SELECT 'marketplace_buyers created with ' || COUNT(*) || ' records' as status FROM marketplace_buyers;

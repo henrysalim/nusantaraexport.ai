@@ -14,6 +14,7 @@ import CommunityPage from "./pages/CommunityPage";
 import PostDetailPage from "./pages/PostDetailPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import FloatingChatButtons from "./components/FloatingChatButtons";
+import PartnershipPage from "./pages/PartnershipPage";
 
 function AppContent() {
   const location = useLocation();
@@ -50,6 +51,7 @@ function AppContent() {
           <Route path="/komunitas" element={<CommunityPage />} />
           <Route path="/komunitas/diskusi/:postId" element={<PostDetailPage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/kemitraan" element={<PartnershipPage />} />
         </Routes>
       </main>
       <Footer />
