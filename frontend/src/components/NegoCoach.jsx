@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Handshake, TrendingUp, TrendingDown, Mail, DollarSign, Lightbulb, Info } from 'lucide-react'
 import { analyzeNegotiation } from '../services/api'
+import AIConfidenceBadge from './AIConfidenceBadge'
 
 export default function NegoCoach() {
   const [commodity, setCommodity] = useState('Kopi Arabika')
@@ -12,12 +13,14 @@ export default function NegoCoach() {
   const [result, setResult] = useState(null)
   const [showEmail, setShowEmail] = useState(false)
   const [error, setError] = useState('')
+  const [aiMetadata, setAiMetadata] = useState(null)
 
   const handleAnalyze = async () => {
     if (!buyerOffer) return
     setLoading(true)
     setResult(null)
     setError('')
+    setAiMetadata(null)
     try {
       const response = await analyzeNegotiation({
         commodity,
@@ -27,6 +30,7 @@ export default function NegoCoach() {
         incoterm,
       })
       setResult(response.data)
+      setAiMetadata(response.data.ai_metadata || null)
     } catch (err) {
       console.error('Nego API error:', err)
       setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
@@ -204,6 +208,18 @@ export default function NegoCoach() {
               </div>
             )}
           </div>
+
+          {/* AI Confidence Badge */}
+          {aiMetadata && (
+            <div className="pt-2 border-t border-slate-100">
+              <AIConfidenceBadge
+                tier={aiMetadata.ai_tier}
+                confidence={aiMetadata.confidence}
+                modelUsed={aiMetadata.model_used}
+                responseTimeMs={aiMetadata.response_time_ms}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

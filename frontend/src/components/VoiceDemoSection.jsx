@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Volume2, Square, ExternalLink } from 'lucide-react'
 import { sendChatMessage } from '../services/api'
+import AIConfidenceBadge from './AIConfidenceBadge'
+import AIThinkingPanel from './AIThinkingPanel'
+import { SkeletonChat } from './SkeletonLoader'
 
 const EXAMPLES = [
   'Apa saja syarat ekspor kopi ke Jepang?',
@@ -159,6 +162,7 @@ export default function VoiceDemoSection() {
   const [status, setStatus] = useState('idle')
   const [inputText, setInputText] = useState('')
   const [queryResult, setQueryResult] = useState(null)
+  const [aiMetadata, setAiMetadata] = useState(null)
   const [isReadingAnswer, setIsReadingAnswer] = useState(false)
   const [detectedIntent, setDetectedIntent] = useState('')
   const [micError, setMicError] = useState('')
@@ -203,9 +207,9 @@ export default function VoiceDemoSection() {
   const handleQuery = async (query) => {
     setStatus('processing')
     setQueryResult(null)
+    setAiMetadata(null)
 
     try {
-      // Try real API first
       const response = await sendChatMessage(query, {
         current_page: 'assistant',
         user_commodity: 'umum'
@@ -217,6 +221,7 @@ export default function VoiceDemoSection() {
         context_used: data.referenced_sources || '[Portal INSW](https://insw.go.id) | [Kementerian Perdagangan](https://kemendag.go.id) | [Bea Cukai RI](https://customs.go.id)'
       })
       setDetectedIntent(data.detected_intent || '')
+      setAiMetadata(data.ai_metadata || null)
       setStatus('speaking')
     } catch (error) {
       console.error('Chatbot API error:', error)
@@ -225,6 +230,7 @@ export default function VoiceDemoSection() {
         context_used: []
       })
       setDetectedIntent('error')
+      setAiMetadata(null)
       setStatus('error')
     }
   }
@@ -340,6 +346,13 @@ export default function VoiceDemoSection() {
           </div>
         )}
 
+        {/* Processing Skeleton */}
+        {status === 'processing' && (
+          <div className="animate-fadeInUp">
+            <SkeletonChat />
+          </div>
+        )}
+
         {/* Results */}
         {status === 'speaking' && queryResult && (
           <div className="bg-white border border-slate-200 rounded-3xl p-8 text-left animate-fadeInUp shadow-lg" role="region" aria-label="Jawaban AI" aria-live="polite">
@@ -366,15 +379,37 @@ export default function VoiceDemoSection() {
                 {isReadingAnswer ? 'Hentikan' : 'Dengarkan'}
               </button>
             </div>
+
+            {/* AI Thinking Panel */}
+            {aiMetadata?.thinking_steps?.length > 0 && (
+              <div className="mb-4">
+                <AIThinkingPanel steps={aiMetadata.thinking_steps} />
+              </div>
+            )}
+
             <div className="text-secondary leading-relaxed font-medium text-[15px] mb-6">
               {renderFormattedText(queryResult.answer)}
             </div>
+
+            {/* Sources */}
             {queryResult.context_used && (
-              <div className="pt-6 border-t border-accent/10">
+              <div className="pt-4 border-t border-accent/10 mb-4">
                 <p className="text-[10px] font-black text-accent/60 uppercase tracking-widest mb-3">Sumber Rujukan Resmi:</p>
                 <div className="flex flex-wrap gap-2">
                   {renderClickableSources(queryResult.context_used)}
                 </div>
+              </div>
+            )}
+
+            {/* AI Confidence Badge */}
+            {aiMetadata && (
+              <div className="pt-4 border-t border-slate-100">
+                <AIConfidenceBadge
+                  tier={aiMetadata.ai_tier}
+                  confidence={aiMetadata.confidence}
+                  modelUsed={aiMetadata.model_used}
+                  responseTimeMs={aiMetadata.response_time_ms}
+                />
               </div>
             )}
           </div>

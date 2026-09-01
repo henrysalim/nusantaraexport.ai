@@ -1,21 +1,26 @@
 import { useState } from 'react'
 import { Search, Tag, ArrowRight } from 'lucide-react'
 import { classifyHSCode } from '../services/api'
+import AIConfidenceBadge from './AIConfidenceBadge'
+import { SkeletonHSCode } from './SkeletonLoader'
 
 export default function HSCodeOptimizer() {
   const [product, setProduct] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
+  const [aiMetadata, setAiMetadata] = useState(null)
 
   const handleClassify = async () => {
     if (!product) return
     setLoading(true)
     setResult(null)
     setError('')
+    setAiMetadata(null)
     try {
       const response = await classifyHSCode({ product_name: product })
       setResult(response.data)
+      setAiMetadata(response.data.ai_metadata || null)
     } catch (err) {
       console.error('HS Code API error:', err)
       setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
@@ -56,7 +61,10 @@ export default function HSCodeOptimizer() {
         </div>
       )}
 
-      {result && (
+      {/* Skeleton loading */}
+      {loading && <SkeletonHSCode />}
+
+      {result && !loading && (
         <div className="animate-fadeInUp space-y-4">
           {/* HS Code Result */}
           <div className="bg-slate-soft p-5 rounded-2xl border border-slate-200">
@@ -111,6 +119,18 @@ export default function HSCodeOptimizer() {
             </div>
             <ArrowRight size={24} className="text-green-400" />
           </div>
+
+          {/* AI Confidence Badge */}
+          {aiMetadata && (
+            <div className="space-y-2">
+              <AIConfidenceBadge
+                tier={aiMetadata.ai_tier}
+                confidence={aiMetadata.confidence}
+                modelUsed={aiMetadata.model_used}
+                responseTimeMs={aiMetadata.response_time_ms}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

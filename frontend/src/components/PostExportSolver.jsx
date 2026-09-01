@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { AlertOctagon, Mail, FileText, DollarSign, Clock, ChevronDown } from 'lucide-react'
 import { solvePostExport } from '../services/api'
+import AIConfidenceBadge from './AIConfidenceBadge'
+import AIThinkingPanel from './AIThinkingPanel'
 
 const PROBLEM_TYPES = [
   { value: 'customs_hold', label: '📦 Barang Tertahan di Pabean', desc: 'Barang ditahan oleh bea cukai negara tujuan' },
@@ -17,14 +19,15 @@ export default function PostExportSolver() {
   const [result, setResult] = useState(null)
   const [showEmail, setShowEmail] = useState(false)
   const [showClaim, setShowClaim] = useState(false)
-
   const [error, setError] = useState('')
+  const [aiMetadata, setAiMetadata] = useState(null)
 
   const handleSolve = async () => {
     if (!problemType) return
     setLoading(true)
     setResult(null)
     setError('')
+    setAiMetadata(null)
     try {
       const response = await solvePostExport({
         problem_type: problemType,
@@ -32,6 +35,7 @@ export default function PostExportSolver() {
         description,
       })
       setResult(response.data)
+      setAiMetadata(response.data.ai_metadata || null)
     } catch (err) {
       console.error('Post-export API error:', err)
       setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
@@ -175,6 +179,21 @@ export default function PostExportSolver() {
             <div className="bg-yellow-50 p-5 rounded-2xl border border-yellow-200 animate-fadeInUp">
               <p className="text-[9px] font-black text-yellow-600 uppercase tracking-widest mb-3">Template Form Klaim</p>
               <p className="text-sm font-bold text-secondary">{result.claim_form_template}</p>
+            </div>
+          )}
+
+          {/* AI Transparency */}
+          {aiMetadata && (
+            <div className="space-y-3 pt-4 border-t border-slate-100">
+              {aiMetadata.thinking_steps?.length > 0 && (
+                <AIThinkingPanel steps={aiMetadata.thinking_steps} />
+              )}
+              <AIConfidenceBadge
+                tier={aiMetadata.ai_tier}
+                confidence={aiMetadata.confidence}
+                modelUsed={aiMetadata.model_used}
+                responseTimeMs={aiMetadata.response_time_ms}
+              />
             </div>
           )}
         </div>

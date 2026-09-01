@@ -8,8 +8,10 @@ Flow:
   4. AI summary always generated from actual data figures (never hardcoded text).
 """
 from fastapi import APIRouter, Depends
+from typing import Optional
 from pydantic import BaseModel
 from app.middleware import get_current_user
+from app.services.ai_metadata_service import build_ai_metadata, log_inference
 from app.services.comtrade_service import (
     resolve_hs_prefix,
     fetch_market_analysis,
@@ -17,6 +19,7 @@ from app.services.comtrade_service import (
 )
 from app.services.cendol_service import CendolNLPService
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +48,7 @@ class GapResponse(BaseModel):
     opportunity_level: str
     ai_summary: str
     data_source: str
+    ai_metadata: dict = {}
 
 
 # ──────────────────────────────────────────────────────
@@ -65,6 +69,7 @@ def analyze_gap(
     hs_prefix = resolve_hs_prefix(product_input) if product_input else None
     # Use the raw hs_code for COMTRADE (longer codes are more precise)
     hs_for_api = request.hs_code.replace(".", "").strip() if request.hs_code else (hs_prefix or "")
+    t_start = time.monotonic()
 
     # Step 2: Try live COMTRADE data
     market_data = None
@@ -90,6 +95,23 @@ def analyze_gap(
         data_source=market_data["data_source"],
     )
 
+    response_time_ms = int((time.monotonic() - t_start) * 1000)
+    is_live = "COMTRADE" in market_data.get("data_source", "")
+    market_metadata = build_ai_metadata(
+        tier="gemini_flash" if is_live else "rule_based",
+        model="gemini-3.1-flash-lite" if is_live else "market-fallback-db",
+        finish_reason="STOP",
+        response_time_ms=response_time_ms,
+        thinking_steps=[
+            f"Resolusi HS code untuk produk '{market_data['product']}'",
+            f"Ambil data ekspor dari {market_data['data_source']}",
+            f"Hitung market gap score ({market_data['gap_score']}/100) dan analisis peluang",
+            "Generate AI market insights via Gemini Flash",
+        ],
+        data_sources=[market_data["data_source"]],
+    )
+    log_inference("market_gap", market_metadata)
+
     return GapResponse(
         product=market_data["product"],
         hs_code=market_data.get("hs_code", hs_for_api or "N/A"),
@@ -102,6 +124,7 @@ def analyze_gap(
         opportunity_level=market_data["opportunity_level"],
         ai_summary=ai_summary,
         data_source=market_data["data_source"],
+        ai_metadata=market_metadata,
     )
 
 
@@ -152,8 +175,11 @@ def _generate_ai_summary(
 
     ai_result = CendolNLPService.generate_response(prompt, context="")
 
-    if ai_result:
-        return ai_result
+    # generate_response now returns a dict — extract the answer text
+    ai_text = ai_result.get("answer", "") if isinstance(ai_result, dict) else str(ai_result)
+
+    if ai_text:
+        return ai_text
 
     # Structured fallback template (always deterministic, always informative)
     opportunity = "luar biasa" if gap_score > 80 else "besar" if gap_score > 60 else "cukup"

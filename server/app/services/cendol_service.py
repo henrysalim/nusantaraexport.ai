@@ -1,5 +1,6 @@
 """
-CendolNLPService v3.0 — Gemini-First Architecture dengan Anti-Hallucination Guard.
+CendolNLPService v3.1 — Gemini-First Architecture dengan Anti-Hallucination Guard
+                         + AI Transparency Metadata (confidence, thinking steps, tier).
 
 Tier 1: Google Gemini Flash (primary — fast, gratis, cerdas)
 Tier 2: Cendol NLP / HuggingFace (jika Gemini gagal)
@@ -10,12 +11,14 @@ Semua fitur diarahkan ke Gemini dengan:
 - Grounding ke RAG context (ChromaDB)
 - Temperature rendah (0.2) untuk mengurangi halusinasi
 - Instruksi eksplisit: "Jangan mengarang data, jika tidak tahu katakan tidak tahu"
+- Chain-of-Thought: blok <thinking> diekstrak untuk transparansi ke user
 """
 import requests
 import os
 import json
 import logging
-from typing import Optional
+import time
+from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -27,10 +30,28 @@ CENDOL_API_KEY = os.getenv("CENDOL_API_KEY", "")
 BACKUP_LLM_PROVIDER = os.getenv("BACKUP_LLM_PROVIDER", "huggingface")
 BACKUP_LLM_API_KEY  = os.getenv("BACKUP_LLM_API_KEY", "")
 
+# Import AI metadata service (setelah load_dotenv agar path resolver jalan)
+try:
+    from app.services.ai_metadata_service import (
+        build_ai_metadata, extract_thinking_steps, log_inference
+    )
+    _HAS_METADATA_SERVICE = True
+except ImportError:
+    _HAS_METADATA_SERVICE = False
+    logger.warning("ai_metadata_service tidak ditemukan — metadata akan dikosongkan.")
+
 # ──────────────────────────────────────────────────────────────────────────────
-# MASTER SYSTEM PROMPT — Anti-hallucination, domain-specific
+# MASTER SYSTEM PROMPT — Anti-hallucination, domain-specific, dengan CoT thinking
 # ──────────────────────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """Anda adalah **NusantaraExport.AI** — asisten AI ekspor senior & konsultan kepabeanan profesional untuk UMKM Indonesia.
+
+**LANGKAH PERTAMA (WAJIB — untuk transparansi AI):**
+Sebelum menjawab, tuliskan proses berpikir Anda dalam blok berikut:
+<thinking>
+Langkah 1: [identifikasi topik dan konteks pertanyaan]
+Langkah 2: [identifikasi regulasi/data relevan dari knowledge base]
+Langkah 3: [formulasi jawaban berdasarkan fakta, bukan asumsi]
+</thinking>
 
 **PETUNJUK FORMATTING JAWABAN (WAJIB DIPATUHI):**
 - Awali jawaban dengan salam singkat profesional.
@@ -85,19 +106,41 @@ class CendolNLPService:
         return "general_qa"
 
     @staticmethod
-    def generate_response(prompt: str, context: str = "", image_base64: str = None, mime_type: str = "image/jpeg") -> str:
+    def generate_response(
+        prompt: str,
+        context: str = "",
+        image_base64: str = None,
+        mime_type: str = "image/jpeg",
+        module: str = "chat",
+    ) -> Dict[str, Any]:
         """
-        Generate AI response dengan 3-tier fallback:
-        1. Gemini Flash (primary)
-        2. Cendol NLP / HuggingFace (backup)
-        3. Rule-based engine (always works)
+        Generate AI response dengan 3-tier fallback.
+        Mengembalikan DICT (bukan string) dengan answer + ai_metadata.
+
+        Returns:
+            {
+              "answer"          : str,
+              "ai_tier"         : str,
+              "model_used"      : str,
+              "confidence"      : float,
+              "finish_reason"   : str,
+              "response_time_ms": int,
+              "thinking_steps"  : list[str],
+              "data_sources"    : list[str],
+              "tier_label"      : str,
+              "tier_icon"       : str,
+              "inference_id"    : str,
+            }
         """
         # Tier 1: Gemini (Primary)
         if GEMINI_API_KEY:
             try:
-                result = CendolNLPService._call_gemini(prompt, context, image_base64, mime_type)
+                result = CendolNLPService._call_gemini(
+                    prompt, context, image_base64, mime_type
+                )
                 if result:
                     logger.info("✅ Response dari Gemini Flash (Tier 1)")
+                    log_inference(module, result) if _HAS_METADATA_SERVICE else None
                     return result
             except Exception as e:
                 logger.warning(f"Gemini Tier 1 failed: {e}")
@@ -108,19 +151,27 @@ class CendolNLPService:
                 result = CendolNLPService._call_backup_llm(prompt, context)
                 if result:
                     logger.info("✅ Response dari Backup LLM (Tier 2)")
+                    log_inference(module, result) if _HAS_METADATA_SERVICE else None
                     return result
             except Exception as e:
                 logger.warning(f"Backup LLM Tier 2 failed: {e}")
 
         # Tier 3: Rule-based (always works)
         logger.info("Using rule-based AI fallback (Tier 3)")
-        return CendolNLPService._fallback_ai_response(prompt, context)
+        result = CendolNLPService._fallback_ai_response(prompt, context)
+        log_inference(module, result) if _HAS_METADATA_SERVICE else None
+        return result
 
     @staticmethod
-    def _call_gemini(prompt: str, context: str = "", image_base64: str = None, mime_type: str = "image/jpeg") -> Optional[str]:
+    def _call_gemini(
+        prompt: str,
+        context: str = "",
+        image_base64: str = None,
+        mime_type: str = "image/jpeg",
+    ) -> Optional[Dict[str, Any]]:
         """
         Call Gemini Flash via REST API dengan system prompt anti-hallucination.
-        Tidak pakai SDK google-generativeai untuk menghindari timeout/hanging.
+        Mengembalikan dict AI metadata (bukan string mentah).
         """
         if not GEMINI_API_KEY:
             return None
@@ -128,12 +179,10 @@ class CendolNLPService:
         model = GEMINI_MODEL
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
 
-        # Build full system prompt dengan RAG context
         full_system = SYSTEM_PROMPT.format(
             rag_context=context if context else "Tidak ada konteks spesifik. Gunakan pengetahuan umum regulasi ekspor Indonesia."
         )
 
-        # Safety settings — cegah output yang berbahaya
         safety_settings = [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
@@ -141,25 +190,18 @@ class CendolNLPService:
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
         ]
 
-        # Generation config — temperature rendah untuk akurasi tinggi
+        TEMPERATURE = 0.2
         generation_config = {
-            "temperature": 0.2,          # Rendah = lebih faktual, kurang kreatif
+            "temperature": TEMPERATURE,
             "topP": 0.8,
             "topK": 40,
-            "maxOutputTokens": 1024,
+            "maxOutputTokens": 1500,
             "responseMimeType": "text/plain",
         }
 
-        # Build content parts
         user_parts = [{"text": f"{full_system}\n\n---\n**Pertanyaan pengguna:** {prompt}"}]
-
         if image_base64:
-            user_parts.append({
-                "inlineData": {
-                    "mimeType": mime_type,
-                    "data": image_base64,
-                }
-            })
+            user_parts.append({"inlineData": {"mimeType": mime_type, "data": image_base64}})
 
         payload = {
             "contents": [{"role": "user", "parts": user_parts}],
@@ -167,12 +209,13 @@ class CendolNLPService:
             "generationConfig": generation_config,
         }
 
+        t_start = time.monotonic()
         try:
-            response = requests.post(url, json=payload, timeout=20)
+            response = requests.post(url, json=payload, timeout=25)
             response.raise_for_status()
             data = response.json()
+            response_time_ms = int((time.monotonic() - t_start) * 1000)
 
-            # Handle blocked response
             candidates = data.get("candidates", [])
             if not candidates:
                 finish_reason = data.get("promptFeedback", {}).get("blockReason", "UNKNOWN")
@@ -180,20 +223,52 @@ class CendolNLPService:
                 return None
 
             candidate = candidates[0]
-            # Handle SAFETY atau RECITATION finish reason
             finish = candidate.get("finishReason", "STOP")
+
             if finish in ("SAFETY", "RECITATION"):
                 logger.warning(f"Gemini candidate finish reason: {finish}")
-                return "Maaf, saya tidak dapat menjawab pertanyaan tersebut karena alasan keamanan konten. Silakan reformulasi pertanyaan Anda dalam konteks ekspor."
+                # Kembalikan dict dengan jawaban aman, bukan None
+                safety_answer = (
+                    "Maaf, saya tidak dapat menjawab pertanyaan tersebut karena "
+                    "alasan keamanan konten. Silakan reformulasi pertanyaan Anda dalam konteks ekspor."
+                )
+                if _HAS_METADATA_SERVICE:
+                    return build_ai_metadata(
+                        tier="gemini_flash", model=model, finish_reason=finish,
+                        response_time_ms=response_time_ms, thinking_steps=[],
+                        data_sources=["Gemini Safety Filter"], temperature=TEMPERATURE,
+                    ) | {"answer": safety_answer}
+                return {"answer": safety_answer, "ai_tier": "gemini_flash",
+                        "confidence": 0.20, "thinking_steps": [], "data_sources": []}
 
             parts = candidate.get("content", {}).get("parts", [])
-            if parts:
-                return parts[0].get("text", "").strip()
+            if not parts:
+                return None
 
-            return None
+            raw_text = parts[0].get("text", "").strip()
+
+            # Ekstrak thinking steps dari blok <thinking>...</thinking>
+            if _HAS_METADATA_SERVICE:
+                thinking_steps, clean_answer = extract_thinking_steps(raw_text)
+                metadata = build_ai_metadata(
+                    tier="gemini_flash",
+                    model=model,
+                    finish_reason=finish,
+                    response_time_ms=response_time_ms,
+                    thinking_steps=thinking_steps,
+                    data_sources=["Gemini Knowledge", "RAG ChromaDB"],
+                    temperature=TEMPERATURE,
+                )
+                return {**metadata, "answer": clean_answer}
+
+            # Fallback tanpa metadata service
+            return {"answer": raw_text, "ai_tier": "gemini_flash",
+                    "model_used": model, "confidence": 0.85,
+                    "thinking_steps": [], "data_sources": [],
+                    "response_time_ms": response_time_ms, "finish_reason": finish}
 
         except requests.exceptions.Timeout:
-            logger.error("Gemini API timeout (20s)")
+            logger.error("Gemini API timeout (25s)")
             return None
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code if e.response else "unknown"
@@ -209,11 +284,15 @@ class CendolNLPService:
             return None
 
     @staticmethod
-    def _call_backup_llm(prompt: str, context: str) -> Optional[str]:
-        """Backup LLM: Cendol NLP → HuggingFace Mistral."""
+    def _call_backup_llm(prompt: str, context: str) -> Optional[Dict[str, Any]]:
+        """Backup LLM: Cendol NLP → HuggingFace Mistral. Mengembalikan dict AI metadata."""
         system_prompt = SYSTEM_PROMPT.format(
             rag_context=context if context else "Gunakan pengetahuan umum regulasi ekspor Indonesia."
         )
+
+        answer_text = None
+        model_name = "backup_llm"
+        t_start = time.monotonic()
 
         # Cendol API (via HuggingFace endpoint jika dikonfigurasi)
         cendol_key = CENDOL_API_KEY or BACKUP_LLM_API_KEY
@@ -230,34 +309,52 @@ class CendolNLPService:
                 data = resp.json()
                 if isinstance(data, list) and data:
                     text = data[0].get("generated_text", "")
-                    return text.split("Jawaban:")[-1].strip() if "Jawaban:" in text else text.strip()
+                    answer_text = text.split("Jawaban:")[-1].strip() if "Jawaban:" in text else text.strip()
+                    model_name = "cendol-nlp"
             except Exception as e:
                 logger.warning(f"Cendol API failed: {e}")
 
         # HuggingFace Mistral fallback
-        hf_key = os.getenv("HUGGINGFACE_API_KEY") or BACKUP_LLM_API_KEY
-        if hf_key and BACKUP_LLM_PROVIDER == "huggingface":
-            try:
-                headers = {"Authorization": f"Bearer {hf_key}"}
-                payload = {
-                    "inputs": f"{system_prompt}\n\nPertanyaan: {prompt}\nJawaban:",
-                    "parameters": {"max_new_tokens": 512, "temperature": 0.2, "return_full_text": False}
-                }
-                resp = requests.post(
-                    "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-                    headers=headers, json=payload, timeout=30
-                )
-                resp.raise_for_status()
-                data = resp.json()
-                if isinstance(data, list) and data:
-                    return data[0].get("generated_text", "").strip()
-            except Exception as e:
-                logger.warning(f"HuggingFace fallback failed: {e}")
+        if not answer_text:
+            hf_key = os.getenv("HUGGINGFACE_API_KEY") or BACKUP_LLM_API_KEY
+            if hf_key and BACKUP_LLM_PROVIDER == "huggingface":
+                try:
+                    headers = {"Authorization": f"Bearer {hf_key}"}
+                    payload = {
+                        "inputs": f"{system_prompt}\n\nPertanyaan: {prompt}\nJawaban:",
+                        "parameters": {"max_new_tokens": 512, "temperature": 0.2, "return_full_text": False}
+                    }
+                    resp = requests.post(
+                        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+                        headers=headers, json=payload, timeout=30
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                    if isinstance(data, list) and data:
+                        answer_text = data[0].get("generated_text", "").strip()
+                        model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+                except Exception as e:
+                    logger.warning(f"HuggingFace fallback failed: {e}")
 
-        return None
+        if not answer_text:
+            return None
+
+        response_time_ms = int((time.monotonic() - t_start) * 1000)
+        if _HAS_METADATA_SERVICE:
+            metadata = build_ai_metadata(
+                tier="backup_llm", model=model_name, finish_reason="STOP",
+                response_time_ms=response_time_ms, thinking_steps=[],
+                data_sources=["HuggingFace Inference API"],
+            )
+            return {**metadata, "answer": answer_text}
+
+        return {"answer": answer_text, "ai_tier": "backup_llm",
+                "model_used": model_name, "confidence": 0.62,
+                "thinking_steps": [], "data_sources": [],
+                "response_time_ms": response_time_ms}
 
     @staticmethod
-    def _fallback_ai_response(prompt: str, context: str = "") -> str:
+    def _fallback_ai_response(prompt: str, context: str = "") -> Dict[str, Any]:
         """
         Rule-based fallback engine — selalu berhasil, tidak pernah crash.
         Menggunakan intent classification untuk memberikan respons relevan.
@@ -326,7 +423,7 @@ class CendolNLPService:
             )
 
         # General fallback
-        return (
+        answer = (
             "Terima kasih atas pertanyaan Anda! Berikut panduan dasar ekspor UMKM Indonesia:\n\n"
             "**Dokumen Wajib:**\n"
             "1. NIB (Nomor Induk Berusaha) — via [OSS](https://oss.go.id)\n"
@@ -340,6 +437,17 @@ class CendolNLPService:
             "• Kayu: SVLK + Fumigation Certificate (ISPM-15)\n\n"
             "Silakan ajukan pertanyaan lebih spesifik tentang produk atau negara tujuan ekspor Anda!"
         )
+        if _HAS_METADATA_SERVICE:
+            metadata = build_ai_metadata(
+                tier="rule_based", model="rule-based-engine", finish_reason="STOP",
+                response_time_ms=0, thinking_steps=[],
+                data_sources=["Rule-based Template Engine"],
+            )
+            return {**metadata, "answer": answer}
+        return {"answer": answer, "ai_tier": "rule_based",
+                "model_used": "rule-based-engine", "confidence": 0.30,
+                "thinking_steps": [], "data_sources": ["Rule-based Template"],
+                "response_time_ms": 0}
 
 
 # Singleton instance

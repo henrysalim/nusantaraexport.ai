@@ -1,20 +1,26 @@
 import { useState } from 'react'
 import { Globe } from 'lucide-react'
 import { analyzeMarketGap } from '../services/api'
+import AIConfidenceBadge from './AIConfidenceBadge'
+import AIThinkingPanel from './AIThinkingPanel'
+import { SkeletonMarket } from './SkeletonLoader'
 
 export default function MarketAnalysisCard() {
   const [productName, setProductName] = useState('')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [aiMetadata, setAiMetadata] = useState(null)
 
   const handleAnalyze = async () => {
     if (!productName) return
     setLoading(true)
     setError('')
+    setAiMetadata(null)
     try {
       const response = await analyzeMarketGap({ product_name: productName })
       setData(response.data)
+      setAiMetadata(response.data.ai_metadata || null)
     } catch (err) {
       console.error('Market API error:', err)
       setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
@@ -65,7 +71,10 @@ export default function MarketAnalysisCard() {
         </div>
       )}
 
-      {data && (
+      {/* Skeleton loading */}
+      {loading && <SkeletonMarket />}
+
+      {data && !loading && (
         <div className="mt-2 pt-4 border-t border-slate-100 animate-fadeInUp" aria-live="polite">
           {/* Stats Row */}
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -108,6 +117,21 @@ export default function MarketAnalysisCard() {
               <div className="text-sm font-medium text-secondary/80 leading-relaxed whitespace-pre-line">
                 {data.ai_summary}
               </div>
+            </div>
+          )}
+
+          {/* AI Transparency */}
+          {aiMetadata && (
+            <div className="space-y-3 mt-3">
+              {aiMetadata.thinking_steps?.length > 0 && (
+                <AIThinkingPanel steps={aiMetadata.thinking_steps} />
+              )}
+              <AIConfidenceBadge
+                tier={aiMetadata.ai_tier}
+                confidence={aiMetadata.confidence}
+                modelUsed={aiMetadata.model_used}
+                responseTimeMs={aiMetadata.response_time_ms}
+              />
             </div>
           )}
         </div>

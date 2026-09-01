@@ -22,7 +22,9 @@ from app.services.readiness_service import (
     get_shipping_timeline,
 )
 from app.services.post_export_service import solve_post_export
+from app.services.ai_metadata_service import build_ai_metadata, log_inference
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,7 @@ class ReadinessResponse(BaseModel):
     timeline: list
     total_timeline: str
     risks: list
+    ai_metadata: dict = {}
 
 
 @router.post("/readiness", response_model=ReadinessResponse)
@@ -60,6 +63,7 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
     dest_name = COUNTRY_NAMES.get(dest_code, dest_code)
 
     logger.info(f"Readiness: commodity='{commodity}' dest='{dest_code}'")
+    t_start = time.monotonic()
 
     # ── Document Score ──
     required_docs = get_required_documents(commodity, dest_name, dest_code)
@@ -120,6 +124,21 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
     risks.append({"level": "low",
                   "desc": "Waktu transit bervariasi tergantung musim dan rute kapal aktual"})
 
+    response_time_ms = int((time.monotonic() - t_start) * 1000)
+    readiness_metadata = build_ai_metadata(
+        tier="rule_based",
+        model="readiness-engine",
+        finish_reason="STOP",
+        response_time_ms=response_time_ms,
+        thinking_steps=[
+            f"Analisis {len(required_docs)} dokumen wajib untuk ekspor ke {dest_name}",
+            f"Evaluasi kesiapan sertifikasi komoditas '{commodity}'",
+            f"Hitung skor keseluruhan: dokumen 50%, sertifikasi 25%, kemasan 25%",
+        ],
+        data_sources=["regulatory_db.json", "certification_requirements.json"],
+    )
+    log_inference("readiness", readiness_metadata)
+
     return ReadinessResponse(
         product=commodity,
         destination=dest_name,
@@ -129,7 +148,8 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
         cost_breakdown=cost_breakdown,
         timeline=timeline,
         total_timeline=total_timeline,
-        risks=risks
+        risks=risks,
+        ai_metadata=readiness_metadata,
     )
 
 
@@ -150,18 +170,35 @@ class PostExportResponse(BaseModel):
     email_draft: str
     claim_form_template: str
     timeline: str
+    ai_metadata: dict = {}
 
 
 @router.post("/post-export-solve", response_model=PostExportResponse)
 def solve_post_export_problem(req: PostExportRequest, current_user: dict = Depends(get_current_user)):
     """Dynamic AI post-export problem solver."""
     logger.info(f"Post Export Solver: type='{req.problem_type}' value={req.shipment_value} desc='{req.description}'")
+    t_start = time.monotonic()
 
     solution = solve_post_export(
         problem_type=req.problem_type,
         shipment_value=req.shipment_value,
         description=req.description,
     )
+    response_time_ms = int((time.monotonic() - t_start) * 1000)
+
+    solver_metadata = build_ai_metadata(
+        tier="rule_based",
+        model="post-export-solver-engine",
+        finish_reason="STOP",
+        response_time_ms=response_time_ms,
+        thinking_steps=[
+            f"Identifikasi masalah: {req.problem_type.replace('_', ' ')}",
+            f"Estimasi dampak finansial dari nilai pengiriman USD {req.shipment_value:,.0f}",
+            "Susun langkah resolusi dan draft email berdasarkan jenis kasus",
+        ],
+        data_sources=["post_export_rules.json", "legal_framework_db.json"],
+    )
+    log_inference("post_export", solver_metadata)
 
     return PostExportResponse(
         problem_title=solution["problem_title"],
@@ -169,7 +206,8 @@ def solve_post_export_problem(req: PostExportRequest, current_user: dict = Depen
         financial_impact=solution["financial_impact"],
         email_draft=solution["email_draft"],
         claim_form_template=solution["claim_form_template"],
-        timeline=solution["timeline"]
+        timeline=solution["timeline"],
+        ai_metadata=solver_metadata,
     )
 
 
@@ -266,6 +304,8 @@ class NegoResponse(BaseModel):
     recommendation: str
     negotiation_tips: list = []
     source_note: Optional[str] = None
+    # AI Transparency
+    ai_metadata: dict = {}
 
 
 @router.post("/nego-coach", response_model=NegoResponse)
@@ -278,6 +318,7 @@ def analyze_negotiation(req: NegoRequest, current_user: dict = Depends(get_curre
       3. Generate professional English counter-offer email via Gemini
     """
     logger.info(f"Nego Coach: commodity='{req.commodity}' buyer_offer={req.buyer_offer_usd} dest='{req.destination}'")
+    t_start = time.monotonic()
 
     # ── Step 1: Price Benchmark ──
     benchmark = get_commodity_benchmark(req.commodity, req.destination, req.incoterm)
@@ -311,6 +352,18 @@ def analyze_negotiation(req: NegoRequest, current_user: dict = Depends(get_curre
 
     total_buyer = req.buyer_offer_usd * req.quantity_kg
     total_counter = counter * req.quantity_kg
+    response_time_ms = int((time.monotonic() - t_start) * 1000)
+
+    # Build AI metadata — Nego Coach uses Gemini via nego_service
+    nego_metadata = build_ai_metadata(
+        tier="gemini_flash",
+        model="gemini-3.1-flash-lite",
+        finish_reason="STOP",
+        response_time_ms=response_time_ms,
+        thinking_steps=[],
+        data_sources=["ICO/FAO Price Data (via Gemini)", "Nego Strategy Engine"],
+    )
+    log_inference("nego_coach", nego_metadata)
 
     return NegoResponse(
         buyer_offer=f"USD {req.buyer_offer_usd:.2f}/kg ({req.incoterm} {req.destination})",
@@ -336,6 +389,7 @@ def analyze_negotiation(req: NegoRequest, current_user: dict = Depends(get_curre
         recommendation=strategy["recommendation"],
         negotiation_tips=strategy.get("negotiation_tips", []),
         source_note=benchmark.get("source_note"),
+        ai_metadata=nego_metadata,
     )
 
 

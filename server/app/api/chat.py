@@ -5,7 +5,7 @@ Supports all modules: Dry Run, Nego Coach, Smart Calendar, Post-Export Solver, a
 """
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from app.middleware import get_current_user
 from app.services.rag_service import query_regulations, generate_rag_response
 from app.services.cendol_service import CendolNLPService
@@ -25,6 +25,9 @@ class ChatResponse(BaseModel):
     reply: str
     detected_intent: str
     referenced_sources: str
+    # AI Transparency metadata
+    ai_metadata: Dict[str, Any] = {}
+    inference_id: str = ""
 
 
 @router.post("/send", response_model=ChatResponse)
@@ -34,6 +37,7 @@ def process_chat(req: ChatRequest, current_user: dict = Depends(get_current_user
     1. Intent classification
     2. RAG context retrieval from ChromaDB
     3. Response generation via CendolNLP (with fallback)
+    4. Returns AI transparency metadata alongside the answer
     """
     try:
         user_message = req.message
@@ -41,8 +45,15 @@ def process_chat(req: ChatRequest, current_user: dict = Depends(get_current_user
         # 1. Classify intent
         intent = CendolNLPService.classify_intent(user_message)
 
-        # 2. Directly generate response using Gemini Flash-Lite (Fast, no ChromaDB overhead)
-        reply = CendolNLPService.generate_response(user_message, context="")
+        # 2. Generate response — now returns dict with ai_metadata
+        result = CendolNLPService.generate_response(
+            user_message, context="", module="chat"
+        )
+
+        # Extract answer and metadata from result dict
+        reply = result.get("answer", "")
+        ai_metadata = {k: v for k, v in result.items() if k != "answer"}
+        inference_id = result.get("inference_id", "")
 
         # 3. Dynamic official clickable source links
         sources = _get_official_sources(intent, user_message)
@@ -50,7 +61,9 @@ def process_chat(req: ChatRequest, current_user: dict = Depends(get_current_user
         return ChatResponse(
             reply=reply,
             detected_intent=intent,
-            referenced_sources=sources
+            referenced_sources=sources,
+            ai_metadata=ai_metadata,
+            inference_id=inference_id,
         )
 
     except Exception as e:
@@ -58,7 +71,9 @@ def process_chat(req: ChatRequest, current_user: dict = Depends(get_current_user
         return ChatResponse(
             reply="Maaf, terjadi gangguan sementara. Silakan coba lagi atau reformulasi pertanyaan Anda.",
             detected_intent="error",
-            referenced_sources="[Portal INSW](https://insw.go.id) | [Kemendag RI](https://kemendag.go.id)"
+            referenced_sources="[Portal INSW](https://insw.go.id) | [Kemendag RI](https://kemendag.go.id)",
+            ai_metadata={"ai_tier": "error", "confidence": 0.0},
+            inference_id="",
         )
 
 
@@ -75,4 +90,3 @@ def _get_official_sources(intent: str, text: str) -> str:
         return "[Portal SKA Kemendag](https://e-ska.kemendag.go.id) | [Perjanjian Dagang RI](https://ditjenppi.kemendag.go.id) | [INSW Portal](https://insw.go.id)"
     else:
         return "[Portal INSW](https://insw.go.id) | [Kementerian Perdagangan RI](https://kemendag.go.id) | [InaExport](https://inaexport.id) | [Bea Cukai RI](https://customs.go.id)"
-

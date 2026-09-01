@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { CheckCircle2, AlertTriangle, XCircle, Camera, Search, Upload, X, Images } from 'lucide-react'
 import { checkPackaging } from '../services/api'
+import AIConfidenceBadge from './AIConfidenceBadge'
 
 const DESTINATIONS = [
   { value: 'us', label: 'Amerika Serikat 🇺🇸' },
@@ -23,6 +24,7 @@ export default function PackagingChecker() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [imageFiles, setImageFiles] = useState([])   // [{file, preview, base64, mimeType}]
+  const [aiMetadata, setAiMetadata] = useState(null)
 
   const addImages = useCallback((files) => {
     const incoming = Array.from(files)
@@ -71,6 +73,7 @@ export default function PackagingChecker() {
     setAnalyzing(true)
     setResult(null)
     setError('')
+    setAiMetadata(null)
 
     try {
       const images = imageFiles.map(img => ({
@@ -84,6 +87,7 @@ export default function PackagingChecker() {
         images,
       })
       setResult(response.data)
+      setAiMetadata(response.data.ai_metadata || null)
     } catch (err) {
       console.error('Packaging check error:', err)
       setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
@@ -287,6 +291,18 @@ export default function PackagingChecker() {
             <p className="text-xs font-black text-secondary/40 uppercase tracking-widest mb-2">Rekomendasi AI</p>
             <p className="text-sm font-medium text-secondary leading-relaxed">{result.suggestion}</p>
           </div>
+
+          {/* AI Confidence Badge */}
+          {aiMetadata && (
+            <div className="pt-2">
+              <AIConfidenceBadge
+                tier={aiMetadata.ai_tier}
+                confidence={aiMetadata.confidence}
+                modelUsed={aiMetadata.model_used}
+                responseTimeMs={aiMetadata.response_time_ms}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

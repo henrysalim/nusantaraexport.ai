@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ClipboardCheck, Truck, CheckCircle2, AlertTriangle, XCircle, TrendingUp, Shield, ChevronRight } from 'lucide-react'
 import { simulateReadiness, simulateDryRun } from '../services/api'
+import AIConfidenceBadge from './AIConfidenceBadge'
+import AIThinkingPanel from './AIThinkingPanel'
 
 const RISK_CONFIG = {
   low: { color: 'bg-green-50 border-green-200', badge: 'bg-green-100 text-green-700', label: '🟢 Rendah' },
@@ -28,6 +30,7 @@ export default function ExportSimulator() {
   const [activeCheckpoint, setActiveCheckpoint] = useState(null)
   const [activeSection, setActiveSection] = useState('readiness') // 'readiness' | 'dryrun'
   const [error, setError] = useState('')
+  const [aiMetadata, setAiMetadata] = useState(null)
 
   const destLabel = DESTINATIONS.find(d => d.value === destination)?.label || destination
 
@@ -55,6 +58,7 @@ export default function ExportSimulator() {
       ])
       setReadinessResult(readinessRes.data)
       setDryRunResult(dryRunRes.data)
+      setAiMetadata(readinessRes.data.ai_metadata || null)
     } catch (err) {
       console.error('Simulator API error:', err)
       setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')
@@ -256,8 +260,23 @@ export default function ExportSimulator() {
                     </div>
                   ))}
                 </div>
-              </div>
             </div>
+
+            {/* AI Transparency */}
+            {aiMetadata && (
+              <div className="space-y-3">
+                {aiMetadata.thinking_steps?.length > 0 && (
+                  <AIThinkingPanel steps={aiMetadata.thinking_steps} />
+                )}
+                <AIConfidenceBadge
+                  tier={aiMetadata.ai_tier}
+                  confidence={aiMetadata.confidence}
+                  modelUsed={aiMetadata.model_used}
+                  responseTimeMs={aiMetadata.response_time_ms}
+                />
+              </div>
+            )}
+          </div>
           )}
 
           {/* =================== DRY RUN SECTION =================== */}

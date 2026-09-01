@@ -3,7 +3,7 @@ Compliance Routes — Packaging Checker & HS Code Optimizer.
 """
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 from app.middleware import get_current_user
 from app.services.cendol_service import CendolNLPService
 from app.services.packaging_service import (
@@ -15,7 +15,9 @@ from app.services.packaging_service import (
     classify_product_category,
 )
 from app.services.hscode_service import classify_product_hs_code
+from app.services.ai_metadata_service import build_ai_metadata, log_inference
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +47,9 @@ class PackagingResponse(BaseModel):
     category: str
     country_name: str
     has_image_analysis: bool
+    # AI Transparency
+    ai_metadata: Dict[str, Any] = {}
+    inference_id: str = ""
 
 
 @router.post("/packaging-check", response_model=PackagingResponse)
@@ -93,6 +98,7 @@ def check_packaging(req: PackagingRequest, current_user: dict = Depends(get_curr
     status = "Siap Ekspor" if score >= 75 else "Perlu Perbaikan" if score >= 50 else "Belum Siap"
 
     # Step 6: AI Recommendation
+    t_rec_start = time.monotonic()
     suggestion = generate_recommendation(
         product_type=req.product_type,
         country_code=dest,
@@ -100,6 +106,22 @@ def check_packaging(req: PackagingRequest, current_user: dict = Depends(get_curr
         items=checklist,
         vision_summary=vision_summary,
     )
+    rec_time_ms = int((time.monotonic() - t_rec_start) * 1000)
+
+    # Build AI metadata for this packaging check
+    ai_tier = "gemini_flash" if has_image_analysis else "rule_based"
+    packaging_metadata = build_ai_metadata(
+        tier=ai_tier,
+        model="gemini-3.1-flash-lite" if has_image_analysis else "rule-based-engine",
+        finish_reason="STOP",
+        response_time_ms=rec_time_ms,
+        thinking_steps=[],
+        data_sources=[
+            "packaging_regulations.json",
+            *([ "Gemini Vision API" ] if has_image_analysis else []),
+        ],
+    )
+    log_inference("packaging", packaging_metadata, has_image=bool(images))
 
     # Resolve country display name
     from app.services.packaging_service import _load_regulations
@@ -125,6 +147,8 @@ def check_packaging(req: PackagingRequest, current_user: dict = Depends(get_curr
         category=category,
         country_name=country_name,
         has_image_analysis=has_image_analysis,
+        ai_metadata=packaging_metadata,
+        inference_id=packaging_metadata.get("inference_id", ""),
     )
 
 
@@ -147,6 +171,9 @@ class HSCodeResponse(BaseModel):
     best_saving: str
     reason: Optional[str] = None
     data_source: Optional[str] = None
+    # AI Transparency
+    ai_metadata: Dict[str, Any] = {}
+    inference_id: str = ""
 
 
 @router.post("/hs-code", response_model=HSCodeResponse)
@@ -156,6 +183,21 @@ def classify_hs_code(req: HSCodeRequest, current_user: dict = Depends(get_curren
     Uses hscode_service which integrates local databases and gemini-3.1-flash-lite.
     """
     logger.info(f"HS Code optimization requested for product: '{req.product_name}'")
+    t_start = time.monotonic()
     result = classify_product_hs_code(req.product_name)
-    return HSCodeResponse(**result)
+    hs_time_ms = int((time.monotonic() - t_start) * 1000)
+
+    # Determine tier based on data_source
+    ds = result.get("data_source", "")
+    hs_tier = "gemini_flash" if "Gemini" in str(ds) else "rule_based"
+    hs_metadata = build_ai_metadata(
+        tier=hs_tier,
+        model="gemini-3.1-flash-lite" if hs_tier == "gemini_flash" else "hs-code-db",
+        finish_reason="STOP",
+        response_time_ms=hs_time_ms,
+        thinking_steps=[],
+        data_sources=[ds or "hs_code_db.json"],
+    )
+    log_inference("hs_code", hs_metadata)
+    return HSCodeResponse(**result, ai_metadata=hs_metadata, inference_id=hs_metadata.get("inference_id", ""))
 
