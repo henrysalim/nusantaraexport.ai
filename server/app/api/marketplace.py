@@ -35,6 +35,7 @@ class ProductCreateRequest(BaseModel):
     lead_time: Optional[str] = None
     packaging: Optional[str] = None
     seller_name: Optional[str] = None
+    whatsapp_number: Optional[str] = None
 
 
 class ProductResponse(BaseModel):
@@ -54,6 +55,7 @@ class ProductResponse(BaseModel):
     packaging: Optional[str]
     status: str
     seller_name: Optional[str]
+    whatsapp_number: Optional[str]
     created_at: str
 
 
@@ -113,6 +115,7 @@ def _row_to_product(p) -> ProductResponse:
         packaging=p["packaging"],
         status=p["status"],
         seller_name=p["seller_name"],
+        whatsapp_number=p.get("whatsapp_number"),
         created_at=str(p["created_at"]),
     )
 
@@ -136,7 +139,8 @@ async def get_products(
     base_q = """
         SELECT id, user_id, name, hs_code, category, description,
                price_usd, price_idr, min_order_qty, images, badges,
-               location, lead_time, packaging, status, seller_name, created_at
+               location, lead_time, packaging, status, seller_name,
+               whatsapp_number, created_at
         FROM marketplace_products
         WHERE status = %s
     """
@@ -179,11 +183,12 @@ async def create_product(
             INSERT INTO marketplace_products
               (user_id, name, hs_code, category, description, price_usd, price_idr,
                min_order_qty, images, badges, location, lead_time, packaging,
-               status, seller_name)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'active',%s)
+               status, seller_name, whatsapp_number)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'active',%s,%s)
             RETURNING id, user_id, name, hs_code, category, description,
                       price_usd, price_idr, min_order_qty, images, badges,
-                      location, lead_time, packaging, status, seller_name, created_at
+                      location, lead_time, packaging, status, seller_name,
+                      whatsapp_number, created_at
             """,
             (
                 str(current_user["id"]),
@@ -200,6 +205,7 @@ async def create_product(
                 req.lead_time,
                 req.packaging,
                 req.seller_name or current_user.get("full_name", ""),
+                req.whatsapp_number,
             ),
             fetch_one=True,
         )

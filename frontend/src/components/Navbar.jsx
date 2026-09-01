@@ -14,6 +14,7 @@ const navLinks = [
       { href: "/marketplace", label: "Marketplace" },
     ],
   },
+  { href: "/kemitraan", label: "Kemitraan" },
   { href: "/kontak", label: "Hubungi Kami" },
 ];
 
