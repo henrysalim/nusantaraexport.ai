@@ -36,9 +36,8 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS Configuration
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://nusantaraexport-ai.vercel.app,https://nusantaraexport-ai.vercel.app/")
-_origins = [o.strip() for o in _raw_origins.split(",")]
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://nusantaraexport-ai.vercel.app,https://www.nusantaraexportai.id")
+_origins = [o.strip().rstrip("/") for o in _raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
