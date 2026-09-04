@@ -1,6 +1,6 @@
 import { MessageCircle } from 'lucide-react'
 
-const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '6281318756412'
+const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '6281586043931'
 
 const WA_MESSAGE = encodeURIComponent(
   'Halo! Saya ingin berkonsultasi tentang ekspor produk UMKM Indonesia.'
