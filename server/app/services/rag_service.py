@@ -19,7 +19,8 @@ def generate_rag_response(query: str) -> dict:
     context = query_regulations(query)
 
     # 2. Generate response via CendolNLP (with auto-fallback)
-    answer = CendolNLPService.generate_response(query, context)
+    ai_res = CendolNLPService.generate_response(query, context)
+    answer = ai_res.get("answer", "") if isinstance(ai_res, dict) else str(ai_res)
 
     return {
         "answer": answer,

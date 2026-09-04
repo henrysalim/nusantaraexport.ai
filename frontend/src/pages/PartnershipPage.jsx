@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 
-const WA_NUMBER = '6281318756412';
+const WA_NUMBER = '6281586043931';
 const WA_PARTNERSHIP_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
   'Halo, saya ingin mengetahui lebih lanjut tentang program kemitraan UMKM di NusantaraExport.AI.\n\nMohon informasikan syarat dan prosedur bergabung sebagai mitra. Terima kasih!'
 )}`;
