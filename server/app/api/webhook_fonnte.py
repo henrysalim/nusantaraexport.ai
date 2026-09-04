@@ -242,7 +242,8 @@ async def receive_fonnte_message(request: Request):
         else:
             try:
                 logger.info(f"🤖 Memproses Gemini untuk {clean_sender}...")
-                ai_reply = CendolNLPService.generate_response(message, context="")
+                ai_res = CendolNLPService.generate_response(message, context="")
+                ai_reply = ai_res.get("answer", "") if isinstance(ai_res, dict) else str(ai_res)
                 if "selesai" not in ai_reply.lower():
                     ai_reply += "\n\n💡 _(Ketik `selesai` untuk mengakhiri sesi bot)_"
             except Exception as e:
