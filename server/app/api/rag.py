@@ -44,7 +44,8 @@ def query_rag(request: QueryRequest, current_user: dict = Depends(get_current_us
     except Exception as e:
         logger.error(f"RAG query error: {e}")
         # Fallback to CendolNLP without RAG context
-        fallback_answer = CendolNLPService.generate_response(request.query)
+        ai_res = CendolNLPService.generate_response(request.query)
+        fallback_answer = ai_res.get("answer", "") if isinstance(ai_res, dict) else str(ai_res)
         return {
             "answer": fallback_answer,
             "context_used": [],
