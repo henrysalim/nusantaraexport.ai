@@ -97,13 +97,30 @@ export default function AccessibilityTools() {
       </a>
 
       {/* Floating Controls */}
-      <div className="fixed bottom-8 left-8 z-[60] flex flex-col items-start gap-4" role="toolbar" aria-label="Alat aksesibilitas">
+      {isExpanded && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-30 sm:hidden"
+          onClick={() => setIsExpanded(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <div className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 flex flex-col items-start gap-3 pointer-events-none" role="toolbar" aria-label="Alat aksesibilitas">
         {/* Expanded Menu */}
-        <div className={`transition-all duration-300 origin-bottom flex flex-col gap-2 ${isExpanded ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-95 pointer-events-none'}`}>
-          <div className="bg-white accessibility-panel border border-slate-200 p-2 rounded-3xl shadow-2xl flex flex-col gap-1 w-64 overflow-hidden">
-            <div className="px-4 py-2 border-b border-slate-100 mb-1 flex items-center gap-2">
+        <div className={`transition-all duration-300 origin-bottom-left flex flex-col gap-2 ${isExpanded ? 'translate-y-0 opacity-100 scale-100 pointer-events-auto visible' : 'translate-y-6 opacity-0 scale-95 pointer-events-none invisible'}`}>
+          <div className="bg-white accessibility-panel border border-slate-200 p-2 rounded-3xl shadow-2xl flex flex-col gap-1 w-64 max-w-[calc(100vw-2rem)] overflow-hidden pointer-events-auto">
+            <div className="px-4 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <Settings size={14} className="text-secondary/40" />
                 <span className="text-[10px] font-black uppercase text-secondary/40" aria-hidden="true">Pengaturan Akses</span>
+              </div>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="text-secondary/40 hover:text-secondary p-1 rounded-lg sm:hidden"
+                aria-label="Tutup menu aksesibilitas"
+              >
+                ×
+              </button>
             </div>
 
             {/* TTS */}
@@ -116,19 +133,19 @@ export default function AccessibilityTools() {
                 {isSpeaking ? <Square size={16} fill="currentColor" /> : <Volume2 size={18} />}
               </div>
               <span className="text-sm">{isSpeaking ? "Berhenti" : "Dengarkan Suara"}</span>
-              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+⇧+S</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono hidden sm:inline">{modKey}+⇧+S</span>
             </button>
 
             {/* Glossary */}
             <button
-              onClick={() => setIsGlossaryOpen(!isGlossaryOpen)}
+              onClick={() => { setIsGlossaryOpen(!isGlossaryOpen); setIsExpanded(false); }}
               className={`flex items-center gap-4 w-full p-3 rounded-2xl font-bold transition-all ${isGlossaryOpen ? "bg-secondary text-white" : "bg-slate-50 text-secondary hover:bg-slate-100"}`}
             >
               <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                 <Book size={18} />
               </div>
               <span className="text-sm">Kamus Ekspor</span>
-              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+⇧+K</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono hidden sm:inline">{modKey}+⇧+K</span>
             </button>
 
             <div className="h-px bg-slate-100 my-1 mx-2" aria-hidden="true" />
@@ -142,7 +159,7 @@ export default function AccessibilityTools() {
                 <Contrast size={18} />
               </div>
               <span className="text-sm">Kontras Tinggi</span>
-              <span className="ml-auto text-[10px] opacity-40 font-mono">{modKey}+⇧+H</span>
+              <span className="ml-auto text-[10px] opacity-40 font-mono hidden sm:inline">{modKey}+⇧+H</span>
             </button>
 
             {/* Font Control Layout */}
@@ -177,7 +194,7 @@ export default function AccessibilityTools() {
             {/* Shortcuts & Reset Container */}
             <div className="flex gap-2 p-1">
                 <button
-                    onClick={() => setShowShortcuts(!showShortcuts)}
+                    onClick={() => { setShowShortcuts(!showShortcuts); setIsExpanded(false); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-100 text-secondary hover:bg-slate-200 rounded-xl font-bold text-xs transition-all"
                 >
                     <Keyboard size={14} /> Pintasan
@@ -196,20 +213,20 @@ export default function AccessibilityTools() {
         {/* Main Toggle Button */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`group flex items-center gap-3 px-6 h-14 rounded-2xl shadow-2xl transition-all duration-300 transform border-2 ${isExpanded ? 'bg-secondary text-white border-secondary' : 'bg-white text-secondary border-slate-100 hover:scale-105 active:scale-95'}`}
+          className={`group pointer-events-auto flex items-center justify-center gap-3 px-3.5 sm:px-6 h-12 sm:h-14 rounded-2xl shadow-xl transition-all duration-300 transform border-2 ${isExpanded ? 'bg-secondary text-white border-secondary' : 'bg-white text-secondary border-slate-100 hover:scale-105 active:scale-95'}`}
           aria-label={isExpanded ? "Tutup menu aksesibilitas" : "Buka menu aksesibilitas"}
           aria-expanded={isExpanded}
         >
-          <Settings size={22} className={`transition-transform duration-500 ${isExpanded ? 'rotate-180' : 'group-hover:rotate-45'}`} />
-          <span className="font-black text-sm uppercase tracking-wider">Aksesibilitas</span>
+          <Settings size={20} className={`transition-transform duration-500 shrink-0 ${isExpanded ? 'rotate-180' : 'group-hover:rotate-45'}`} />
+          <span className="hidden sm:inline font-black text-sm uppercase tracking-wider">Aksesibilitas</span>
           {isExpanded && <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">×</div>}
         </button>
       </div>
 
       {/* Shortcuts Modal */}
       {showShortcuts && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70" onClick={() => setShowShortcuts(false)} role="dialog" aria-modal="true" aria-label="Pintasan keyboard">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/70 p-4" onClick={() => setShowShortcuts(false)} role="dialog" aria-modal="true" aria-label="Pintasan keyboard">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full mx-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-black text-secondary mb-6">Pintasan Keyboard</h2>
             <div className="space-y-3">
               {[
@@ -236,15 +253,15 @@ export default function AccessibilityTools() {
       {/* Glossary */}
       <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />
 
-      {/* Back to Top */}
+      {/* Back to Top — Positioned vertically ABOVE the WhatsApp button */}
       <button
         onClick={scrollToTop}
         aria-label="Kembali ke atas"
-        className={`fixed bottom-8 right-8 z-[60] w-auto px-4 h-14 bg-accent text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 transform border-4 border-white ${isVisible ? "translate-y-0 opacity-100 scale-100" : "translate-y-20 opacity-0 scale-50 pointer-events-none"} hover:bg-secondary hover:-translate-y-2 active:scale-95`}
+        className={`fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-40 w-12 h-12 sm:w-auto sm:px-4 sm:h-12 bg-accent text-white rounded-full sm:rounded-2xl shadow-xl flex items-center justify-center transition-all duration-300 transform border-2 sm:border-4 border-white ${isVisible ? "translate-y-0 opacity-100 scale-100 pointer-events-auto visible" : "translate-y-4 opacity-0 scale-75 pointer-events-none invisible"} hover:bg-secondary hover:-translate-y-1 active:scale-95`}
         tabIndex={isVisible ? 0 : -1}
       >
-        Kembali ke atas&nbsp;
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
+        <span className="hidden sm:inline font-bold text-xs">Kembali ke atas&nbsp;</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>
       </button>
     </>
   );

@@ -497,9 +497,11 @@ export default function DocumentGenerator() {
         {isLastStep ? (
           <StepUnduh
             docId={draftId}
+            formData={formData}
             downloading={downloading}
             downloaded={downloaded}
             onDownload={handleDownload}
+            onNavigateStep={setCurrentStep}
           />
         ) : (
           <ActiveStep formData={formData} onChange={handleChange} />
@@ -507,7 +509,7 @@ export default function DocumentGenerator() {
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between pt-1">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 pt-3 pb-6 sm:pb-0 border-t border-slate-100">
         <button
           onClick={() => currentStep === 0 ? setView('list') : setCurrentStep(s => s - 1)}
           className="flex items-center gap-2 px-4 py-2.5 text-sm font-black text-secondary/60
@@ -517,7 +519,7 @@ export default function DocumentGenerator() {
           {currentStep === 0 ? 'Batal' : 'Sebelumnya'}
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Manual save */}
           {!isLastStep && (
             <button

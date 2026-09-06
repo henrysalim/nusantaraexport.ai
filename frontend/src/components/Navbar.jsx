@@ -68,12 +68,12 @@ export default function Navbar() {
       aria-label="Navigasi utama"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white shadow-md py-3`}
     >
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3" aria-label="NusantaraExport.AI - Halaman Utama">
-          <div className="w-20 h-20 flex items-center justify-center text-white" aria-hidden="true">
-            <img src="logo.png" alt="NusantaraExport.AI Logo" />
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3" aria-label="NusantaraExport.AI - Halaman Utama">
+          <div className="w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center text-white shrink-0" aria-hidden="true">
+            <img src="logo.png" alt="NusantaraExport.AI Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-display font-black text-xl text-secondary tracking-tight">
+          <span className="font-display font-black text-lg sm:text-xl text-secondary tracking-tight">
             Nusantara<span className="text-accent">Export</span>.AI
           </span>
         </Link>
@@ -197,7 +197,7 @@ export default function Navbar() {
       </div>
 
       {menuOpen && (
-        <div id="mobile-menu" className="lg:hidden bg-white border-t border-slate-100 shadow-xl py-6 px-6" role="menu">
+        <div id="mobile-menu" className="lg:hidden bg-white border-t border-slate-100 shadow-xl py-6 px-6 max-h-[calc(100vh-80px)] overflow-y-auto" role="menu">
           <ul className="flex flex-col gap-4">
             {navLinks.map((l) => (
               <li key={l.href} role="none" className="flex flex-col gap-2">

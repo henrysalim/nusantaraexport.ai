@@ -427,7 +427,7 @@ export default function CommunityPage() {
       {isDrawerOpen && (
         <>
           <div ref={overlayRef} className="drawer-overlay" onClick={handleCloseDrawer}></div>
-          <div ref={drawerRef} className="drawer-content p-8">
+          <div ref={drawerRef} className="drawer-content p-5 sm:p-8">
             <div className="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
               <h2 className="text-xl font-display font-black text-secondary">Tulis Diskusi Baru</h2>
               <button 

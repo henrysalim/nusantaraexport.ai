@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 
-const WA_NUMBER = '6281318756412';
+const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '6281586043931';
 const WA_PARTNERSHIP_URL = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
   'Halo, saya ingin mengetahui lebih lanjut tentang program kemitraan UMKM di NusantaraExport.AI.\n\nMohon informasikan syarat dan prosedur bergabung sebagai mitra. Terima kasih!'
 )}`;
@@ -96,10 +96,10 @@ export default function PartnershipPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-soft pt-28 pb-20">
+    <div className="min-h-screen bg-slate-soft pt-24 sm:pt-28 pb-28 sm:pb-20">
 
       {/* ── HERO ── */}
-      <section className="bg-secondary text-white py-20 px-6 mb-16 relative overflow-hidden">
+      <section className="bg-secondary text-white py-16 sm:py-20 px-4 sm:px-6 mb-16 relative overflow-hidden">
         {/* Decorative blobs */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4 pointer-events-none" />
@@ -319,7 +319,7 @@ export default function PartnershipPage() {
         </section>
 
         {/* ── CTA UTAMA ── */}
-        <section className="bg-gradient-to-br from-secondary to-secondary/80 rounded-3xl p-12 text-white text-center relative overflow-hidden">
+        <section className="bg-gradient-to-br from-secondary to-secondary/80 rounded-3xl p-6 sm:p-12 text-white text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full -translate-y-1/3 translate-x-1/4 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4 pointer-events-none" />
           

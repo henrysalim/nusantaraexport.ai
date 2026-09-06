@@ -31,12 +31,12 @@ export default function DemoPage() {
     switch (activeTab) {
       case 'assistant': return <VoiceDemoSection />
       case 'market': return (
-        <div className="bg-white danantara-card rounded-[2rem] p-8">
+        <div className="bg-white danantara-card rounded-2xl sm:rounded-[2rem] p-4 sm:p-8">
           <MarketAnalysisCard />
         </div>
       )
       case 'docs': return (
-        <div className="bg-white danantara-card rounded-[2rem] p-8">
+        <div className="bg-white danantara-card rounded-2xl sm:rounded-[2rem] p-4 sm:p-8">
           <DocumentGenerator />
         </div>
       )
@@ -53,7 +53,7 @@ export default function DemoPage() {
 
   return (
     <div className="min-h-screen bg-slate-soft">
-      <main className="max-w-6xl mx-auto px-6 pt-28 pb-20">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-28 sm:pb-20">
         {/* Header */}
         <div className="mb-8 animate-fadeInUp">
           <div className="flex items-center gap-4 mb-2">

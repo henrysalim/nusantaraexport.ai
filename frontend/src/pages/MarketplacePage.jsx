@@ -45,6 +45,7 @@ export default function MarketplacePage() {
   const [error, setError] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formImages, setFormImages] = useState([]); // [{preview: dataUrl, file: File}]
@@ -200,7 +201,11 @@ export default function MarketplacePage() {
               <Plus size={18} /> Tambah Produk
             </button>
             <div className="relative">
-              <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-6 py-3 rounded-xl font-bold">
+              <button 
+                onClick={() => setShowInquiryModal(true)}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-6 py-3 rounded-xl font-bold cursor-pointer"
+                aria-label={`Daftar Permintaan (${cartCount} produk)`}
+              >
                 <ShoppingCart size={20} />
                 Inquiry List
               </button>
@@ -708,6 +713,81 @@ export default function MarketplacePage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Inquiry List */}
+      {showInquiryModal && (
+        <div className="fixed inset-0 z-[200] bg-secondary/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fadeInUp">
+            <div className="p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                    <ShoppingCart size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-display font-black text-secondary">Inquiry List</h2>
+                    <p className="text-xs text-secondary/50 font-bold">Daftar Permintaan Penawaran</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowInquiryModal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  aria-label="Tutup dialog inquiry"
+                >
+                  <X size={20} className="text-secondary/50" />
+                </button>
+              </div>
+
+              {cartCount === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+                    <ShoppingCart size={32} />
+                  </div>
+                  <h3 className="text-base font-black text-secondary mb-2">Inquiry List Anda Masih Kosong</h3>
+                  <p className="text-sm text-secondary/60 leading-relaxed max-w-xs mx-auto mb-6">
+                    Pilih produk yang menarik dari etalase di bawah dan klik <span className="font-bold text-accent">Kirim Inquiry</span> untuk menambahkan permintaan penawaran.
+                  </p>
+                  <button
+                    onClick={() => setShowInquiryModal(false)}
+                    className="btn-primary w-full justify-center"
+                  >
+                    Jelajahi Produk
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-accent/5 border border-accent/20 rounded-2xl">
+                    <p className="text-sm font-bold text-secondary">
+                      Anda memiliki <span className="text-accent font-black">{cartCount} produk</span> dalam daftar permintaan penawaran.
+                    </p>
+                    <p className="text-xs text-secondary/60 mt-1">
+                      Tim NusantaraExport dan supplier terkait siap merespons rincian MOQ, harga FOB/CIF, dan sampel.
+                    </p>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => { setCartCount(0); setShowInquiryModal(false); }}
+                      className="py-3 px-4 text-xs font-black text-secondary/70 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                      Reset Daftar
+                    </button>
+                    <a
+                      href={`https://api.whatsapp.com/send?phone=6281586043931&text=${encodeURIComponent(`Halo NusantaraExport, saya ingin menanyakan ${cartCount} produk yang telah saya tambahkan ke Inquiry List di marketplace.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary flex-1 justify-center text-xs"
+                      onClick={() => setShowInquiryModal(false)}
+                    >
+                      Kirim via WhatsApp
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

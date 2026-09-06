@@ -1,5 +1,5 @@
 import { Download, CheckCircle2, FileText, Package, FileCheck, Truck,
-  ScrollText, FileSignature, Users, FileBarChart2 } from 'lucide-react'
+  ScrollText, FileSignature, Users, FileBarChart2, AlertCircle, ArrowLeft } from 'lucide-react'
 
 const DOC_LIST = [
   {
@@ -76,19 +76,109 @@ const DOC_LIST = [
   },
 ]
 
-export default function StepUnduh({ docId, downloading, downloaded, onDownload }) {
+function evaluateCompleteness(formData) {
+  if (!formData) return { isComplete: false, isEmpty: true, missing: ['Produk & Buyer', 'Pengiriman', 'Keuangan'] }
+
+  const missing = []
+
+  // Step 1: Produk & Buyer check
+  const hasProduct = Boolean(
+    (formData.buyer_name && formData.buyer_name.trim()) ||
+    (formData.product_name && formData.product_name.trim()) ||
+    (formData.items && formData.items.some(i => i.name && i.name.trim()))
+  )
+  if (!hasProduct) missing.push('Produk & Buyer')
+
+  // Step 2: Pengiriman check
+  const hasShipping = Boolean(
+    (formData.port_loading && formData.port_loading.trim()) ||
+    (formData.port_destination && formData.port_destination.trim()) ||
+    (formData.container_no && formData.container_no.trim())
+  )
+  if (!hasShipping) missing.push('Pengiriman')
+
+  // Step 3: Keuangan check
+  const hasFinance = Boolean(
+    formData.usd_idr_rate ||
+    formData.price_at_warehouse ||
+    (formData.items && formData.items.some(i => i.price_usd && Number(i.price_usd) > 0)) ||
+    (formData.bank_account && formData.bank_account.trim())
+  )
+  if (!hasFinance) missing.push('Keuangan')
+
+  const isComplete = missing.length === 0
+  const isEmpty = missing.length === 3
+
+  return { isComplete, isEmpty, missing }
+}
+
+export default function StepUnduh({ docId, formData, downloading, downloaded, onDownload, onNavigateStep }) {
+  const { isComplete, isEmpty, missing } = evaluateCompleteness(formData)
+
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-5 text-white">
-        <div className="flex items-center gap-3 mb-1">
-          <CheckCircle2 size={20} />
-          <span className="font-black text-base">Semua data tersimpan!</span>
+      {/* Dynamic Header Status */}
+      {isComplete ? (
+        <div className="bg-gradient-to-r from-emerald-600 to-green-600 rounded-2xl p-5 text-white shadow-sm">
+          <div className="flex items-center gap-3 mb-1">
+            <CheckCircle2 size={20} className="shrink-0" />
+            <span className="font-black text-base">Semua data lengkap & tersimpan!</span>
+          </div>
+          <p className="text-white/80 text-sm">
+            Seluruh data ekspor telah terisi. Klik tombol "Unduh PDF" pada setiap dokumen di bawah untuk mengunduh.
+          </p>
         </div>
-        <p className="text-white/70 text-sm">
-          Klik tombol "Unduh PDF" pada setiap dokumen di bawah untuk mengunduh.
-        </p>
-      </div>
+      ) : isEmpty ? (
+        <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl p-5 text-secondary">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5 text-amber-700 font-black text-base">
+                <AlertCircle size={20} className="shrink-0 text-amber-600" />
+                <span>Draft Tersimpan (Data Ekspor Belum Diisi)</span>
+              </div>
+              <p className="text-secondary/70 text-xs sm:text-sm leading-relaxed max-w-xl">
+                Draft telah dibuat di sistem, tetapi data pada tab <strong>Produk & Buyer</strong>, <strong>Pengiriman</strong>, dan <strong>Keuangan</strong> masih kosong. Dokumen PDF yang diunduh akan memiliki kolom kosong.
+              </p>
+            </div>
+            {onNavigateStep && (
+              <button
+                onClick={() => onNavigateStep(0)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black transition-all shrink-0 shadow-md shadow-amber-600/20"
+              >
+                <ArrowLeft size={14} />
+                Lengkapi Data Sekarang
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-blue-500/10 border-2 border-blue-500/30 rounded-2xl p-5 text-secondary">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5 text-blue-800 font-black text-base">
+                <AlertCircle size={20} className="shrink-0 text-blue-600" />
+                <span>Sebagian Data Belum Lengkap</span>
+              </div>
+              <p className="text-secondary/70 text-xs sm:text-sm leading-relaxed max-w-xl">
+                Draft Anda tersimpan, namun bagian <strong>{missing.join(', ')}</strong> belum terisi lengkap. Anda tetap dapat mengunduh PDF, namun disarankan melengkapi semua informasi agar dokumen valid.
+              </p>
+            </div>
+            {onNavigateStep && (
+              <button
+                onClick={() => {
+                  if (missing.includes('Produk & Buyer')) onNavigateStep(0)
+                  else if (missing.includes('Pengiriman')) onNavigateStep(1)
+                  else onNavigateStep(2)
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black transition-all shrink-0 shadow-md shadow-blue-600/20"
+              >
+                <ArrowLeft size={14} />
+                Lengkapi {missing[0]}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Doc Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

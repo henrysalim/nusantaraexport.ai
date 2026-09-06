@@ -2,8 +2,8 @@ import { XCircle, CheckCircle2, Mic, BarChart3, FileText, ShieldCheck } from "lu
 
 export default function AboutSection() {
   return (
-    <section id="tentang" className="h-screen py-24 bg-slate-soft px-6" aria-labelledby="tentang-heading">
-      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+    <section id="tentang" className="min-h-screen py-16 sm:py-24 bg-slate-soft px-4 sm:px-6 flex items-center" aria-labelledby="tentang-heading">
+      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 sm:gap-16 items-center w-full">
         <div className="animate-fadeInUp">
           <h2 id="tentang-heading" className="text-3xl lg:text-5xl font-display font-black text-secondary leading-tight mb-8">
             Ekspor Nggak Seharusnya <span className="text-accent">Sulit</span>!

@@ -101,15 +101,23 @@ export default function GlossaryPanel({ isOpen, onClose }) {
   }, [isOpen, onClose]);
 
   return (
-    <div
-      id="glossary-panel"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Kamus istilah ekspor dalam bahasa sederhana"
-      className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white accessibility-panel shadow-2xl z-[100] transform transition-transform duration-500 ease-in-out border-l border-slate-100 flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}
-      aria-hidden={!isOpen}
-      tabIndex={-1}
-    >
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] transition-opacity duration-300 ${isOpen ? "opacity-100 pointer-events-auto visible" : "opacity-0 pointer-events-none invisible"}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div
+        id="glossary-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Kamus istilah ekspor dalam bahasa sederhana"
+        className={`fixed inset-y-0 right-0 w-full sm:w-96 bg-white accessibility-panel shadow-2xl z-[75] transform transition-transform duration-500 ease-in-out border-l border-slate-100 flex flex-col ${isOpen ? "translate-x-0 pointer-events-auto visible" : "translate-x-full pointer-events-none invisible"}`}
+        aria-hidden={!isOpen}
+        tabIndex={-1}
+      >
       {/* Header */}
       <div className="p-6 bg-secondary text-white flex justify-between items-center">
         <div>
@@ -187,6 +195,7 @@ export default function GlossaryPanel({ isOpen, onClose }) {
           NusantaraExport.AI — Platform Inklusif untuk UMKM Indonesia
         </p>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

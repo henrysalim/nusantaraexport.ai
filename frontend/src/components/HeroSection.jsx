@@ -39,7 +39,7 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative h-screen flex items-center pt-32 pb-20 px-6 overflow-hidden"
+      className="relative min-h-screen h-auto flex items-center pt-28 sm:pt-32 pb-20 sm:pb-24 px-4 sm:px-6 overflow-hidden"
       aria-label="Halaman utama NusantaraExport.AI"
     >
       {/* Background Image */}
@@ -59,7 +59,7 @@ export default function HeroSection() {
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-30 w-full">
         {/* Left Column */}
         <div className="animate-fadeInUp text-center md:text-left md:max-w-xl pl-0 md:pl-4">
-          <h1 className="text-4xl lg:text-6xl font-display font-black text-white leading-tight min-h-[160px] md:min-h-[220px]">
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-display font-black text-white leading-tight min-h-[140px] sm:min-h-[160px] md:min-h-[220px]">
             UMKM Indonesia, <br />
             sudah saatnya <br />
             <span

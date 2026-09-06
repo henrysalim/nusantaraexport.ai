@@ -16,10 +16,10 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-soft pt-28 pb-20 px-6">
+    <div className="min-h-screen bg-slate-soft pt-24 sm:pt-28 pb-28 sm:pb-20 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-display font-black text-secondary mb-3">Hubungi Kami</h1>
+        <div className="text-center mb-10 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-display font-black text-secondary mb-3">Hubungi Kami</h1>
           <p className="text-secondary/50 font-medium max-w-lg mx-auto">
             Punya pertanyaan, masukan, atau butuh bantuan? Tim kami siap membantu UMKM Indonesia.
           </p>
@@ -78,7 +78,7 @@ export default function ContactPage() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-lg border border-slate-100 p-8 space-y-5">
+              <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-lg border border-slate-100 p-5 sm:p-8 space-y-5">
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div>
                     <label htmlFor="c-name" className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Nama</label>

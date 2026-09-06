@@ -243,27 +243,31 @@ export default function StepProdukBuyer({ formData, onChange }) {
           <p className="text-xs font-black text-secondary/60 uppercase tracking-widest">
             Rincian Barang <span className="text-accent">*</span>
           </p>
-          <button
-            type="button"
-            onClick={addItem}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-light text-accent text-xs font-bold rounded-xl
-              hover:bg-accent hover:text-white transition-all"
-          >
-            <Plus size={12} /> Tambah Baris
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-secondary/40 font-bold sm:hidden">← Geser tabel →</span>
+            <button
+              type="button"
+              onClick={addItem}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-light text-accent text-xs font-bold rounded-xl
+                hover:bg-accent hover:text-white transition-all shrink-0"
+            >
+              <Plus size={12} /> Tambah Baris
+            </button>
+          </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 overflow-hidden">
-          {/* Header */}
-          <div className="grid bg-secondary text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 items-center"
-               style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 32px' }}>
-            <span className="flex items-center">Nama / Deskripsi <Tooltip content="Nama spesifik barang yang diekspor." /></span>
-            <span className="text-center flex items-center justify-center">Qty (Kg) <Tooltip content="Berat bersih barang dalam satuan Kilogram." /></span>
-            <span className="text-center flex items-center justify-center">Qty (Bags) <Tooltip content="Jumlah karung/kemasan barang." /></span>
-            <span className="text-center flex items-center justify-center">HS Code <Tooltip content="Kode klasifikasi spesifik untuk barang ini." /></span>
-            <span className="text-right flex items-center justify-end">Harga/Kg (USD) <Tooltip content="Harga satuan per kilogram dalam Dollar AS." /></span>
-            <span></span>
-          </div>
+        <div className="rounded-2xl border border-slate-200 overflow-x-auto">
+          <div className="min-w-[620px]">
+            {/* Header */}
+            <div className="grid bg-secondary text-white text-[10px] font-black uppercase tracking-widest px-3 py-2.5 items-center"
+                 style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 32px' }}>
+              <span className="flex items-center">Nama / Deskripsi <Tooltip content="Nama spesifik barang yang diekspor." /></span>
+              <span className="text-center flex items-center justify-center">Qty (Kg) <Tooltip content="Berat bersih barang dalam satuan Kilogram." /></span>
+              <span className="text-center flex items-center justify-center">Qty (Bags) <Tooltip content="Jumlah karung/kemasan barang." /></span>
+              <span className="text-center flex items-center justify-center">HS Code <Tooltip content="Kode klasifikasi spesifik untuk barang ini." /></span>
+              <span className="text-right flex items-center justify-end">Harga/Kg (USD) <Tooltip content="Harga satuan per kilogram dalam Dollar AS." /></span>
+              <span></span>
+            </div>
 
           {items.map((item, idx) => {
             // Formatting helper for currency in the row input
@@ -346,6 +350,7 @@ export default function StepProdukBuyer({ formData, onChange }) {
             <span className="text-base font-black text-accent">
               USD {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
+          </div>
           </div>
         </div>
       </div>

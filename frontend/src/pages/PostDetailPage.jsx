@@ -261,8 +261,8 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-soft pt-24 pb-16">
-      <div className="max-w-4xl mx-auto px-6 space-y-6">
+    <div className="min-h-screen bg-slate-soft pt-24 pb-28 sm:pb-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
         
         {/* Back Link */}
         <Link to="/komunitas" className="inline-flex items-center gap-2 text-sm font-black text-secondary/60 hover:text-accent transition-colors">
@@ -270,7 +270,7 @@ export default function PostDetailPage() {
         </Link>
 
         {/* Main Post Card */}
-        <div className="glass-panel p-8 rounded-3xl space-y-6">
+        <div className="glass-panel p-5 sm:p-8 rounded-3xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-accent-light text-accent rounded-full flex items-center justify-center text-sm font-black">
