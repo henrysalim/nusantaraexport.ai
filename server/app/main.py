@@ -37,21 +37,49 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-_raw_origins = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8081,http://127.0.0.1:8081,https://nusantaraexport-ai.vercel.app,https://nusantaraexportai.id,https://www.nusantaraexportai.id"
-)
-_origins = [o.strip().rstrip("/") for o in _raw_origins.split(",") if o.strip()]
+HARDCODED_ORIGINS = [
+    "https://nusantaraexportai.id",
+    "https://www.nusantaraexportai.id",
+    "https://nusantaraexport-ai.vercel.app",
+    "https://nusantaraexport-ai-server.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+]
+
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+_env_origins = [o.strip().rstrip("/") for o in _raw_origins.split(",") if o.strip()]
+_origins = list(set(HARDCODED_ORIGINS + _env_origins))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:[0-9]+)?",
+    allow_origin_regex=r"^https?://(.*\.)?(nusantaraexportai\.id|vercel\.app|localhost|127\.0\.0\.1)(:[0-9]+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
+    expose_headers=["Content-Disposition", "Set-Cookie"],
 )
+
+
+@app.options("/{full_path:path}")
+async def options_handler(request: Request, full_path: str):
+    """Fallback handler for CORS preflight OPTIONS requests."""
+    origin = request.headers.get("origin") or "*"
+    return JSONResponse(
+        status_code=200,
+        content={"status": "ok"},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, X-Requested-With, X-CSRF-Token, Origin",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 
 @app.exception_handler(Exception)
@@ -61,13 +89,12 @@ async def global_exception_handler(request: Request, exc: Exception):
     so the browser never misinterprets internal server errors as CORS violations.
     """
     logger.error(f"Global unhandled error at {request.url.path}: {exc}", exc_info=True)
-    origin = request.headers.get("origin")
-    allowed_origin = origin if (origin and (origin in _origins or "*" in _origins)) else (_origins[0] if _origins else "*")
+    origin = request.headers.get("origin") or "*"
     return JSONResponse(
         status_code=500,
         content={"detail": "Terjadi kesalahan internal server.", "error": str(exc)},
         headers={
-            "Access-Control-Allow-Origin": allowed_origin,
+            "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",
             "Access-Control-Allow-Methods": "*",
             "Access-Control-Allow-Headers": "*",
