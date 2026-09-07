@@ -230,20 +230,29 @@ export default function DocumentGenerator() {
 
   // ── Download PDF
   async function handleDownload(docType) {
-    if (!draftId) return
     setDownloading(d => ({ ...d, [docType]: true }))
     try {
-      const res = await generateDocPDF(docType, draftId)
+      let currentId = draftId
+      if (!currentId) {
+        currentId = await handleSave(true)
+      }
+      if (!currentId) {
+        alert('Gagal menyimpan draft sebelum mengunduh. Silakan coba lagi.')
+        return
+      }
+      const res = await generateDocPDF(docType, currentId)
       const blob = new Blob([res.data], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${docType}_${formData.company_name || 'dokumen'}.pdf`
+      const safeCompany = (formData.company_name || 'dokumen').replace(/\s+/g, '_')
+      a.download = `${docType}_${safeCompany}.pdf`
       a.click()
       URL.revokeObjectURL(url)
       setDownloaded(d => ({ ...d, [docType]: true }))
     } catch (err) {
-      alert(`Gagal membuat PDF untuk ${docType}. Pastikan semua data telah diisi.`)
+      console.error('Download PDF error:', err)
+      alert(`Gagal membuat PDF untuk ${docType}. Pastikan server backend sedang aktif.`)
     } finally {
       setDownloading(d => ({ ...d, [docType]: false }))
     }

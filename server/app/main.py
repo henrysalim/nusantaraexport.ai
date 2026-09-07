@@ -3,6 +3,7 @@ NusantaraExport.AI — FastAPI Backend Engine
 Compliance Autopilot for Indonesian UMKM Export
 """
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -36,21 +37,47 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://nusantaraexport-ai.vercel.app,https://www.nusantaraexportai.id")
+_raw_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8081,http://127.0.0.1:8081,https://nusantaraexport-ai.vercel.app,https://nusantaraexportai.id,https://www.nusantaraexportai.id"
+)
 _origins = [o.strip().rstrip("/") for o in _raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:[0-9]+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Global exception handler ensuring all 500 errors include proper CORS headers
+    so the browser never misinterprets internal server errors as CORS violations.
+    """
+    logger.error(f"Global unhandled error at {request.url.path}: {exc}", exc_info=True)
+    origin = request.headers.get("origin")
+    allowed_origin = origin if (origin and (origin in _origins or "*" in _origins)) else (_origins[0] if _origins else "*")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Terjadi kesalahan internal server.", "error": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": allowed_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Bootstrap ChromaDB and verify auth database on startup."""
+    """Bootstrap ChromaDB, document tables, and verify auth database on startup."""
     logger.info("Starting NusantaraExport.AI Backend...")
 
     # Bootstrap ChromaDB
@@ -60,12 +87,19 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"ChromaDB bootstrap warning: {e}")
 
+    # Bootstrap Document Generator table
+    try:
+        docs.bootstrap_export_documents_table()
+    except Exception as e:
+        logger.warning(f"Export documents bootstrap warning: {e}")
+
     # Verify auth database connection
     try:
         from app.config.db_config import get_auth_db_connection
         conn = get_auth_db_connection()
-        conn.close()
-        logger.info("✅ Auth database (PostgreSQL port 5432) connected.")
+        if conn:
+            conn.close()
+            logger.info("✅ Auth database (PostgreSQL port 5432) connected.")
     except Exception as e:
         logger.warning(f"⚠️ Auth database not available: {e}")
 
@@ -127,4 +161,3 @@ app.include_router(ai_transparency.router, prefix="/api/ai/transparency", tags=[
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8081, reload=True, log_level="info")
-

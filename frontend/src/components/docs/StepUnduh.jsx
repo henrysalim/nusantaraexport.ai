@@ -213,14 +213,12 @@ export default function StepUnduh({ docId, formData, downloading, downloaded, on
               ) : (
                 <button
                   onClick={() => onDownload(doc.key)}
-                  disabled={isDownloading || !docId}
+                  disabled={isDownloading}
                   className={`flex items-center justify-center gap-2 w-full py-2 rounded-xl text-xs font-black
                     transition-all
-                    ${!docId
-                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      : isDownloading
-                        ? 'bg-accent-light text-accent cursor-wait'
-                        : 'bg-accent-light text-accent hover:bg-accent hover:text-white group-hover:scale-[1.02]'
+                    ${isDownloading
+                      ? 'bg-accent-light text-accent cursor-wait'
+                      : 'bg-accent-light text-accent hover:bg-accent hover:text-white group-hover:scale-[1.02]'
                     }`}
                 >
                   {isDownloading ? (
@@ -242,12 +240,6 @@ export default function StepUnduh({ docId, formData, downloading, downloaded, on
           )
         })}
       </div>
-
-      {!docId && (
-        <p className="text-xs text-secondary/40 text-center">
-          ⚠️ Draft belum tersimpan. Kembali ke langkah sebelumnya untuk menyimpan data.
-        </p>
-      )}
     </div>
   )
 }
