@@ -32,7 +32,9 @@ export default function HeroSection() {
     };
 
     runCycle();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -52,8 +54,6 @@ export default function HeroSection() {
         />
         <div className="absolute inset-0 bg-black/50 z-10" />
       </div>
-
-
 
       {/* Content */}
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-30 w-full">
@@ -90,32 +90,40 @@ export default function HeroSection() {
             >
               Lihat Caranya →
             </a>
-            <Link
-              to="/langganan"
-              id="btn-hero-lihat-paket"
-              className="px-6 py-4 text-white/80 w-full sm:w-auto font-bold border border-white/30 rounded-md hover:bg-white/10 hover:text-white transition-all text-sm whitespace-nowrap"
-            >
-              💎 Lihat Paket Langganan
-            </Link>
           </div>
 
           <div className="mt-12 flex items-center justify-center md:justify-start gap-6 opacity-80">
             <div className="text-center">
-              <div className="text-2xl font-black text-white" aria-label="Tujuh jenis dokumen ekspor">7+</div>
+              <div
+                className="text-2xl font-black text-white"
+                aria-label="Tujuh jenis dokumen ekspor"
+              >
+                7+
+              </div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">
                 Dokumen Ekspor
               </div>
             </div>
             <div className="w-px h-8 bg-white/20" aria-hidden="true" />
             <div className="text-center">
-              <div className="text-2xl font-black text-white" aria-label="Seratus persen aman dan terpercaya">100%</div>
+              <div
+                className="text-2xl font-black text-white"
+                aria-label="Seratus persen aman dan terpercaya"
+              >
+                100%
+              </div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">
                 Aman & Terpercaya
               </div>
             </div>
             <div className="w-px h-8 bg-white/20" aria-hidden="true" />
             <div className="text-center">
-              <div className="text-2xl font-black text-white" aria-label="Ramah disabilitas">♿</div>
+              <div
+                className="text-2xl font-black text-white"
+                aria-label="Ramah disabilitas"
+              >
+                ♿
+              </div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">
                 Inklusif
               </div>
@@ -124,7 +132,10 @@ export default function HeroSection() {
         </div>
 
         {/* Right Column — Dashboard Preview */}
-        <div className="relative animate-fadeInUp hidden md:block w-full max-w-md ml-auto" aria-hidden="true">
+        <div
+          className="relative animate-fadeInUp hidden md:block w-full max-w-md ml-auto"
+          aria-hidden="true"
+        >
           <div className="bg-white/25 border border-white/20 pb-0 overflow-hidden rounded-[2.5rem] shadow-2xl transform translate-z-0">
             <div className="p-8 pb-4">
               <div className="flex items-center gap-4 mb-6">
