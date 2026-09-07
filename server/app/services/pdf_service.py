@@ -16,10 +16,22 @@ from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from datetime import datetime
 import os, uuid, requests, tempfile
 
-EXPORT_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "exports"
-)
-os.makedirs(EXPORT_DIR, exist_ok=True)
+def _get_export_dir():
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        d = os.path.join(tempfile.gettempdir(), "exports")
+    else:
+        d = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "exports"
+        )
+    try:
+        os.makedirs(d, exist_ok=True)
+        return d
+    except (OSError, PermissionError):
+        d = tempfile.gettempdir()
+        os.makedirs(d, exist_ok=True)
+        return d
+
+EXPORT_DIR = _get_export_dir()
 
 # ─────────────────────────────────────────────────────────────────
 # Shared helpers
