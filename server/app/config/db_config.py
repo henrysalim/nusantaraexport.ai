@@ -4,11 +4,13 @@ Supports PostgreSQL (Docker/Supabase/Local).
 """
 import os
 import logging
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, quote_plus
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 logger = logging.getLogger(__name__)
+
+_is_vercel = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
 
 _db_host = os.getenv("DB_HOST", "127.0.0.1")
 _db_port = os.getenv("DB_PORT", "5432")
@@ -16,7 +18,9 @@ _db_user = os.getenv("DB_USER", "nusantaraexport")
 _db_pass = os.getenv("DB_PASSWORD", "Nusantar43xport!")
 _db_name = os.getenv("DB_NAME", "nusantaraexport_ai")
 
-_default_url = f"postgresql://{_db_user}:{_db_pass}@{_db_host}:{_db_port}/{_db_name}"
+_encoded_user = quote_plus(_db_user) if _db_user else ""
+_encoded_pass = quote_plus(_db_pass) if _db_pass else ""
+_default_url = f"postgresql://{_encoded_user}:{_encoded_pass}@{_db_host}:{_db_port}/{_db_name}"
 
 _raw_db_url = os.getenv("DATABASE_URL", "").strip()
 _raw_auth_url = os.getenv("AUTH_DATABASE_URL", "").strip()
@@ -26,6 +30,9 @@ def _is_valid_db_url(url: str) -> bool:
         return False
     placeholders = ["[host]", "[password]", "your_host", "your_password", "localhost:5432/postgres_dummy"]
     if any(p in url for p in placeholders):
+        return False
+    # If running on Vercel, localhost URLs are not reachable
+    if _is_vercel and ("127.0.0.1" in url or "localhost" in url):
         return False
     return True
 
@@ -39,27 +46,36 @@ _use_auth_db = _is_valid_db_url(AUTH_DATABASE_URL)
 def _connect_pg(url: str):
     """Connect to PostgreSQL using direct URI or parsed parameters with auto fallback."""
     import psycopg2
+    
+    if _is_vercel and ("127.0.0.1" in url or "localhost" in url):
+        raise ConnectionRefusedError("Localhost database not reachable on Vercel serverless")
+
+    timeout_sec = 2 if _is_vercel else 5
+
     if url and ("postgresql://" in url or "postgres://" in url):
         try:
-            return psycopg2.connect(url, connect_timeout=8)
+            return psycopg2.connect(url, connect_timeout=timeout_sec)
         except Exception as err:
             # If IPv6 failed locally ("Cannot assign requested address" or DNS timeout), try pooler fallback
             if "Cannot assign requested address" in str(err) or "timeout" in str(err):
                 logger.info("Retrying connection via fallback pooler mode...")
                 fallback_url = url.replace("db.jkykqcgclvxxsfryhryh.supabase.co:5432", "aws-0-ap-southeast-1.pooler.supabase.com:6543").replace("user=postgres", "user=postgres.jkykqcgclvxxsfryhryh")
                 try:
-                    return psycopg2.connect(fallback_url, connect_timeout=8)
+                    return psycopg2.connect(fallback_url, connect_timeout=timeout_sec)
                 except Exception:
                     pass
             raise err
     
+    if _is_vercel and (_db_host in ("127.0.0.1", "localhost")):
+        raise ConnectionRefusedError("Localhost database not reachable on Vercel serverless")
+
     return psycopg2.connect(
         dbname=_db_name,
         user=_db_user,
         password=_db_pass,
         host=_db_host,
         port=int(_db_port),
-        connect_timeout=8
+        connect_timeout=timeout_sec
     )
 
 
@@ -129,9 +145,10 @@ def execute_auth_query(query, params=None, fetch=False, fetch_one=False):
             email = params[0] if params and len(params) > 0 else "demo@nusantaraexport.ai"
             return {
                 "id": "00000000-0000-0000-0000-000000000001",
-                "full_name": "Demo User (Offline Mode)",
+                "full_name": "Henry Salim",
                 "email": str(email),
-                "password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW",
+                # Bcrypt hash for password 'henry1234'
+                "password": "$2b$12$4mU8eIq0f6B8xH1Gsm13ve7840ZgE3tP4pT26e9Y6XN1QjM8bN14W",
                 "phone": "+6281234567890",
                 "business_name": "Koperasi Eksportir Nusantara",
                 "province": "DKI Jakarta",
@@ -169,4 +186,3 @@ def execute_auth_query(query, params=None, fetch=False, fetch_one=False):
             cur.close()
         if conn:
             conn.close()
-
