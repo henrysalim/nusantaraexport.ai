@@ -192,6 +192,34 @@ export default function DemoPage() {
           </div>
         </div>
 
+        {/* Disclaimer AI */}
+        <div
+          role="note"
+          aria-label="Disclaimer penggunaan AI"
+          className="mb-6 flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-amber-500 shrink-0 mt-0.5"
+            aria-hidden="true"
+          >
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <p className="text-xs font-bold text-amber-700 leading-relaxed">
+            Seluruh fitur AI dalam platform ini berfungsi sebagai alat bantu dan tidak menggantikan keputusan profesional. Informasi yang diberikan dapat mengandung ketidakakuratan. Verifikasi manual terhadap sumber resmi tetap diperlukan sebelum mengambil tindakan ekspor.
+          </p>
+        </div>
+
         {/* Tab Navigation */}
         <div className="mb-8 overflow-x-auto">
           <div className="flex gap-2 min-w-max pb-2" role="tablist" aria-label="Modul ekspor">
