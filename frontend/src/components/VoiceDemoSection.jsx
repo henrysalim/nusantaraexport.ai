@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { Volume2, Square, ExternalLink } from 'lucide-react'
+import { Volume2, Square, ExternalLink, Zap } from 'lucide-react'
 import { sendChatMessage } from '../services/api'
 import AIConfidenceBadge from './AIConfidenceBadge'
 import AIThinkingPanel from './AIThinkingPanel'
 import { SkeletonChat } from './SkeletonLoader'
+import { useSubscription } from '../context/SubscriptionContext'
+import { Link } from 'react-router-dom'
 
 const EXAMPLES = [
   'Apa saja syarat ekspor kopi ke Jepang?',
@@ -159,6 +161,7 @@ const renderFormattedText = (text) => {
 }
 
 export default function VoiceDemoSection() {
+  const { hasTokens, consumeTokens, tokensRemaining, tokenQuota, tier } = useSubscription()
   const [status, setStatus] = useState('idle')
   const [inputText, setInputText] = useState('')
   const [queryResult, setQueryResult] = useState(null)
@@ -205,6 +208,12 @@ export default function VoiceDemoSection() {
   }, [])
 
   const handleQuery = async (query) => {
+    // Cek kuota token sebelum mengirim request
+    if (!hasTokens) {
+      setStatus('error')
+      return
+    }
+
     setStatus('processing')
     setQueryResult(null)
     setAiMetadata(null)
@@ -216,8 +225,13 @@ export default function VoiceDemoSection() {
       })
 
       const data = response.data
+      const reply = data.reply || ''
+
+      // Hitung & kurangi token setelah response diterima
+      consumeTokens(query, reply)
+
       setQueryResult({
-        answer: data.reply,
+        answer: reply,
         context_used: data.referenced_sources || '[Portal INSW](https://insw.go.id) | [Kementerian Perdagangan](https://kemendag.go.id) | [Bea Cukai RI](https://customs.go.id)'
       })
       setDetectedIntent(data.detected_intent || '')
@@ -280,9 +294,47 @@ export default function VoiceDemoSection() {
     <div className="bg-white danantara-card rounded-[2.5rem] p-10 md:p-12" role="region" aria-label="Konsultasi ekspor lewat suara atau teks">
       <div className="max-w-xl mx-auto text-center">
         <h2 className="text-3xl font-display font-black text-secondary mb-4">Konsultasi Ekspor</h2>
-        <p className="text-secondary/50 font-medium mb-10">
+        <p className="text-secondary/50 font-medium mb-6">
           Tanya apa saja seputar regulasi, biaya, dan peluang ekspor. Bisa lewat suara atau ketik.
         </p>
+
+        {/* Banner kuota token habis */}
+        {!hasTokens && tier !== 'premium' && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between gap-3 animate-fadeInUp">
+            <div className="flex items-center gap-2.5 text-left">
+              <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+                <Zap size={15} className="text-red-500" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-red-700">Kuota token harian habis</p>
+                <p className="text-xs text-red-500 font-medium">Reset otomatis tengah malam. Upgrade untuk lebih banyak token.</p>
+              </div>
+            </div>
+            <Link
+              to="/langganan"
+              id="btn-chatbot-token-exhausted-upgrade"
+              className="shrink-0 px-3 py-1.5 bg-red-500 text-white text-xs font-black rounded-xl hover:bg-red-600 transition-colors"
+            >
+              Upgrade →
+            </Link>
+          </div>
+        )}
+
+        {/* Token usage mini-indicator (Free & Starter) */}
+        {tier !== 'premium' && tokenQuota !== Infinity && tokensRemaining > 0 && (
+          <div className="mb-6 flex items-center justify-center gap-2 text-xs text-secondary/40 font-medium">
+            <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  (tokensRemaining / tokenQuota) < 0.2 ? 'bg-red-400' :
+                  (tokensRemaining / tokenQuota) < 0.5 ? 'bg-amber-400' : 'bg-green-400'
+                }`}
+                style={{ width: `${Math.min(100, (tokensRemaining / tokenQuota) * 100)}%` }}
+              />
+            </div>
+            <span>{tokensRemaining.toLocaleString('id-ID')} token tersisa</span>
+          </div>
+        )}
 
         {/* Big Mic Button */}
         <div className="flex flex-col items-center gap-6 mb-10">

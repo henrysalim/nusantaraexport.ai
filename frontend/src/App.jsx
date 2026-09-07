@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { AuthProvider } from "./context/AuthContext";
+import { SubscriptionProvider } from "./context/SubscriptionContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -15,6 +16,7 @@ import PostDetailPage from "./pages/PostDetailPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import FloatingChatButtons from "./components/FloatingChatButtons";
 import PartnershipPage from "./pages/PartnershipPage";
+import PricingPage from "./pages/PricingPage";
 
 function AppContent() {
   const location = useLocation();
@@ -52,6 +54,7 @@ function AppContent() {
           <Route path="/komunitas/diskusi/:postId" element={<PostDetailPage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/kemitraan" element={<PartnershipPage />} />
+          <Route path="/langganan" element={<PricingPage />} />
         </Routes>
       </main>
       <Footer />
@@ -63,7 +66,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <SubscriptionProvider>
+        <AppContent />
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }

@@ -90,6 +90,13 @@ export default function HeroSection() {
             >
               Lihat Caranya →
             </a>
+            <Link
+              to="/langganan"
+              id="btn-hero-lihat-paket"
+              className="px-6 py-4 text-white/80 w-full sm:w-auto font-bold border border-white/30 rounded-md hover:bg-white/10 hover:text-white transition-all text-sm whitespace-nowrap"
+            >
+              💎 Lihat Paket Langganan
+            </Link>
           </div>
 
           <div className="mt-12 flex items-center justify-center md:justify-start gap-6 opacity-80">

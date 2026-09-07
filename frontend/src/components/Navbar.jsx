@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { User, LogIn, LogOut } from "lucide-react";
+import { User, LogIn, LogOut, Crown } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useSubscription, TIERS } from "../context/SubscriptionContext";
 
 const navLinks = [
-  { href: "/#tentang", label: "Tentang" },
-  { href: "/#cara-kerja", label: "Cara Kerja" },
   {
     href: "/#fitur",
     label: "Fitur",
@@ -14,6 +13,7 @@ const navLinks = [
       { href: "/marketplace", label: "Marketplace" },
     ],
   },
+  { href: "/langganan", label: "Langganan" },
   { href: "/kemitraan", label: "Kemitraan" },
   { href: "/kontak", label: "Hubungi Kami" },
 ];
@@ -23,6 +23,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { tier } = useSubscription();
   const location = useLocation();
 
   useEffect(() => {
@@ -137,8 +138,17 @@ export default function Navbar() {
                   aria-haspopup="true"
                   aria-expanded={dropdownOpen}
                 >
-                  <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black shrink-0">
-                    {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                  <div className="relative w-7 h-7 shrink-0">
+                    <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-white text-xs font-black">
+                      {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                    {tier && tier !== 'free' && (
+                      <span className={`absolute -bottom-1 -right-1 px-1 py-0 rounded-full text-[7px] font-black text-white leading-tight ${
+                        tier === 'premium' ? 'bg-amber-500' : tier === 'pro' ? 'bg-violet-500' : 'bg-blue-500'
+                      }`}>
+                        {tier.toUpperCase()}
+                      </span>
+                    )}
                   </div>
                   <span className="text-sm font-bold text-secondary shrink-0">{user?.full_name?.split(' ')[0] || 'Profil'}</span>
                   <svg
@@ -151,12 +161,27 @@ export default function Navbar() {
                   </svg>
                 </button>
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl py-1.5 z-50">
+                  <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-xl shadow-xl py-1.5 z-50">
+                    {tier && tier !== 'free' && (
+                      <div className="px-4 py-2 border-b border-slate-100">
+                        <span className="text-[10px] font-black text-secondary/40 uppercase tracking-widest">Paket Aktif</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <Crown size={12} className="text-amber-500" />
+                          <span className="text-sm font-black text-secondary">{TIERS[tier]?.label}</span>
+                        </div>
+                      </div>
+                    )}
                     <Link
                       to="/profil"
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-secondary/80 hover:text-accent hover:bg-slate-50 transition-colors"
                     >
                       <User size={16} className="text-secondary/60" /> Profil Saya
+                    </Link>
+                    <Link
+                      to="/langganan"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-secondary/80 hover:text-accent hover:bg-slate-50 transition-colors"
+                    >
+                      <Crown size={16} className="text-secondary/60" /> Langganan
                     </Link>
                     <hr className="border-slate-100 my-1" />
                     <button

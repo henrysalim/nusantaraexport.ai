@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, Save, CheckCircle2, Loader, AlertCircle } from 'lucide-react'
+import { User, Save, CheckCircle2, Loader, AlertCircle, Crown, Zap, Star, Sparkles, ExternalLink } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useSubscription, TIERS, TOKEN_QUOTA } from '../context/SubscriptionContext'
+import { Link } from 'react-router-dom'
 import api from '../services/api'
 
 const Field = ({ id, label, type = 'text', disabled = false, ...props }) => (
@@ -20,6 +22,7 @@ const Field = ({ id, label, type = 'text', disabled = false, ...props }) => (
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { tier, subscription, tokensUsed, tokenQuota } = useSubscription()
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -176,6 +179,95 @@ export default function ProfilePage() {
             )}
           </div>
         </form>
+
+        {/* ── Subscription Section ──────────────────────────────────── */}
+        <div className="mt-8 bg-white rounded-3xl shadow-lg border border-slate-100 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center">
+                <Crown size={20} className="text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-secondary">Paket Langganan</h2>
+                <p className="text-sm text-secondary/50 font-medium">Status langganan aktif Anda</p>
+              </div>
+            </div>
+            <Link
+              to="/langganan"
+              id="btn-profile-manage-subscription"
+              className="flex items-center gap-1.5 text-xs font-black text-accent hover:underline"
+            >
+              Kelola <ExternalLink size={12} />
+            </Link>
+          </div>
+
+          {/* Tier aktif */}
+          <div className={`flex items-center justify-between p-4 rounded-2xl mb-4 ${
+            tier === 'premium' ? 'bg-amber-50 border border-amber-200' :
+            tier === 'pro'     ? 'bg-violet-50 border border-violet-200' :
+            tier === 'starter' ? 'bg-blue-50 border border-blue-200' :
+                                  'bg-slate-50 border border-slate-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                tier === 'premium' ? 'bg-amber-500' :
+                tier === 'pro'     ? 'bg-violet-500' :
+                tier === 'starter' ? 'bg-blue-500' : 'bg-slate-400'
+              }`}>
+                {tier === 'premium' ? <Crown size={16} className="text-white" /> :
+                 tier === 'pro'     ? <Star size={16} className="text-white" /> :
+                 tier === 'starter' ? <Zap size={16} className="text-white" /> :
+                                     <Sparkles size={16} className="text-white" />}
+              </div>
+              <div>
+                <div className="font-black text-secondary text-sm">Paket {TIERS[tier]?.label}</div>
+                {subscription?.expiresAt && tier !== 'free' ? (
+                  <div className="text-[11px] text-secondary/50 font-medium">
+                    Aktif hingga {new Date(subscription.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-secondary/40 font-medium">Paket dasar tanpa biaya</div>
+                )}
+              </div>
+            </div>
+            {tier === 'free' && (
+              <Link to="/langganan" id="btn-profile-upgrade" className="text-xs font-black text-accent hover:underline">
+                Upgrade →
+              </Link>
+            )}
+          </div>
+
+          {/* Token usage card (hanya untuk non-premium) */}
+          {tier !== 'premium' && tokenQuota !== Infinity && (
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[11px] font-black text-secondary/50 uppercase tracking-widest">Kuota Token Chatbot Hari Ini</span>
+                <span className="text-[11px] font-black text-secondary">
+                  {tokensUsed.toLocaleString('id-ID')} / {tokenQuota.toLocaleString('id-ID')}
+                </span>
+              </div>
+              <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden mb-2">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    (tokensUsed / tokenQuota) > 0.8 ? 'bg-red-500' :
+                    (tokensUsed / tokenQuota) > 0.5 ? 'bg-amber-400' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(100, (tokensUsed / tokenQuota) * 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-secondary/40 font-medium">
+                🕛 Kuota direset otomatis setiap tengah malam
+              </p>
+            </div>
+          )}
+
+          {tier === 'premium' && (
+            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-center gap-3">
+              <Crown size={18} className="text-amber-500 shrink-0" />
+              <p className="text-sm font-bold text-amber-700">Token tidak terbatas — nikmati semua fitur tanpa batasan!</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

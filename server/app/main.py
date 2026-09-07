@@ -9,7 +9,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.api import rag, market, umkm, docs, chat, simulator, compliance, auth, community
-from app.api import marketplace, webhook_fonnte, ai_transparency
+from app.api import marketplace, webhook_fonnte, ai_transparency, subscription
 from app.services.vector_store import bootstrap_regulations
 import os
 import logging
@@ -183,6 +183,7 @@ app.include_router(community.router, prefix="/api/community", tags=["Community F
 app.include_router(marketplace.router, prefix="/api/marketplace", tags=["Marketplace"])
 app.include_router(webhook_fonnte.router, prefix="/api/webhook", tags=["WhatsApp Webhook"])
 app.include_router(ai_transparency.router, prefix="/api/ai/transparency", tags=["AI Transparency"])
+app.include_router(subscription.router, prefix="/api/subscription", tags=["Subscription"])
 
 
 if __name__ == "__main__":
