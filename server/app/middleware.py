@@ -92,3 +92,18 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
         )
+
+
+async def get_optional_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> dict:
+    """
+    Optional auth dependency — returns authenticated user dict if token is valid,
+    or a guest dictionary if no valid credentials provided.
+    """
+    try:
+        return await get_current_user(request, credentials)
+    except Exception:
+        return {"id": "guest", "email": "guest@nusantaraexport.ai", "full_name": "Tamu"}
+

@@ -117,14 +117,23 @@ def extract_thinking_steps(raw_text: str) -> tuple:
     thinking_block = match.group(1).strip()
     clean_answer = thinking_pattern.sub("", raw_text).strip()
 
+    # Safety guard: Jika clean_answer kosong atau terlalu pendek (karena AI menulis seluruh jawaban di dalam thinking),
+    # gunakan isi teks tersebut agar jawaban tidak hilang/blank!
+    if not clean_answer or len(clean_answer) < 50:
+        clean_answer = thinking_block
+
     # Pisahkan per baris non-kosong
     steps = [
         line.strip().lstrip("-•*0123456789. ")
         for line in thinking_block.split("\n")
         if line.strip()
     ]
+    # Ambil langkah ringkas (maksimal 5 langkah) untuk transparansi
+    display_steps = [s for s in steps if s.lower().startswith("langkah") or len(s) < 120][:5]
+    if not display_steps and steps:
+        display_steps = steps[:3]
 
-    return steps, clean_answer
+    return display_steps, clean_answer
 
 
 # ──────────────────────────────────────────────────────────────────────────────

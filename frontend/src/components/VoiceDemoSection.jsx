@@ -3,6 +3,7 @@ import { Volume2, Square, ExternalLink, Zap } from 'lucide-react'
 import { sendChatMessage } from '../services/api'
 import AIConfidenceBadge from './AIConfidenceBadge'
 import AIThinkingPanel from './AIThinkingPanel'
+import AIFeedbackWidget from './AIFeedbackWidget'
 import { SkeletonChat } from './SkeletonLoader'
 import { useSubscription } from '../context/SubscriptionContext'
 import { Link } from 'react-router-dom'
@@ -168,6 +169,7 @@ export default function VoiceDemoSection() {
   const [aiMetadata, setAiMetadata] = useState(null)
   const [isReadingAnswer, setIsReadingAnswer] = useState(false)
   const [detectedIntent, setDetectedIntent] = useState('')
+  const [inferenceId, setInferenceId] = useState('')
   const [micError, setMicError] = useState('')
   const recognitionRef = useRef(null)
 
@@ -217,6 +219,7 @@ export default function VoiceDemoSection() {
     setStatus('processing')
     setQueryResult(null)
     setAiMetadata(null)
+    setInferenceId('')
 
     try {
       const response = await sendChatMessage(query, {
@@ -236,6 +239,7 @@ export default function VoiceDemoSection() {
       })
       setDetectedIntent(data.detected_intent || '')
       setAiMetadata(data.ai_metadata || null)
+      setInferenceId(data.inference_id || data.ai_metadata?.inference_id || (window.crypto?.randomUUID ? window.crypto.randomUUID() : '11111111-1111-1111-1111-111111111111'))
       setStatus('speaking')
     } catch (error) {
       console.error('Chatbot API error:', error)
@@ -245,6 +249,7 @@ export default function VoiceDemoSection() {
       })
       setDetectedIntent('error')
       setAiMetadata(null)
+      setInferenceId('')
       setStatus('error')
     }
   }
@@ -446,24 +451,29 @@ export default function VoiceDemoSection() {
             {/* Sources */}
             {queryResult.context_used && (
               <div className="pt-4 border-t border-accent/10 mb-4">
-                <p className="text-[10px] font-black text-accent/60 uppercase tracking-widest mb-3">Sumber Rujukan Resmi:</p>
+                <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-3">
+                  {aiMetadata?.data_sources?.some(d => String(d).toLowerCase().includes('google') || String(d).toLowerCase().includes('search'))
+                    ? '🌐 Sumber Rujukan Live Web (Gemini Search Grounding):'
+                    : 'Sumber Rujukan Resmi:'}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {renderClickableSources(queryResult.context_used)}
                 </div>
               </div>
             )}
 
-            {/* AI Confidence Badge */}
-            {aiMetadata && (
-              <div className="pt-4 border-t border-slate-100">
+            {/* AI Confidence Badge & Feedback Reaction Widget */}
+            <div className="pt-4 border-t border-slate-100">
+              {aiMetadata && (
                 <AIConfidenceBadge
                   tier={aiMetadata.ai_tier}
                   confidence={aiMetadata.confidence}
                   modelUsed={aiMetadata.model_used}
                   responseTimeMs={aiMetadata.response_time_ms}
+                  inferenceId={inferenceId || aiMetadata.inference_id}
                 />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>

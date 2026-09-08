@@ -55,79 +55,87 @@ export default function AIFeedbackWidget({ inferenceId = '', compact = false }) 
       <div style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 4,
-        fontSize: 10,
+        gap: 6,
+        fontSize: 11,
         color: voted === 1 ? '#059669' : '#dc2626',
         fontWeight: 700,
-        opacity: 0.7,
+        padding: '2px 0',
       }}>
-        {voted === 1 ? '👍 Terima kasih!' : '🚩 Laporan diterima'}
+        {voted === 1
+          ? '👍 Terima kasih! Masukan Anda membantu kalibrasi tingkat keyakinan AI.'
+          : '🚩 Laporan diterima. Masukan Anda akan digunakan untuk peningkatan akurasi model.'}
       </div>
     )
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: compact ? 4 : 6,
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: compact ? 4 : 10,
       }}>
         {!compact && (
-          <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>
-            Apakah jawaban ini membantu?
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 11, color: '#475569', fontWeight: 600 }}>
+              Bantu validasi: Apakah jawaban AI di atas akurat & bermanfaat?
+            </span>
+          </div>
         )}
 
-        <button
-          onClick={() => submitFeedback(1)}
-          disabled={submitting || !inferenceId}
-          title="Jawaban membantu"
-          style={{
-            background: 'none',
-            border: '1px solid #d1fae5',
-            borderRadius: 8,
-            padding: compact ? '2px 6px' : '4px 8px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 3,
-            color: '#10b981',
-            fontSize: 10,
-            fontWeight: 700,
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#ecfdf5'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-        >
-          <ThumbsUp size={11} />
-          {!compact && 'Ya'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button
+            onClick={() => submitFeedback(1)}
+            disabled={submitting || !inferenceId}
+            title="Jawaban akurat dan membantu"
+            style={{
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              borderRadius: 8,
+              padding: compact ? '2px 6px' : '4px 10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              color: '#059669',
+              fontSize: 11,
+              fontWeight: 700,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#d1fae5'}
+            onMouseLeave={e => e.currentTarget.style.background = '#ecfdf5'}
+          >
+            <ThumbsUp size={12} />
+            {!compact && 'Ya, Akurat'}
+          </button>
 
-        <button
-          onClick={() => setShowReport(true)}
-          disabled={submitting || !inferenceId}
-          title="Laporkan jawaban salah"
-          style={{
-            background: 'none',
-            border: '1px solid #fee2e2',
-            borderRadius: 8,
-            padding: compact ? '2px 6px' : '4px 8px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 3,
-            color: '#ef4444',
-            fontSize: 10,
-            fontWeight: 700,
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#fef2f2'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-        >
-          <ThumbsDown size={11} />
-          {!compact && 'Laporkan'}
-        </button>
+          <button
+            onClick={() => setShowReport(true)}
+            disabled={submitting || !inferenceId}
+            title="Laporkan jawaban kurang tepat"
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: 8,
+              padding: compact ? '2px 6px' : '4px 10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              color: '#dc2626',
+              fontSize: 11,
+              fontWeight: 700,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#fee2e2'}
+            onMouseLeave={e => e.currentTarget.style.background = '#fef2f2'}
+          >
+            <ThumbsDown size={12} />
+            {!compact && 'Kurang Tepat'}
+          </button>
+        </div>
       </div>
 
       {/* Report modal */}
