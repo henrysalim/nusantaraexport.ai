@@ -9,7 +9,6 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
-# ── Regulation data (sama persis dengan sebelumnya) ──────────────────────────
 BOOTSTRAP_REGULATIONS = [
     {
         "id": "reg_001",
@@ -169,6 +168,91 @@ def bootstrap_regulations():
             cur.close()
         if conn:
             conn.close()
+
+
+def sync_regulations_with_gemini_search(topics: List[str] = None) -> int:
+    """
+    Scrape/Retrieve regulasi ekspor resmi terbaru langsung dari web menggunakan
+    Gemini Live Search Grounding, lalu simpan ke database Supabase regulations.
+    """
+    import requests
+    import json
+    import uuid
+
+    key = os.getenv("GEMINI_API_KEY", "").strip().strip('"').strip("'")
+    if not key:
+        logger.warning("GEMINI_API_KEY tidak ada. Batal sync web.")
+        return 0
+
+    default_topics = [
+        "Sarang Burung Walet", "Kopi Arabika", "Minyak Kelapa Sawit (CPO)",
+        "Arang Briket Batok Kelapa", "Keripik & Makanan Olahan",
+        "Vanili Organik", "Ikan Tuna & Hasil Laut", "Kerajinan Rotan & Kayu"
+    ]
+    target_topics = topics or default_topics
+
+    from app.config.db_config import get_db_connection
+    conn = get_db_connection()
+    if not conn:
+        logger.warning("Database tidak terhubung.")
+        return 0
+
+    inserted_count = 0
+    cur = None
+    try:
+        from psycopg2.extras import RealDictCursor
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        for topic in target_topics:
+            prompt = (
+                f"Sebutkan 1 regulasi/peraturan resmi terbaru pemerintah Indonesia (Permendag, Permentan, UU, atau Keputusan Karantina) "
+                f"mengenai ekspor komoditas {topic}. "
+                "Format respon HANYA JSON (tanpa markdown, tanpa teks lain): "
+                '{"source": "<nama dan nomor peraturan resmi>", "text": "<ringkasan isi dan syarat hukumnya>", "category": "<Legal/Customs/Health/FTA/Packaging>"}'
+            )
+
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}"
+            payload = {
+                "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                "tools": [{"googleSearch": {}}]
+            }
+
+            try:
+                res = requests.post(url, json=payload, timeout=25)
+                if res.status_code == 200:
+                    cand = res.json().get("candidates", [{}])[0]
+                    raw = cand.get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                    clean_json = raw.replace("```json", "").replace("```", "").strip()
+                    item = json.loads(clean_json)
+
+                    if item.get("source") and item.get("text"):
+                        reg_id = f"web_{uuid.uuid4().hex[:8]}"
+                        cur.execute(
+                            """
+                            INSERT INTO regulations (id, text, source, category)
+                            VALUES (%s, %s, %s, %s)
+                            ON CONFLICT (id) DO NOTHING
+                            """,
+                            (reg_id, item["text"], item["source"], item.get("category", "LiveWeb"))
+                        )
+                        conn.commit()
+                        inserted_count += 1
+                        logger.info(f"✅ Berhasil ingest regulasi web untuk {topic}: {item['source']}")
+            except Exception as item_err:
+                logger.warning(f"Gagal sync web regulasi untuk {topic}: {item_err}")
+                continue
+
+    except Exception as e:
+        logger.error(f"sync_regulations_with_gemini_search error: {e}")
+        if conn:
+            conn.rollback()
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+    return inserted_count
 
 
 def query_regulations(query_text: str, n_results: int = 3) -> str:

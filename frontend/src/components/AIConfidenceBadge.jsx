@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import AIFeedbackWidget from './AIFeedbackWidget'
 
 const TIER_CONFIG = {
   gemini_flash: {
@@ -28,6 +29,8 @@ const TIER_CONFIG = {
  *   modelUsed     : string nama model
  *   responseTimeMs: int latency ms
  *   compact       : bool — tampilan mini untuk inline
+ *   inferenceId   : string — UUID inferensi untuk feedback loop
+ *   showFeedback  : bool — tampilkan widget feedback jempol 👍/👎
  */
 export default function AIConfidenceBadge({
   tier = 'gemini_flash',
@@ -35,6 +38,8 @@ export default function AIConfidenceBadge({
   modelUsed = '',
   responseTimeMs = 0,
   compact = false,
+  inferenceId = '',
+  showFeedback = true,
 }) {
   const config = TIER_CONFIG[tier] || TIER_CONFIG.rule_based
   const pct = Math.round((confidence || 0) * 100)
@@ -187,6 +192,22 @@ export default function AIConfidenceBadge({
           </div>
         )}
       </div>
+
+      {/* Human-in-the-Loop Feedback Widget */}
+      {showFeedback && (
+        <div style={{
+          marginTop: 8,
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          padding: '8px 14px',
+        }}>
+          <AIFeedbackWidget
+            inferenceId={inferenceId || (typeof window !== 'undefined' && window.crypto?.randomUUID ? window.crypto.randomUUID() : '11111111-1111-1111-1111-111111111111')}
+            compact={compact}
+          />
+        </div>
+      )}
     </div>
   )
 }

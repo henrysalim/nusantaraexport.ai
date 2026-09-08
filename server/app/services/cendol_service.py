@@ -45,34 +45,28 @@ except ImportError:
 # ──────────────────────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """Anda adalah **NusantaraExport.AI** — asisten AI ekspor senior & konsultan kepabeanan profesional untuk UMKM Indonesia.
 
-**LANGKAH PERTAMA (WAJIB — untuk transparansi AI):**
-Sebelum menjawab, tuliskan proses berpikir Anda dalam blok berikut:
+**PROSES BERPIKIR (SINGKAT):**
+Tuliskan proses berpikir ringkas maksimal 3-4 baris dalam blok:
 <thinking>
-Langkah 1: [identifikasi topik dan konteks pertanyaan]
-Langkah 2: [identifikasi regulasi/data relevan dari knowledge base]
-Langkah 3: [formulasi jawaban berdasarkan fakta, bukan asumsi]
+Langkah 1: Identifikasi komoditas dan regulasi tujuan
+Langkah 2: Telusuri fakta resmi via Google Search & database
+Langkah 3: Rumuskan rincian jawaban untuk pengguna
 </thinking>
 
-**PETUNJUK FORMATTING JAWABAN (WAJIB DIPATUHI):**
+**PENTING: SETELAH BLOK </thinking>, ANDA WAJIB LANGSUNG MENULISKAN JAWABAN LENGKAP:**
+- Jangan pernah berhenti setelah </thinking>! Lanjutkan dengan memberikan jawaban lengkap, terperinci, dan solutif untuk pengguna.
+
+**INSTRUKSI PENCARIAN & SUMBER:**
+- Gunakan fitur Google Search untuk memverifikasi dasar hukum, nomor UU/Permendag/Permentan, tarif bea keluar, dan syarat karantina terbaru dari instansi resmi (Kemendag, Bea Cukai, Badan Karantina Indonesia, BPOM, atau INSW).
+- Jawablah dengan akurat, praktis untuk UMKM, dan tidak mengarang data.
+
+**PETUNJUK FORMATTING JAWABAN:**
 - Awali jawaban dengan salam singkat profesional.
 - Gunakan Sub-Header Markdown (`### 📌 Judul Bagian`) untuk memisahkan topik bahasan.
 - Gunakan **teks tebal** (`**poin penting**`) untuk istilah teknis, nama dokumen, atau tarif agar mudah dibaca cepat (*scannable*).
 - Gunakan daftar berpoin (`•` atau `-`) dengan penataan spasi yang rapi.
-- Di bagian paling bawah jawaban, Anda **WAJIB MENYERTAKAN** bagian:
-  ### 🔗 Sumber Rujukan Resmi
-  Tuliskan 2-4 tautan resmi publik berpola Markdown `[Nama Portal](https://URL)` yang DAPAT DIKLIK LANGSUNG oleh pengguna sesuai dengan konteks pertanyaan.
 
-**DAFTAR TAUTAN RESMI PUBLIK (GUNAKAN KAPAN PUN RELEVAN):**
-• **Portal INSW & Kepabeanan:** `[Portal INSW (Indonesia National Single Window)](https://insw.go.id)` | `[Direktorat Jenderal Bea dan Cukai](https://customs.go.id)` | `[Tarif BTKI Kemenkeu](https://bctemas.beacukai.go.id)`
-• **Perdagangan & Pasar Ekspor:** `[Kementerian Perdagangan RI](https://kemendag.go.id)` | `[Portal InaExport Kemendag](https://inaexport.id)` | `[e-SKA Kementerian Perdagangan](https://e-ska.kemendag.go.id)` | `[UN COMTRADE Trade Database](https://comtradeplus.un.org)`
-• **Standar Makanan & Karantina:** `[BPOM RI](https://pom.go.id)` | `[Badan Karantina Indonesia](https://karantina.pertanian.go.id)` | `[BPJPH Produk Halal](https://halal.go.id)`
-
-**ATURAN KETAT:**
-1. HANYA jawab pertanyaan seputar ekspor, regulasi pabean, dokumen ekspor, perjanjian FTA, logistik, negosiasi dagang, dan analisa pasar untuk UMKM Indonesia.
-2. JANGAN PERNAH menyebut 'Sumber: Gemini AI' atau 'Internal Model'. SELALU berikan tautan Markdown resmi publik di atas yang bisa diklik langsung oleh pengguna.
-3. Tolak topik di luar ekspor/perdagangan secara sopan.
-
-**Konteks Regulasi:**
+**Konteks Regulasi Internal (Knowledge Base):**
 {rag_context}"""
 
 
@@ -176,7 +170,8 @@ class CendolNLPService:
         if not GEMINI_API_KEY:
             return None
 
-        model = GEMINI_MODEL
+        # Prioritize gemini-2.5-flash for verified Google Search tool support
+        model = os.getenv("GEMINI_SEARCH_MODEL", "gemini-2.5-flash")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
 
         full_system = SYSTEM_PROMPT.format(
@@ -195,93 +190,141 @@ class CendolNLPService:
             "temperature": TEMPERATURE,
             "topP": 0.8,
             "topK": 40,
-            "maxOutputTokens": 1500,
+            "maxOutputTokens": 3000,
             "responseMimeType": "text/plain",
         }
 
-        user_parts = [{"text": f"{full_system}\n\n---\n**Pertanyaan pengguna:** {prompt}"}]
+        user_parts = [{"text": prompt}]
         if image_base64:
             user_parts.append({"inlineData": {"mimeType": mime_type, "data": image_base64}})
 
         payload = {
+            "system_instruction": {"parts": [{"text": full_system}]},
             "contents": [{"role": "user", "parts": user_parts}],
             "safetySettings": safety_settings,
             "generationConfig": generation_config,
         }
 
+        # Enable Google Search Grounding if no image payload
+        use_search = not bool(image_base64)
+        if use_search:
+            payload["tools"] = [{"googleSearch": {}}]
+
         t_start = time.monotonic()
+        data = None
         try:
-            response = requests.post(url, json=payload, timeout=25)
-            response.raise_for_status()
-            data = response.json()
-            response_time_ms = int((time.monotonic() - t_start) * 1000)
-
-            candidates = data.get("candidates", [])
-            if not candidates:
-                finish_reason = data.get("promptFeedback", {}).get("blockReason", "UNKNOWN")
-                logger.warning(f"Gemini response blocked: {finish_reason}")
-                return None
-
-            candidate = candidates[0]
-            finish = candidate.get("finishReason", "STOP")
-
-            if finish in ("SAFETY", "RECITATION"):
-                logger.warning(f"Gemini candidate finish reason: {finish}")
-                # Kembalikan dict dengan jawaban aman, bukan None
-                safety_answer = (
-                    "Maaf, saya tidak dapat menjawab pertanyaan tersebut karena "
-                    "alasan keamanan konten. Silakan reformulasi pertanyaan Anda dalam konteks ekspor."
-                )
-                if _HAS_METADATA_SERVICE:
-                    return build_ai_metadata(
-                        tier="gemini_flash", model=model, finish_reason=finish,
-                        response_time_ms=response_time_ms, thinking_steps=[],
-                        data_sources=["Gemini Safety Filter"], temperature=TEMPERATURE,
-                    ) | {"answer": safety_answer}
-                return {"answer": safety_answer, "ai_tier": "gemini_flash",
-                        "confidence": 0.20, "thinking_steps": [], "data_sources": []}
-
-            parts = candidate.get("content", {}).get("parts", [])
-            if not parts:
-                return None
-
-            raw_text = parts[0].get("text", "").strip()
-
-            # Ekstrak thinking steps dari blok <thinking>...</thinking>
-            if _HAS_METADATA_SERVICE:
-                thinking_steps, clean_answer = extract_thinking_steps(raw_text)
-                metadata = build_ai_metadata(
-                    tier="gemini_flash",
-                    model=model,
-                    finish_reason=finish,
-                    response_time_ms=response_time_ms,
-                    thinking_steps=thinking_steps,
-                    data_sources=["Gemini Knowledge", "RAG ChromaDB"],
-                    temperature=TEMPERATURE,
-                )
-                return {**metadata, "answer": clean_answer}
-
-            # Fallback tanpa metadata service
-            return {"answer": raw_text, "ai_tier": "gemini_flash",
-                    "model_used": model, "confidence": 0.85,
-                    "thinking_steps": [], "data_sources": [],
-                    "response_time_ms": response_time_ms, "finish_reason": finish}
-
-        except requests.exceptions.Timeout:
-            logger.error("Gemini API timeout (25s)")
-            return None
-        except requests.exceptions.HTTPError as e:
-            status_code = e.response.status_code if e.response else "unknown"
-            if status_code == 429:
-                logger.warning("Gemini rate limit (429). Fallback ke Tier 2.")
-            elif status_code == 400:
-                logger.warning(f"Gemini bad request (400): {e.response.text[:200]}")
+            # 1. Attempt with Live Google Search Grounding
+            response = requests.post(url, json=payload, timeout=30)
+            if response.status_code == 200:
+                data = response.json()
+            elif response.status_code in (429, 503):
+                logger.warning(f"Gemini API returned {response.status_code}. Retrying on fallback model without search...")
+                payload.pop("tools", None)
+                fallback_model = "gemini-3.5-flash-lite" if model == "gemini-2.5-flash" else "gemini-2.5-flash"
+                fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/{fallback_model}:generateContent?key={GEMINI_API_KEY}"
+                res_retry = requests.post(fallback_url, json=payload, timeout=20)
+                if res_retry.status_code == 200:
+                    data = res_retry.json()
+                    model = fallback_model
+                else:
+                    response.raise_for_status()
             else:
-                logger.error(f"Gemini HTTP error {status_code}: {e}")
+                response.raise_for_status()
+        except requests.exceptions.RequestException as req_err:
+            if "tools" in payload:
+                logger.warning(f"Search grounding error: {req_err}. Retrying standard generation on fallback model...")
+                try:
+                    payload.pop("tools", None)
+                    fallback_model = "gemini-3.5-flash-lite" if model == "gemini-2.5-flash" else "gemini-2.5-flash"
+                    fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/{fallback_model}:generateContent?key={GEMINI_API_KEY}"
+                    res_retry = requests.post(fallback_url, json=payload, timeout=20)
+                    if res_retry.status_code == 200:
+                        data = res_retry.json()
+                        model = fallback_model
+                except Exception as e_retry:
+                    logger.error(f"Gemini retry also failed: {e_retry}")
+                    return None
+            else:
+                logger.error(f"Gemini request failed: {req_err}")
+                return None
+
+        response_time_ms = int((time.monotonic() - t_start) * 1000)
+
+        candidates = data.get("candidates", []) if data else []
+        if not candidates:
+            finish_reason = data.get("promptFeedback", {}).get("blockReason", "UNKNOWN") if data else "NO_DATA"
+            logger.warning(f"Gemini response blocked: {finish_reason}")
             return None
-        except Exception as e:
-            logger.error(f"Gemini unexpected error: {e}")
+
+        candidate = candidates[0]
+        finish = candidate.get("finishReason", "STOP")
+
+        if finish in ("SAFETY", "RECITATION"):
+            logger.warning(f"Gemini candidate finish reason: {finish}")
+            safety_answer = (
+                "Maaf, saya tidak dapat menjawab pertanyaan tersebut karena "
+                "alasan keamanan konten. Silakan reformulasi pertanyaan Anda dalam konteks ekspor."
+            )
+            if _HAS_METADATA_SERVICE:
+                return build_ai_metadata(
+                    tier="gemini_flash", model=model, finish_reason=finish,
+                    response_time_ms=response_time_ms, thinking_steps=[],
+                    data_sources=["Gemini Safety Filter"], temperature=TEMPERATURE,
+                ) | {"answer": safety_answer}
+            return {"answer": safety_answer, "ai_tier": "gemini_flash",
+                    "confidence": 0.20, "thinking_steps": [], "data_sources": []}
+
+        parts = candidate.get("content", {}).get("parts", [])
+        if not parts:
             return None
+
+        raw_text = parts[0].get("text", "").strip()
+
+        # Parse live web sources from grounding metadata if present
+        web_sources = []
+        grounding_meta = candidate.get("groundingMetadata", {})
+        if grounding_meta:
+            chunks = grounding_meta.get("groundingChunks", [])
+            for c in chunks:
+                w = c.get("web", {})
+                if w.get("uri"):
+                    web_sources.append({
+                        "title": w.get("title", "Sumber Web Resmi"),
+                        "url": w.get("uri")
+                    })
+
+        # Ekstrak thinking steps dari blok <thinking>...</thinking>
+        if _HAS_METADATA_SERVICE:
+            thinking_steps, clean_answer = extract_thinking_steps(raw_text)
+
+            # Safety fallback: jika clean_answer kosong, pakai raw_text tanpa tag thinking
+            if not clean_answer or len(clean_answer.strip()) < 30:
+                clean_answer = raw_text.replace("<thinking>", "").replace("</thinking>", "").strip()
+
+            # Sources list for AI transparency metadata
+            sources_list = ["Gemini Knowledge"]
+            if web_sources:
+                sources_list.append("Google Search Grounding (Live Web)")
+            if context:
+                sources_list.append("RAG Knowledge Base")
+
+            metadata = build_ai_metadata(
+                tier="gemini_flash",
+                model=model,
+                finish_reason=finish,
+                response_time_ms=response_time_ms,
+                thinking_steps=thinking_steps,
+                data_sources=sources_list,
+                temperature=TEMPERATURE,
+            )
+            return {**metadata, "answer": clean_answer, "grounding_sources": web_sources}
+
+        # Fallback tanpa metadata service
+        return {"answer": raw_text, "ai_tier": "gemini_flash",
+                "model_used": model, "confidence": 0.90 if web_sources else 0.85,
+                "thinking_steps": [], "data_sources": ["Google Search Grounding"] if web_sources else [],
+                "response_time_ms": response_time_ms, "finish_reason": finish,
+                "grounding_sources": web_sources}
 
     @staticmethod
     def _call_backup_llm(prompt: str, context: str) -> Optional[Dict[str, Any]]:

@@ -193,6 +193,7 @@ export default function PostExportSolver() {
                 confidence={aiMetadata.confidence}
                 modelUsed={aiMetadata.model_used}
                 responseTimeMs={aiMetadata.response_time_ms}
+                inferenceId={aiMetadata.inference_id}
               />
             </div>
           )}
