@@ -86,8 +86,21 @@ export default function PackagingChecker() {
         product_type: productType,
         images,
       })
-      setResult(response.data)
-      setAiMetadata(response.data.ai_metadata || null)
+      const data = response.data
+      setResult(data)
+      setAiMetadata(data.ai_metadata || null)
+
+      // Simpan hasil ke localStorage agar bisa dipakai ExportSimulator
+      try {
+        localStorage.setItem('ne_last_packaging', JSON.stringify({
+          score: data.score,
+          items: data.items,
+          product: productType,
+          destination,
+          country_name: data.country_name,
+          timestamp: new Date().toISOString(),
+        }))
+      } catch (_) { /* ignore storage errors */ }
     } catch (err) {
       console.error('Packaging check error:', err)
       setError('Gagal terhubung ke server. Pastikan backend berjalan di port 8081.')

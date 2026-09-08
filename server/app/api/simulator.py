@@ -18,6 +18,7 @@ from app.services.readiness_service import (
     get_required_documents,
     get_cost_breakdown,
     get_certification_items,
+    get_packaging_checklist,
     get_dry_run_checkpoints,
     get_shipping_timeline,
 )
@@ -40,6 +41,13 @@ class ReadinessRequest(BaseModel):
     destination: str = ""
     documents: List[str] = []
     packaging_ready: bool = False
+    # Optional real data from other features
+    packaging_score: Optional[int] = None      # from PackagingChecker
+    packaging_items: Optional[list] = None     # from PackagingChecker
+    existing_docs: Optional[List[str]] = None  # from DocumentGenerator
+    # User-supplied production data (for accurate cost calculation)
+    production_price_per_kg: Optional[float] = None  # user's production cost per kg (IDR)
+    quantity_kg: Optional[float] = None               # quantity to export in kg
 
 
 class ReadinessResponse(BaseModel):
@@ -66,11 +74,16 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
     t_start = time.monotonic()
 
     # ── Document Score ──
+    # Merge user-provided documents with any existing docs from DocumentGenerator
+    all_user_docs = list(req.documents)
+    if req.existing_docs:
+        all_user_docs = list(set(all_user_docs + req.existing_docs))
+
     required_docs = get_required_documents(commodity, dest_name, dest_code)
     doc_items = []
     doc_score = 0
     for doc in required_docs:
-        if doc in req.documents or doc.lower() in [d.lower() for d in req.documents]:
+        if doc in all_user_docs or doc.lower() in [d.lower() for d in all_user_docs]:
             doc_items.append({"doc": doc, "status": "pass"})
             doc_score += 1
         else:
@@ -82,18 +95,16 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
     cert_items, cert_score = get_certification_items(commodity, dest_name, dest_code)
 
     # ── Packaging Score ──
-    pack_items = [
-        {"doc": "Label Bahasa Inggris", "status": "pass"},
-        {"doc": "Nutrition Facts", "status": "pass"},
-        {"doc": "Country of Origin", "status": "pass"},
-    ]
-    if dest_code == "jp":
-        pack_items.append({"doc": "Label Bahasa Jepang", "status": "warning", "note": "Diperlukan untuk pasar Jepang"})
-    elif dest_code == "cn":
-        pack_items.append({"doc": "Label Bahasa Mandarin", "status": "warning", "note": "Diperlukan untuk pasar Tiongkok"})
-    elif dest_code == "kr":
-        pack_items.append({"doc": "Label Bahasa Korea", "status": "warning", "note": "Wajib untuk pasar Korea Selatan"})
-    pack_score = 80 if req.packaging_ready else 50
+    # If a real packaging check was done via PackagingChecker, use its score directly.
+    if req.packaging_score is not None:
+        pack_score = max(0, min(100, req.packaging_score))
+        pack_items = req.packaging_items if req.packaging_items else [
+            {"doc": "Hasil Audit Kemasan", "status": "pass",
+             "note": f"Skor real dari Packaging Checker: {pack_score}/100"}
+        ]
+    else:
+        # Ask Gemini for commodity-specific packaging requirements
+        pack_items, pack_score = get_packaging_checklist(commodity, dest_name, dest_code)
 
     # ── Overall Score ──
     overall = int((doc_pct * 0.5) + (cert_score * 0.25) + (pack_score * 0.25))
@@ -107,7 +118,12 @@ def calculate_readiness(req: ReadinessRequest, current_user: dict = Depends(get_
     ]
 
     # ── Cost Breakdown ──
-    cost_breakdown = get_cost_breakdown(commodity, dest_name)
+    cost_breakdown = get_cost_breakdown(
+        commodity,
+        dest_name,
+        production_price_per_kg=req.production_price_per_kg,
+        quantity_kg=req.quantity_kg,
+    )
 
     # ── Timeline ──
     timeline, total_timeline = get_shipping_timeline(dest_name, dest_code)

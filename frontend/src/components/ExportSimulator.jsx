@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { ClipboardCheck, Truck, CheckCircle2, AlertTriangle, XCircle, TrendingUp, Shield, ChevronRight } from 'lucide-react'
+import {
+  ClipboardCheck, Truck, CheckCircle2, AlertTriangle, XCircle,
+  TrendingUp, Shield, ChevronRight, Camera, FileText, Sparkles, RefreshCw,
+} from 'lucide-react'
 import { simulateReadiness, simulateDryRun } from '../services/api'
 import AIConfidenceBadge from './AIConfidenceBadge'
 import AIThinkingPanel from './AIThinkingPanel'
 
 const RISK_CONFIG = {
-  low: { color: 'bg-green-50 border-green-200', badge: 'bg-green-100 text-green-700', label: '🟢 Rendah' },
-  medium: { color: 'bg-yellow-50 border-yellow-200', badge: 'bg-yellow-100 text-yellow-700', label: '🟡 Sedang' },
-  high: { color: 'bg-red-50 border-red-200', badge: 'bg-red-100 text-red-700', label: '🔴 Tinggi' },
-  very_high: { color: 'bg-red-100 border-red-300', badge: 'bg-red-200 text-red-800', label: '🔴 Sangat Tinggi' },
+  low:      { color: 'bg-green-50 border-green-200',  badge: 'bg-green-100 text-green-700',  label: '🟢 Rendah' },
+  medium:   { color: 'bg-yellow-50 border-yellow-200', badge: 'bg-yellow-100 text-yellow-700', label: '🟡 Sedang' },
+  high:     { color: 'bg-red-50 border-red-200',      badge: 'bg-red-100 text-red-700',      label: '🔴 Tinggi' },
+  very_high:{ color: 'bg-red-100 border-red-300',     badge: 'bg-red-200 text-red-800',      label: '🔴 Sangat Tinggi' },
 }
 
 const DESTINATIONS = [
@@ -21,19 +24,63 @@ const DESTINATIONS = [
   { value: 'sg', label: 'Singapura' },
 ]
 
+// ── Helper: Baca localStorage dengan safe parse ──────────────────────────────
+function readLocalJSON(key, fallback = null) {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : fallback
+  } catch { return fallback }
+}
+
+// ── Format relative time ─────────────────────────────────────────────────────
+function relativeTime(isoStr) {
+  if (!isoStr) return ''
+  const diff = Date.now() - new Date(isoStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'baru saja'
+  if (mins < 60) return `${mins} menit lalu`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} jam lalu`
+  return `${Math.floor(hrs / 24)} hari lalu`
+}
+
 export default function ExportSimulator() {
-  const [product, setProduct] = useState('')
-  const [destination, setDestination] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [product, setProduct]                 = useState('')
+  const [destination, setDestination]         = useState('')
+  const [loading, setLoading]                 = useState(false)
   const [readinessResult, setReadinessResult] = useState(null)
-  const [dryRunResult, setDryRunResult] = useState(null)
+  const [dryRunResult, setDryRunResult]       = useState(null)
   const [activeCheckpoint, setActiveCheckpoint] = useState(null)
-  const [activeSection, setActiveSection] = useState('readiness') // 'readiness' | 'dryrun'
-  const [error, setError] = useState('')
-  const [aiMetadata, setAiMetadata] = useState(null)
+  const [activeSection, setActiveSection]     = useState('readiness')
+  const [error, setError]                     = useState('')
+  const [aiMetadata, setAiMetadata]           = useState(null)
+
+  // ── Input produksi dari user ───────────────────────────────────────────────
+  const [pricePerKg, setPricePerKg]   = useState('')   // harga produksi/kg (IDR)
+  const [quantityKg, setQuantityKg]   = useState('')   // jumlah ekspor (kg)
+
+  // ── Integrasi fitur lain ───────────────────────────────────────────────────
+  const [packagingContext, setPackagingContext]   = useState(null)
+  const [docsContextUsed, setDocsContextUsed]     = useState(false)
 
   const destLabel = DESTINATIONS.find(d => d.value === destination)?.label || destination
 
+  // Data dari localStorage (dibaca fresh setiap render — not stale)
+  const savedPackaging = readLocalJSON('ne_last_packaging')
+  const savedDocs      = readLocalJSON('ne_docs_ready', [])
+
+  // ── Tombol: Gunakan Hasil Packaging ─────────────────────────────────────
+  const handleUsePackaging = () => {
+    if (!savedPackaging) return
+    setPackagingContext(savedPackaging)
+  }
+
+  const handleClearPackaging = () => setPackagingContext(null)
+
+  // ── Tombol: Sertakan Dokumen Sudah Dibuat ───────────────────────────────
+  const handleToggleDocs = () => setDocsContextUsed(v => !v)
+
+  // ── Simulate ─────────────────────────────────────────────────────────────
   const handleSimulate = async () => {
     if (!product) return
     setLoading(true)
@@ -41,19 +88,45 @@ export default function ExportSimulator() {
     setDryRunResult(null)
     setError('')
 
+    // Docs list: gabung default + dokumen yang sudah dibuat user
+    const baseDocs = ['NIB', 'Commercial Invoice', 'Packing List']
+    const allDocs  = docsContextUsed && savedDocs.length > 0
+      ? [...new Set([...baseDocs, ...savedDocs])]
+      : baseDocs
+
+    // Packaging context
+    const packScore = packagingContext ? packagingContext.score : undefined
+    const packItems = packagingContext ? packagingContext.items : undefined
+
     try {
-      // Call both APIs in parallel
+      // Format Indonesia menggunakan titik sebagai pemisah ribuan.
+      // Hapus titik sebelum konversi agar 5.000.000 terbaca 5000000, bukan 5.
+      const parseNumericInput = (val) => {
+        if (!val) return undefined
+        const clean = String(val).replace(/\./g, '').replace(/,/g, '.').replace(/[^0-9.]/g, '')
+        const num = parseFloat(clean)
+        return isNaN(num) || num <= 0 ? undefined : num
+      }
+
+      const numPrice = parseNumericInput(pricePerKg)
+      const numQty   = parseNumericInput(quantityKg)
+
       const [readinessRes, dryRunRes] = await Promise.all([
         simulateReadiness({
           commodity: product,
           destination: destination || 'jp',
-          documents: ['NIB', 'Commercial Invoice', 'Packing List'],
-          packaging_ready: true,
+          documents: allDocs,
+          packaging_ready: packagingContext ? packagingContext.score >= 75 : true,
+          ...(packScore !== undefined && { packaging_score: packScore }),
+          ...(packItems !== undefined && { packaging_items: packItems }),
+          ...(docsContextUsed && savedDocs.length > 0 && { existing_docs: savedDocs }),
+          ...(numPrice !== undefined && { production_price_per_kg: numPrice }),
+          ...(numQty   !== undefined && { quantity_kg: numQty }),
         }),
         simulateDryRun({
           commodity: product,
           destination: destLabel || 'Jepang',
-          documents: ['NIB', 'Commercial Invoice', 'Packing List', 'CoA', 'SKA', 'PEB'],
+          documents: allDocs,
         }),
       ])
       setReadinessResult(readinessRes.data)
@@ -68,7 +141,7 @@ export default function ExportSimulator() {
   }
 
   const statusIcon = (s) => {
-    if (s === 'pass' || s === 'complete') return <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
+    if (s === 'pass' || s === 'complete')   return <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
     if (s === 'warning' || s === 'partial') return <AlertTriangle size={14} className="text-yellow-500 flex-shrink-0" />
     return <XCircle size={14} className="text-red-500 flex-shrink-0" />
   }
@@ -88,13 +161,13 @@ export default function ExportSimulator() {
         </div>
       </div>
 
-      {/* Input Form */}
-      <div className="grid sm:grid-cols-2 gap-3 mb-4">
+      {/* Input Form — row 1: produk + tujuan */}
+      <div className="grid sm:grid-cols-2 gap-3 mb-3">
         <div>
           <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">Nama Produk</label>
           <input
             type="text"
-            placeholder="Contoh: Kopi Arabika"
+            placeholder="Contoh: Tempe, Kopi Arabika"
             className="w-full px-4 py-3 bg-slate-soft border border-slate-200 rounded-xl font-bold text-secondary outline-none focus:border-accent text-sm"
             value={product}
             onChange={(e) => setProduct(e.target.value)}
@@ -114,11 +187,141 @@ export default function ExportSimulator() {
           </select>
         </div>
       </div>
+
+      {/* Input Form — row 2: harga produksi + jumlah */}
+      <div className="grid sm:grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">
+            Harga Produksi / kg (Rp)
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-secondary/40 pointer-events-none">Rp</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="15.000"
+              className="w-full pl-10 pr-4 py-3 bg-slate-soft border border-slate-200 rounded-xl font-bold text-secondary outline-none focus:border-accent text-sm"
+              value={pricePerKg}
+              onChange={(e) => {
+                // format dengan titik ribuan
+                const raw = e.target.value.replace(/[^0-9]/g, '')
+                setPricePerKg(raw ? parseInt(raw, 10).toLocaleString('id-ID') : '')
+              }}
+            />
+          </div>
+          <p className="text-[9px] text-secondary/40 mt-1 font-medium">Kosongkan jika ingin estimasi otomatis patokan HPP pasar dari AI (Gemini).</p>
+        </div>
+        <div>
+          <label className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-2 block">
+            Jumlah yang Diekspor (kg)
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="500"
+              className="w-full px-4 py-3 bg-slate-soft border border-slate-200 rounded-xl font-bold text-secondary outline-none focus:border-accent text-sm"
+              value={quantityKg}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9]/g, '')
+                setQuantityKg(raw ? parseInt(raw, 10).toLocaleString('id-ID') : '')
+              }}
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-secondary/30 pointer-events-none">kg</span>
+          </div>
+          <p className="text-[9px] text-secondary/30 mt-1 font-medium">Default 500 kg jika kosong. Freight dihitung per kg × jumlah.</p>
+        </div>
+      </div>
+
+      {/* ── Integrasi fitur lain ── */}
+      <div className="space-y-2 mb-4">
+        {/* Packaging integration */}
+        {savedPackaging ? (
+          packagingContext ? (
+            // ✅ Aktif — tampilkan badge + tombol lepas
+            <div className="flex items-center justify-between px-4 py-3 bg-green-50 border border-green-200 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <Camera size={14} className="text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-black text-green-700">
+                    ✓ Hasil Audit Kemasan digunakan — Skor: {packagingContext.score}/100
+                  </p>
+                  <p className="text-[10px] text-green-600/70">
+                    Produk: {packagingContext.product} · {relativeTime(packagingContext.timestamp)}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleClearPackaging}
+                className="text-[10px] font-black text-green-600 hover:text-green-800 flex items-center gap-1 underline"
+              >
+                <RefreshCw size={10} /> Lepas
+              </button>
+            </div>
+          ) : (
+            // 🔵 Ada data tapi belum dipakai — tombol "Gunakan"
+            <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border border-blue-200 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <Camera size={14} className="text-blue-500 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-black text-blue-700">Hasil Audit Kemasan tersedia</p>
+                  <p className="text-[10px] text-blue-500/70">
+                    {savedPackaging.product} · Skor: {savedPackaging.score}/100 · {relativeTime(savedPackaging.timestamp)}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleUsePackaging}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-[10px] font-black rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                <Sparkles size={10} /> Gunakan
+              </button>
+            </div>
+          )
+        ) : (
+          // ⚪ Belum ada data — info CTA
+          <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-dashed border-slate-300 rounded-2xl">
+            <Camera size={14} className="text-slate-400 flex-shrink-0" />
+            <p className="text-[11px] text-secondary/40 font-medium leading-relaxed">
+              Belum ada hasil Audit Kemasan. Pergi ke tab <span className="font-black">Audit Kemasan</span> lalu jalankan analisis — hasilnya akan bisa digunakan di sini untuk meningkatkan akurasi simulasi.
+            </p>
+          </div>
+        )}
+
+
+        {/* Docs integration */}
+        {savedDocs.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-violet-50 border border-violet-200 rounded-2xl">
+            <div className="flex items-center gap-2">
+              <FileText size={14} className="text-violet-500 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-black text-violet-700">
+                  {savedDocs.length} dokumen sudah dibuat di Buat Dokumen
+                </p>
+                <p className="text-[10px] text-violet-500/70 truncate max-w-[220px]">
+                  {savedDocs.slice(0, 3).join(', ')}{savedDocs.length > 3 ? ` +${savedDocs.length - 3} lainnya` : ''}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleToggleDocs}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black rounded-xl transition-colors ${
+                docsContextUsed
+                  ? 'bg-violet-600 text-white hover:bg-violet-700'
+                  : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+              }`}
+            >
+              {docsContextUsed ? <><CheckCircle2 size={10} /> Digunakan</> : 'Sertakan'}
+            </button>
+          </div>
+        )}
+      </div>
+
       <button onClick={handleSimulate} disabled={loading || !product} className="btn-primary w-full justify-center py-4 mb-6">
         {loading ? (
           <span className="flex items-center gap-2">
             <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-            Menganalisis kesiapan & rute ekspor...
+            Menganalisis kesiapan &amp; rute ekspor...
           </span>
         ) : '🚀 Mulai Simulasi Ekspor'}
       </button>
@@ -165,6 +368,19 @@ export default function ExportSimulator() {
           {/* =================== READINESS SECTION =================== */}
           {activeSection === 'readiness' && readinessResult && (
             <div className="space-y-5 animate-fadeInUp">
+
+              {/* Context banner — tampilkan jika data real digunakan */}
+              {(packagingContext || docsContextUsed) && (
+                <div className="flex items-start gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                  <Sparkles size={14} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs font-bold text-emerald-700 leading-relaxed">
+                    Skor ini menggunakan data real dari{' '}
+                    {[packagingContext && 'Audit Kemasan', docsContextUsed && 'Dokumen yang sudah dibuat'].filter(Boolean).join(' & ')}.
+                    Hasilnya lebih akurat dari simulasi standar.
+                  </p>
+                </div>
+              )}
+
               {/* Overall Score */}
               <div className="bg-slate-soft p-6 rounded-2xl border border-slate-200 flex items-center justify-between">
                 <div>
@@ -175,13 +391,21 @@ export default function ExportSimulator() {
                   <div className="relative w-20 h-20">
                     <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={readinessResult.overall_score >= 80 ? '#22c55e' : readinessResult.overall_score >= 60 ? '#eab308' : '#ef4444'} strokeWidth="3" strokeDasharray={`${readinessResult.overall_score}, 100`} />
+                      <path
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke={readinessResult.overall_score >= 80 ? '#22c55e' : readinessResult.overall_score >= 60 ? '#eab308' : '#ef4444'}
+                        strokeWidth="3"
+                        strokeDasharray={`${readinessResult.overall_score}, 100`}
+                      />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-xl font-black text-secondary">{readinessResult.overall_score}</span>
                     </div>
                   </div>
-                  <p className={`text-xs font-black mt-1 ${readinessResult.overall_score >= 80 ? 'text-green-600' : readinessResult.overall_score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>{readinessResult.status}</p>
+                  <p className={`text-xs font-black mt-1 ${readinessResult.overall_score >= 80 ? 'text-green-600' : readinessResult.overall_score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {readinessResult.status}
+                  </p>
                 </div>
               </div>
 
@@ -190,7 +414,9 @@ export default function ExportSimulator() {
                 <div key={ci} className="border border-slate-200 rounded-2xl overflow-hidden">
                   <div className="bg-slate-soft px-5 py-3 flex items-center justify-between">
                     <span className="text-sm font-black text-secondary">{cat.name}</span>
-                    <span className={`text-xs font-black px-2 py-1 rounded-lg ${cat.score >= 80 ? 'bg-green-100 text-green-700' : cat.score >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{cat.score}/100</span>
+                    <span className={`text-xs font-black px-2 py-1 rounded-lg ${cat.score >= 80 ? 'bg-green-100 text-green-700' : cat.score >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                      {cat.score}/100
+                    </span>
                   </div>
                   <div className="p-4 space-y-2">
                     {cat.items.map((item, ii) => (
@@ -202,28 +428,125 @@ export default function ExportSimulator() {
                         </div>
                       </div>
                     ))}
+                    {/* Label khusus jika sumber data real */}
+                    {cat.name === 'Kepatuhan Kemasan' && packagingContext && (
+                      <div className="mt-2 flex items-center gap-1.5 text-[10px] font-black text-emerald-600">
+                        <Camera size={10} /> Data real dari Audit Kemasan terakhir
+                      </div>
+                    )}
+                    {cat.name === 'Kelengkapan Dokumen' && docsContextUsed && savedDocs.length > 0 && (
+                      <div className="mt-2 flex items-center gap-1.5 text-[10px] font-black text-violet-600">
+                        <FileText size={10} /> Termasuk {savedDocs.length} dokumen yang sudah kamu buat
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
 
               {/* Cost Breakdown */}
               <div className="border border-slate-200 rounded-2xl overflow-hidden">
-                <div className="bg-slate-soft px-5 py-3">
+                <div className="bg-slate-soft px-5 py-3 flex items-center justify-between">
                   <span className="text-sm font-black text-secondary">Estimasi Biaya Ekspor</span>
+                  {readinessResult.cost_breakdown.quantity_kg && (
+                    <span className="text-xs font-bold text-secondary/40">
+                      {Number(readinessResult.cost_breakdown.quantity_kg).toLocaleString('id-ID')} kg
+                    </span>
+                  )}
                 </div>
-                <div className="p-4 space-y-2">
-                  {Object.entries(readinessResult.cost_breakdown).filter(([k]) => k !== 'total').map(([key, item]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-slate-50">
-                      <span className="text-sm text-secondary/60 font-medium">{item.label}</span>
-                      <span className="text-sm font-bold text-secondary">{item.amount}</span>
+
+                {/* Production row — user input or estimated */}
+                <div className="px-4 pt-4 pb-2 border-b border-slate-50">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-bold text-secondary">
+                        {readinessResult.cost_breakdown.production?.label}
+                      </p>
+                      {readinessResult.cost_breakdown.production?.calculation && (
+                        <p className="text-[10px] font-black text-accent/70 mt-0.5">
+                          {readinessResult.cost_breakdown.production.calculation}
+                        </p>
+                      )}
+                      {readinessResult.cost_breakdown.production?.user_input ? (
+                        <span className="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-black rounded">
+                          ✓ Harga kamu sendiri
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black rounded">
+                          ✨ Estimasi HPP Pasar (Gemini AI)
+                        </span>
+                      )}
                     </div>
-                  ))}
-                  <div className="flex justify-between py-3 border-t-2 border-slate-200 mt-2">
-                    <span className="font-black text-secondary">TOTAL ESTIMASI</span>
-                    <span className="text-lg font-black text-accent">{readinessResult.cost_breakdown.total}</span>
+                    <span className="text-sm font-bold text-secondary whitespace-nowrap">
+                      {readinessResult.cost_breakdown.production?.amount}
+                    </span>
                   </div>
                 </div>
+
+                {/* Freight row — from Gemini or fallback */}
+                <div className="px-4 py-2 border-b border-slate-50">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-bold text-secondary">
+                        {readinessResult.cost_breakdown.freight?.label}
+                      </p>
+                      {readinessResult.cost_breakdown.freight?.calculation && (
+                        <p className="text-[10px] font-black text-blue-500/70 mt-0.5">
+                          {readinessResult.cost_breakdown.freight.calculation}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-secondary whitespace-nowrap">
+                      {readinessResult.cost_breakdown.freight?.amount}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Other rows (insurance, docs, customs) */}
+                {['insurance', 'docs', 'customs'].map((key) => {
+                  const item = readinessResult.cost_breakdown[key]
+                  if (!item) return null
+                  return (
+                    <div key={key} className="px-4 py-2 border-b border-slate-50">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-bold text-secondary">{item.label}</p>
+                          {item.note && (
+                            <p className="text-[10px] text-secondary/30 mt-0.5 font-medium">{item.note}</p>
+                          )}
+                        </div>
+                        <span className="text-sm font-bold text-secondary whitespace-nowrap">{item.amount}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {/* Total */}
+                <div className="flex justify-between items-center px-4 py-3 border-t-2 border-slate-200">
+                  <span className="font-black text-secondary">TOTAL ESTIMASI</span>
+                  <span className="text-lg font-black text-accent">{readinessResult.cost_breakdown.total}</span>
+                </div>
+
+                {/* Source note */}
+                {readinessResult.cost_breakdown.source_note && (
+                  <div className="px-4 pb-3 flex items-start gap-1.5">
+                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                      readinessResult.cost_breakdown.confidence === 'high'
+                        ? 'bg-green-100 text-green-700'
+                        : readinessResult.cost_breakdown.confidence === 'low'
+                          ? 'bg-red-100 text-red-600'
+                          : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {readinessResult.cost_breakdown.confidence === 'high' ? '✓ High Confidence'
+                        : readinessResult.cost_breakdown.confidence === 'low' ? '⚠ Low Confidence'
+                        : '~ Medium Confidence'}
+                    </span>
+                    <p className="text-[9px] text-secondary/40 font-medium leading-relaxed">
+                      Freight: {readinessResult.cost_breakdown.source_note}
+                    </p>
+                  </div>
+                )}
               </div>
+
 
               {/* Timeline */}
               <div className="border border-slate-200 rounded-2xl overflow-hidden">
@@ -255,28 +578,32 @@ export default function ExportSimulator() {
                 <div className="space-y-2">
                   {readinessResult.risks.map((r, i) => (
                     <div key={i} className={`p-3 rounded-xl border flex items-start gap-2 ${r.level === 'high' ? 'bg-red-50 border-red-100' : r.level === 'medium' ? 'bg-yellow-50 border-yellow-100' : 'bg-slate-50 border-slate-100'}`}>
-                      {r.level === 'high' ? <XCircle size={14} className="text-red-500 mt-0.5 flex-shrink-0" /> : r.level === 'medium' ? <AlertTriangle size={14} className="text-yellow-500 mt-0.5 flex-shrink-0" /> : <TrendingUp size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />}
+                      {r.level === 'high'
+                        ? <XCircle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
+                        : r.level === 'medium'
+                          ? <AlertTriangle size={14} className="text-yellow-500 mt-0.5 flex-shrink-0" />
+                          : <TrendingUp size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />}
                       <p className="text-xs font-medium text-secondary">{r.desc}</p>
                     </div>
                   ))}
                 </div>
-            </div>
-
-            {/* AI Transparency */}
-            {aiMetadata && (
-              <div className="space-y-3">
-                {aiMetadata.thinking_steps?.length > 0 && (
-                  <AIThinkingPanel steps={aiMetadata.thinking_steps} />
-                )}
-                <AIConfidenceBadge
-                  tier={aiMetadata.ai_tier}
-                  confidence={aiMetadata.confidence}
-                  modelUsed={aiMetadata.model_used}
-                  responseTimeMs={aiMetadata.response_time_ms}
-                />
               </div>
-            )}
-          </div>
+
+              {/* AI Transparency */}
+              {aiMetadata && (
+                <div className="space-y-3">
+                  {aiMetadata.thinking_steps?.length > 0 && (
+                    <AIThinkingPanel steps={aiMetadata.thinking_steps} />
+                  )}
+                  <AIConfidenceBadge
+                    tier={aiMetadata.ai_tier}
+                    confidence={aiMetadata.confidence}
+                    modelUsed={aiMetadata.model_used}
+                    responseTimeMs={aiMetadata.response_time_ms}
+                  />
+                </div>
+              )}
+            </div>
           )}
 
           {/* =================== DRY RUN SECTION =================== */}
