@@ -250,6 +250,27 @@ export default function DocumentGenerator() {
       a.click()
       URL.revokeObjectURL(url)
       setDownloaded(d => ({ ...d, [docType]: true }))
+
+      // Catat dokumen yang sudah dibuat ke localStorage untuk ExportSimulator
+      const DOC_NAME_MAP = {
+        'invoice': 'Commercial Invoice',
+        'proforma-invoice': 'Proforma Invoice',
+        'packing-list': 'Packing List',
+        'shipping-instruction': 'Shipping Instruction',
+        'surat-penawaran': 'Surat Penawaran Ekspor',
+        'sales-contract-buyer': 'Sales Contract',
+        'kontrak-supplier': 'Kontrak Supplier',
+        'surat-jalan': 'Surat Jalan',
+        'perhitungan-biaya': 'Perhitungan Biaya Ekspor',
+      }
+      const docDisplayName = DOC_NAME_MAP[docType] || docType
+      try {
+        const existing = JSON.parse(localStorage.getItem('ne_docs_ready') || '[]')
+        if (!existing.includes(docDisplayName)) {
+          existing.push(docDisplayName)
+          localStorage.setItem('ne_docs_ready', JSON.stringify(existing))
+        }
+      } catch (_) { /* ignore storage errors */ }
     } catch (err) {
       console.error('Download PDF error:', err)
       alert(`Gagal membuat PDF untuk ${docType}. Pastikan server backend sedang aktif.`)
